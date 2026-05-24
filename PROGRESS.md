@@ -1,0 +1,110 @@
+# PROGRESS — Build State (mutable)
+
+## AT-A-GLANCE (update every session)
+- **Current Phase:** Phase R — Research and knowledge acquisition
+- **Next Concrete Task:** Create the research workspace per SYSTEM_DESIGN Section 4.5 and dispatch the first research subagents
+- **Overall completion estimate:** 0%
+- **Last session date:** 2026-05-24
+- **Codebase known-good?** (tests passing) No — `make` is not installed in the current shell, so `make test` could not run
+
+## RESUME HERE (only if mid-task)
+<exact file, function, line, and intended end-state — clear this when the task is done>
+
+## KNOWN ISSUES / BLOCKERS
+- `make test` could not run on 2026-05-24 because `make` is not installed in the current shell.
+
+## QUESTIONS FOR THE HUMAN
+- <none yet>
+
+## PHASE GATE STATUS
+- [ ] Phase R gate met (see SYSTEM_DESIGN 3.05)
+- [ ] Phase 0 gate met (see SYSTEM_DESIGN 3.1)
+- [ ] Phase 1 gate met
+- [ ] Phase 2 gate met
+- [ ] Phase 3 gate met
+- [ ] Phase 4 gate met
+- [ ] Phase 5 gate met
+
+## MASTER CHECKLIST MIRROR
+
+### 3.05 Phase R — Research & knowledge acquisition
+
+- [ ] Research workspace created at `research/` with the structure in Section 4.5
+- [ ] Subagents dispatched across all research tracks (Section 4.5.3) and their findings written to `research/findings/`
+- [ ] Plasmid biology synthesized into `research/findings/plasmid_biology.md` (structure, components, design rules)
+- [ ] Sequence-generation landscape synthesized into `research/findings/sequence_models.md` (DNABERT-2, Nucleotide Transformer, Evo, GenSLM, etc., with licenses)
+- [ ] Existing tools & prior art synthesized into `research/findings/prior_art.md` (OriGen, PlasmidGPT, Benchling, SnapGene, VectorBuilder, etc.)
+- [ ] Data sources synthesized into `research/findings/data_sources.md` (Addgene, NCBI, access methods, licensing, formats)
+- [ ] Validation/constraint rules synthesized into `research/findings/design_rules.md` (restriction sites, codon optimization, regulatory compatibility)
+- [ ] Visualization approaches synthesized into `research/findings/visualization.md` (seqviz, circular/linear map rendering)
+- [ ] An annotated bibliography (`research/bibliography.md`) lists every paper/source read, with a one-line takeaway and citation
+- [ ] A consolidated `research/SYNTHESIS.md` distills everything into the decisions that affect the build, with open questions flagged for the human
+- [ ] **GATE:** Every research track has a findings file with cited sources; `research/SYNTHESIS.md` exists and explicitly answers the "questions the build needs answered" list (Section 4.5.2); any unresolved biological questions are logged under "Questions for the human" in `PROGRESS.md`.
+
+### 3.1 Phase 0 — Foundations & data pipeline
+
+- [ ] Monorepo scaffolded with the structure in Section 4.2
+- [ ] Local dev environment reproducible (`make setup` brings up Postgres + object store + vector DB locally via Docker Compose)
+- [ ] CI runs lint + tests on every commit
+- [ ] Addgene ingestion job pulls plasmid metadata + sequences into the canonical `plasmids` table (Section 12.1)
+- [ ] NCBI GenBank ingestion job pulls plasmid-annotated sequences
+- [ ] Literature/context extraction job populates the `experimental_contexts` table (Section 12.2)
+- [ ] Sequence parser normalizes every sequence into canonical annotated form (Section 12.3) with component detection (ORI, promoter, GOI, marker, MCS, terminator)
+- [ ] Data quality report job produces counts, null-rates, and dedup stats
+- [ ] **GATE:** ≥ 50,000 fully-parsed, component-annotated plasmid records exist in the database and pass schema validation; a single CLI command reproduces the whole pipeline from empty DB.
+
+### 3.2 Phase 1 — Retrieval layer (MVP)
+
+- [ ] Embedding service wraps a biomedical encoder (Section 6.2) behind the `Embedder` interface
+- [ ] Every plasmid record embedded and indexed in the vector DB
+- [ ] NLU parser converts free-text experimental goals into the structured `DesignSpec` (Section 12.4) via an LLM behind the `IntentParser` interface
+- [ ] Retrieval service returns top-K relevant plasmids for a `DesignSpec`, with hybrid (semantic + structured-filter) search
+- [ ] Recommendation generator produces a plain-English, ranked explanation of how to adapt each retrieved plasmid
+- [ ] Evaluation harness measures retrieval quality against a hand-labeled gold set (Section 6.6)
+- [ ] **GATE:** Given 20 realistic natural-language queries, the system returns relevant plasmids with a top-5 hit rate ≥ 80% on the gold set, end-to-end, via a single function call.
+
+### 3.3 Phase 2 — Sequence generation
+
+- [ ] Base DNA language model selected and loaded behind the `SequenceGenerator` interface (Section 7.2)
+- [ ] Training data formatter produces (context, template, target) examples from Phase 0 data (Section 7.3)
+- [ ] Fine-tuning pipeline runs on managed GPUs and checkpoints to object storage
+- [ ] Inference service generates a candidate full-length plasmid sequence from a `DesignSpec` + retrieved templates
+- [ ] Generated sequences are re-annotated by the Phase 0 parser to confirm component structure
+- [ ] Generation evaluation: % of generations that are syntactically valid DNA, contain the requested components, and pass basic feasibility (Section 7.6)
+- [ ] **GATE:** ≥ 70% of generations for the gold-set queries are syntactically valid, contain all requested components, and pass the Phase 3 constraint engine.
+
+### 3.4 Phase 3 — Constraint & validation engine
+
+- [ ] Restriction-site conflict checker
+- [ ] Repeat / instability checker
+- [ ] Codon optimization scorer for the target organism
+- [ ] Regulatory-element compatibility checker (promoter/host, marker presence, ORI/host)
+- [ ] Optional therapeutic-compliance checks (flagged, not blocking, for gene-therapy contexts)
+- [ ] Validation report object (Section 12.5) with PASS / WARN / FAIL per check and actionable messages
+- [ ] Engine runs deterministically and is unit-tested against known-good and known-bad constructs
+- [ ] **GATE:** Engine correctly classifies a curated set of ≥ 50 known-good and ≥ 50 known-bad constructs with ≥ 95% accuracy.
+
+### 3.5 Phase 4 — Application layer
+
+- [ ] FastAPI backend exposes the API contract in Section 13
+- [ ] Session + conversation persistence (refinement loop) works end-to-end
+- [ ] Plasmid map visualizer renders circular + linear maps in the frontend (Section 9.4)
+- [ ] Chat-style iterative design UI (describe → design → refine → validate)
+- [ ] Export to GenBank / FASTA and primer-design output
+- [ ] Synthesis-order handoff (file generation + provider redirect/stub) (Section 9.6)
+- [ ] AuthN/AuthZ, rate limiting, usage metering
+- [ ] **GATE:** A new user can sign up, type a goal in plain English, receive a validated design with a rendered map, refine it conversationally, and export synthesis-ready files — all through the deployed UI.
+
+### 3.6 Phase 5 — Feedback flywheel
+
+- [ ] Outcome-capture flow (did the construct validate? sequencing + expression data) (Section 10.2)
+- [ ] Outcome data stored as labeled training signal
+- [ ] Scheduled re-training / fine-tuning pipeline consumes new outcomes
+- [ ] Model registry + versioning + safe rollout (shadow → canary → full) (Section 10.4)
+- [ ] Offline eval gate prevents regressions before any model promotion
+- [ ] **GATE:** A full loop runs automatically — a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
+
+## BUILD LOG (append-only, newest at top)
+- 2026-05-24 — Created initial monorepo skeleton directories under `packages/`, `services/`, `apps/`, `research/`, `tests/`, and `infra/`; added `.gitignore`, `.env.example`, and stub `Makefile`.
+- 2026-05-24 — Attempted `make test`; blocked because `make` is not installed in the current shell.
+- 2026-05-24 — Created PROGRESS.md from SYSTEM_DESIGN Section 1 and mirrored the Section 3 checklist.
