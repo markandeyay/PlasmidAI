@@ -2,22 +2,32 @@
 
 ## AT-A-GLANCE (update every session)
 - **Current Phase:** Phase R — Research and knowledge acquisition
-- **Next Concrete Task:** Create the research workspace per SYSTEM_DESIGN Section 4.5 and dispatch the first research subagents
-- **Overall completion estimate:** 0%
+- **Next Concrete Task:** Human review of Phase R findings and questions before authorizing Phase 0
+- **Overall completion estimate:** 5%
 - **Last session date:** 2026-05-24
 - **Codebase known-good?** (tests passing) No — `make` is not installed in the current shell, so `make test` could not run
 
 ## RESUME HERE (only if mid-task)
-<exact file, function, line, and intended end-state — clear this when the task is done>
+<none>
 
 ## KNOWN ISSUES / BLOCKERS
 - `make test` could not run on 2026-05-24 because `make` is not installed in the current shell.
+- Phase 0 must not begin until the human reviews Phase R questions and authorizes the next phase.
 
 ## QUESTIONS FOR THE HUMAN
-- <none yet>
+- Which synthesis provider profile should be the default for "synthesis-ready" when no provider is selected: conservative cross-provider, Twist, IDT, GenScript, or user-selected only?
+- Should the first product only score codon usage, or may it automatically rewrite coding sequences after explicit user consent?
+- For commercial use, can Addgene-derived records be used for model training under the eventual approved data access license, or only for retrieval/display?
+- Should GenBank-derived records be treated as commercially trainable by default, or should submitter-IP caveats require legal review before training?
+- Should Evo 2 7B be the first generation candidate, with Carbon-3B as fallback, pending infrastructure and license review?
+- Should the platform operate as a regulated-like biosecurity checkpoint before provider handoff, even where direct legal duties attach primarily to synthesis providers or procurement?
+- What is the current controlling U.S. nucleic-acid screening framework after the May 5, 2025 Executive Order directive to revise or replace the 2024 framework?
+- For circular plasmids, where should canonical base 1 be placed in generated designs: source record origin, ORI start, MCS/cloning site, or synthesis-provider convention?
+- Should the MVP map be read-only, or should browser-side feature/sequence editing be in scope?
+- Which vector types are in the first supported validity profile set: generic mammalian expression, lentiviral, AAV, bacterial expression, CRISPR/shRNA, or another subset?
 
 ## PHASE GATE STATUS
-- [ ] Phase R gate met (see SYSTEM_DESIGN 3.05)
+- [ ] Phase R gate met (see SYSTEM_DESIGN 3.05) — artifacts complete; awaiting human review and test baseline is unavailable because `make` is missing
 - [ ] Phase 0 gate met (see SYSTEM_DESIGN 3.1)
 - [ ] Phase 1 gate met
 - [ ] Phase 2 gate met
@@ -29,17 +39,17 @@
 
 ### 3.05 Phase R — Research & knowledge acquisition
 
-- [ ] Research workspace created at `research/` with the structure in Section 4.5
-- [ ] Subagents dispatched across all research tracks (Section 4.5.3) and their findings written to `research/findings/`
-- [ ] Plasmid biology synthesized into `research/findings/plasmid_biology.md` (structure, components, design rules)
-- [ ] Sequence-generation landscape synthesized into `research/findings/sequence_models.md` (DNABERT-2, Nucleotide Transformer, Evo, GenSLM, etc., with licenses)
-- [ ] Existing tools & prior art synthesized into `research/findings/prior_art.md` (OriGen, PlasmidGPT, Benchling, SnapGene, VectorBuilder, etc.)
-- [ ] Data sources synthesized into `research/findings/data_sources.md` (Addgene, NCBI, access methods, licensing, formats)
-- [ ] Validation/constraint rules synthesized into `research/findings/design_rules.md` (restriction sites, codon optimization, regulatory compatibility)
-- [ ] Visualization approaches synthesized into `research/findings/visualization.md` (seqviz, circular/linear map rendering)
-- [ ] An annotated bibliography (`research/bibliography.md`) lists every paper/source read, with a one-line takeaway and citation
-- [ ] A consolidated `research/SYNTHESIS.md` distills everything into the decisions that affect the build, with open questions flagged for the human
-- [ ] **GATE:** Every research track has a findings file with cited sources; `research/SYNTHESIS.md` exists and explicitly answers the "questions the build needs answered" list (Section 4.5.2); any unresolved biological questions are logged under "Questions for the human" in `PROGRESS.md`.
+- [x] Research workspace created at `research/` with the structure in Section 4.5
+- [x] Subagents dispatched across all research tracks (Section 4.5.3) and their findings written to `research/findings/`
+- [x] Plasmid biology synthesized into `research/findings/plasmid_biology.md` (structure, components, design rules)
+- [x] Sequence-generation landscape synthesized into `research/findings/sequence_models.md` (DNABERT-2, Nucleotide Transformer, Evo, GenSLM, etc., with licenses)
+- [x] Existing tools & prior art synthesized into `research/findings/prior_art.md` (OriGen, PlasmidGPT, Benchling, SnapGene, VectorBuilder, etc.)
+- [x] Data sources synthesized into `research/findings/data_sources.md` (Addgene, NCBI, access methods, licensing, formats)
+- [x] Validation/constraint rules synthesized into `research/findings/design_rules.md` (restriction sites, codon optimization, regulatory compatibility)
+- [x] Visualization approaches synthesized into `research/findings/visualization.md` (seqviz, circular/linear map rendering)
+- [x] An annotated bibliography (`research/bibliography.md`) lists every paper/source read, with a one-line takeaway and citation
+- [x] A consolidated `research/SYNTHESIS.md` distills everything into the decisions that affect the build, with open questions flagged for the human
+- [ ] **GATE:** Every research track has a findings file with cited sources; `research/SYNTHESIS.md` exists and explicitly answers the "questions the build needs answered" list (Section 4.5.2); any unresolved biological questions are logged under "Questions for the human" in `PROGRESS.md`. Artifact criteria are complete; left unticked pending human review and because `make test` could not run.
 
 ### 3.1 Phase 0 — Foundations & data pipeline
 
@@ -105,6 +115,10 @@
 - [ ] **GATE:** A full loop runs automatically — a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-05-24 — Completed Phase R research tracks A-J in `research/findings/`: plasmid biology, design rules, sequence models, prior art, data sources, representation, validation tooling, visualization, architecture patterns, and biosecurity.
+- 2026-05-24 — Wrote `research/SYNTHESIS.md` answering all SYSTEM_DESIGN Section 4.5.2 questions and recording build decisions.
+- 2026-05-24 — Wrote `research/bibliography.md` with an annotated source list grouped by research track.
+- 2026-05-24 — Logged Phase R human-review questions and stopped before Phase 0.
 - 2026-05-24 — Created initial monorepo skeleton directories under `packages/`, `services/`, `apps/`, `research/`, `tests/`, and `infra/`; added `.gitignore`, `.env.example`, and stub `Makefile`.
 - 2026-05-24 — Attempted `make test`; blocked because `make` is not installed in the current shell.
 - 2026-05-24 — Created PROGRESS.md from SYSTEM_DESIGN Section 1 and mirrored the Section 3 checklist.
