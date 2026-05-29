@@ -2,20 +2,20 @@
 
 ## AT-A-GLANCE (update every session)
 - **Current Phase:** Phase 0: Foundations and Data Pipeline
-- **Next Concrete Task:** Resolve local Postgres password authentication for Python `DATABASE_URL`, then rerun `make ingest-genbank MODE=dev N=10`
+- **Next Concrete Task:** Refine GenBank dev query/fetch filtering so `make ingest-genbank MODE=dev N=10` returns 10 records with concrete sequence content, then rerun verification
 - **Overall completion estimate:** 5%
 - **Last session date:** 2026-05-29
 - **Codebase known-good?** (tests passing) Yes — `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, 7 schema tests, 7 fake-backed Addgene ingestion tests, and 7 fake-backed GenBank ingestion tests
 
 ## RESUME HERE (only if mid-task)
-NCBI GenBank ingestion implementation and fake-backed tests are complete. Local `.env` now has a real `NCBI_EMAIL`, but the real dev-mode run failed before network access because Python `psycopg` password authentication to local Postgres failed for the configured `DATABASE_URL`. Resume by fixing local Postgres credentials/volume state, then rerun `make ingest-genbank MODE=dev N=10`.
+Local Docker Postgres auth is resolved by remapping the gitignored `.env` Postgres host port to `55432` because a native Windows `postgres` process owns `5432`. Real NCBI dev-mode run now reaches Entrez, caches 10 raw GenBank blobs, and writes an `ingestion_runs` row, but only 1/10 records upsert because 9 returned records have undefined sequence content. Resume by tightening the NCBI query/filter or fetch handling to avoid undefined-sequence records, then rerun `make ingest-genbank MODE=dev N=10`.
 
 ## KNOWN ISSUES / BLOCKERS
 - Phase 0 is authorized as of 2026-05-29; do not begin Phase 1 until the Phase 0 gate is met and reviewed.
 - The GNU Make directory was added to the user PATH on 2026-05-29, but the current Codex host process has not inherited that PATH refresh. Use `C:\Program Files (x86)\GnuWin32\bin\make.exe` directly in this process if plain `make` is still unresolved; new user shells should pick up the user PATH.
 - Addgene dev-mode ingestion is blocked pending Addgene partner-program response on API access, terms, and commercial licensing. This is not a quick local credential/config unblock; keep the existing ingester parked until the partner access path is resolved.
-- NCBI real dev-mode ingestion is blocked because local `.env` still contains the placeholder `NCBI_EMAIL=researcher@example.com`. The job stops before any Entrez request until a real contact email is configured.
-- NCBI real dev-mode ingestion is now blocked by local Postgres password authentication for Python clients: `psycopg` cannot connect as user `plasmid` using the configured `DATABASE_URL`, although container-local service checks still pass.
+- Local gitignored `.env` uses `POSTGRES_PORT=55432` because a native Windows `postgres` process owns port `5432`; committed Docker defaults still use local-dev defaults and were not changed.
+- NCBI real dev-mode ingestion currently fails verification because the default query returned 9/10 records whose GenBank text parses with undefined sequence content. The run cached 10 blobs, inserted 1 `genbank:*` plasmid row, and logged `records_seen=10`, `records_upserted=1`, `errors=9`.
 
 ## QUESTIONS FOR THE HUMAN
 - Which synthesis provider profile should be the default for "synthesis-ready" when no provider is selected: conservative cross-provider, Twist, IDT, GenScript, or user-selected only?
@@ -118,6 +118,8 @@ NCBI GenBank ingestion implementation and fake-backed tests are complete. Local 
 - [ ] **GATE:** A full loop runs automatically — a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-05-29 — Resolved the local Postgres auth mismatch: `docker-compose.yml` and `.env` credentials matched, but a native Windows `postgres` process owned host port 5432; updated gitignored `.env` to map Docker Postgres to host port 55432 and confirmed `make test` plus direct `psycopg` connectivity pass.
+- 2026-05-29 — Ran real `make ingest-genbank MODE=dev N=10`; the job reached NCBI and cached 10 raw GenBank blobs in MinIO, but failed verification because only 1 record upserted and 9 records reported undefined sequence content. Latest `ingestion_runs` row: source `genbank`, mode `dev`, records_seen `10`, records_upserted `1`, errors `9`.
 - 2026-05-29 — Updated gitignored local `.env` with the real NCBI contact email and confirmed no tracked file changed.
 - 2026-05-29 — Attempted `make ingest-genbank MODE=dev N=10`; it failed before any NCBI network request because `psycopg` could not authenticate to local Postgres using the configured `DATABASE_URL`.
 - 2026-05-29 — Built the NCBI GenBank ingestion job at `packages/data_pipeline/ingest/genbank.py` with Entrez/SeqIO, cache-first raw GenBank text storage under `raw/genbank/<accession>.gb`, NCBI-aware rate limits, exponential backoff, idempotent Postgres upserts, `ingestion_runs` logging, dev/bulk/refresh modes, and a `make ingest-genbank MODE=dev N=10` entrypoint.
