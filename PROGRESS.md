@@ -2,13 +2,13 @@
 
 ## AT-A-GLANCE (update every session)
 - **Current Phase:** Phase 0: Foundations and Data Pipeline
-- **Next Concrete Task:** Stand up the local Docker Compose development stack and wire `make setup` / `make test` service connectivity checks
+- **Next Concrete Task:** Define the canonical Pydantic schemas in `packages/core/schemas` and add representative schema validation tests
 - **Overall completion estimate:** 5%
 - **Last session date:** 2026-05-29
-- **Codebase known-good?** (tests passing) Yes — `C:\Program Files (x86)\GnuWin32\bin\make.exe test` passes the current stub target as of the Phase 0 startup ritual
+- **Codebase known-good?** (tests passing) Yes — `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, and Redis
 
 ## RESUME HERE (only if mid-task)
-<none>
+Checkpoint commit after Phase 0 milestone 1: local Docker Compose stack and service connectivity checks are complete. Resume with canonical Pydantic schemas in `packages/core/schemas`.
 
 ## KNOWN ISSUES / BLOCKERS
 - Phase 0 is authorized as of 2026-05-29; do not begin Phase 1 until the Phase 0 gate is met and reviewed.
@@ -53,8 +53,8 @@
 
 ### 3.1 Phase 0 — Foundations & data pipeline
 
-- [ ] Monorepo scaffolded with the structure in Section 4.2
-- [ ] Local dev environment reproducible (`make setup` brings up Postgres + object store + vector DB locally via Docker Compose)
+- [x] Monorepo scaffolded with the structure in Section 4.2
+- [x] Local dev environment reproducible (`make setup` brings up Postgres + object store + vector DB locally via Docker Compose)
 - [ ] CI runs lint + tests on every commit
 - [ ] Addgene ingestion job pulls plasmid metadata + sequences into the canonical `plasmids` table (Section 12.1)
 - [ ] NCBI GenBank ingestion job pulls plasmid-annotated sequences
@@ -115,6 +115,7 @@
 - [ ] **GATE:** A full loop runs automatically — a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-05-29 — Completed Phase 0 milestone 1: added Docker Compose services for Postgres/pgvector, MinIO, and Redis; wired `make setup` to create `.env` and start the stack; wired `make test` to verify connectivity to each service; confirmed the stack is running locally.
 - 2026-05-29 — Completed the Phase 0 startup ritual: re-read the Phase 0/system schema specs, re-read the Phase R data-source and plasmid-biology findings, confirmed the current stub `make test` target passes, and moved the active phase to Phase 0.
 - 2026-05-29 — Generated consolidated Phase R report source at `research/phase_r_report.tex` from existing `research/findings/`, `research/SYNTHESIS.md`, `research/bibliography.md`, and `PROGRESS.md` questions without modifying the source research files.
 - 2026-05-29 — Compiled `research/phase_r_report.pdf` with `pdflatex` run twice; transient LaTeX aux/out/toc artifacts were removed.

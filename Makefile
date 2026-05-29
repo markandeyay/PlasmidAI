@@ -1,10 +1,13 @@
-.PHONY: setup test lint ingest-all eval-retrieval
+.PHONY: setup test lint ingest-all eval-retrieval services-down
+
+PYTHON ?= python
 
 setup:
-	@echo "TODO: bootstrap local services and dependencies"
+	powershell -NoProfile -ExecutionPolicy Bypass -Command "if (-not (Test-Path -LiteralPath '.env')) { Copy-Item -LiteralPath '.env.example' -Destination '.env' }"
+	docker compose up -d
 
 test:
-	@echo "No tests implemented yet."
+	$(PYTHON) scripts/check_services.py
 
 lint:
 	@echo "No lint configured yet."
@@ -14,3 +17,6 @@ ingest-all:
 
 eval-retrieval:
 	@echo "TODO: run Phase 1 retrieval evaluation"
+
+services-down:
+	docker compose down

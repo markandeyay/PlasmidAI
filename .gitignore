@@ -19,7 +19,9 @@ dist/
 build/
 
 # Local data and generated artifacts
-data/
+data/*
+!data/eval/
+!data/eval/**
 *.sqlite
 *.db
 *.log
