@@ -1,0 +1,18 @@
+LOCUS       UNUS0001                  35 bp    DNA     circular SYN 01-JAN-2026
+DEFINITION  Chlamydomonas plasmid complete sequence.
+ACCESSION   UNUS0001
+VERSION     UNUS0001.1
+KEYWORDS    plasmid.
+SOURCE      Chlamydomonas reinhardtii
+  ORGANISM  Chlamydomonas reinhardtii
+            Eukaryota; Viridiplantae; Chlorophyta.
+FEATURES             Location/Qualifiers
+     source          1..35
+                     /organism="Chlamydomonas reinhardtii"
+                     /mol_type="other DNA"
+                     /plasmid="pChlamy"
+     promoter        1..10
+                     /label="HSP70A-RBCS2 promoter"
+ORIGIN
+        1 atgcgtacgt agctagctaa gcatgcatgc atgcg
+//

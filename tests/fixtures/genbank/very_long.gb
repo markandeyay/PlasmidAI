@@ -1,0 +1,24 @@
+LOCUS       LONG0001                 200 bp    DNA     circular SYN 01-JAN-2026
+DEFINITION  Longer plasmid fixture complete sequence.
+ACCESSION   LONG0001
+VERSION     LONG0001.1
+KEYWORDS    plasmid; long fixture.
+SOURCE      synthetic DNA construct
+  ORGANISM  synthetic DNA construct
+            other sequences; artificial sequences.
+FEATURES             Location/Qualifiers
+     source          1..200
+                     /organism="synthetic DNA construct"
+                     /mol_type="other DNA"
+                     /plasmid="pLong"
+     promoter        1..20
+                     /label="EF1a promoter"
+     CDS             100..180
+                     /gene="puro"
+                     /product="puromycin resistance protein"
+ORIGIN
+        1 atgcgtacgt agctagctaa gcatgcatgc atgcgtacgt agctagctaa
+       61 gcatgcatgc atgcgtacgt agctagctaa gcatgcatgc atgcgtacgt
+      121 agctagctaa gcatgcatgc atgcgtacgt agctagctaa gcatgcatgc
+      181 atgcgtacgt agctagctaa gcatgcatgc atgcgtacgt agctagctaa
+//

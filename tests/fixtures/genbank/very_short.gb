@@ -1,0 +1,15 @@
+LOCUS       SHRT0001                   8 bp    DNA     linear   SYN 01-JAN-2026
+DEFINITION  Very short synthetic plasmid fragment.
+ACCESSION   SHRT0001
+VERSION     SHRT0001.1
+KEYWORDS    plasmid.
+SOURCE      synthetic DNA construct
+  ORGANISM  synthetic DNA construct
+            other sequences; artificial sequences.
+FEATURES             Location/Qualifiers
+     source          1..8
+                     /organism="synthetic DNA construct"
+                     /mol_type="other DNA"
+ORIGIN
+        1 atgcgtac
+//

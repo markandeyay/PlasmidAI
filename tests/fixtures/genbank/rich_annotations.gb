@@ -1,0 +1,28 @@
+LOCUS       RICH0001                  70 bp    DNA     circular SYN 01-JAN-2026
+DEFINITION  Rich mammalian expression plasmid complete sequence.
+ACCESSION   RICH0001
+VERSION     RICH0001.1
+KEYWORDS    plasmid; expression vector.
+SOURCE      synthetic DNA construct
+  ORGANISM  synthetic DNA construct
+            other sequences; artificial sequences.
+REFERENCE   1  (bases 1 to 70)
+  AUTHORS   Example,A.
+  TITLE     Direct Submission
+  JOURNAL   Submitted (01-JAN-2026) DOI:10.1000/rich
+FEATURES             Location/Qualifiers
+     source          1..70
+                     /organism="synthetic DNA construct"
+                     /mol_type="other DNA"
+                     /plasmid="pRich"
+     promoter        1..15
+                     /label="CMV promoter"
+     CDS             20..55
+                     /gene="bla"
+                     /product="beta-lactamase"
+     terminator      60..75
+                     /label="bGH polyA"
+ORIGIN
+        1 atgcgtacgt agctagctaa gcatgcatgc atgcgtacgt agctagctaa
+       61 gcatgcatgc atgcgtacgt
+//

@@ -2,18 +2,19 @@
 
 ## AT-A-GLANCE (update every session)
 - **Current Phase:** Phase 0: Foundations and Data Pipeline
-- **Next Concrete Task:** Provide approved Addgene API credentials/license acceptance, then run `make ingest-addgene MODE=dev N=10` against the real API
+- **Next Concrete Task:** Set a real `NCBI_EMAIL` in local `.env`, then run `make ingest-genbank MODE=dev N=10` and verify Postgres/MinIO/`ingestion_runs`
 - **Overall completion estimate:** 5%
 - **Last session date:** 2026-05-29
-- **Codebase known-good?** (tests passing) Yes — `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, 7 schema tests, and 7 fake-backed Addgene ingestion tests
+- **Codebase known-good?** (tests passing) Yes — `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, 7 schema tests, 7 fake-backed Addgene ingestion tests, and 7 fake-backed GenBank ingestion tests
 
 ## RESUME HERE (only if mid-task)
-Addgene ingestion implementation and fake-backed tests are complete. Real dev-mode run is blocked until `.env` contains an approved `ADDGENE_API_TOKEN` and `ADDGENE_DATA_LICENSE_ACCEPTED=true`; resume by running `make ingest-addgene MODE=dev N=10`, then verify 10 Postgres rows, 10 MinIO blobs under `raw/addgene/`, and one `ingestion_runs` row.
+NCBI GenBank ingestion implementation and fake-backed tests are complete. Real dev-mode run is blocked until local `.env` has a real `NCBI_EMAIL` value; resume by running `make ingest-genbank MODE=dev N=10`, then verify 10 `genbank:*` Postgres rows, 10 MinIO blobs under `raw/genbank/`, and one `ingestion_runs` row.
 
 ## KNOWN ISSUES / BLOCKERS
 - Phase 0 is authorized as of 2026-05-29; do not begin Phase 1 until the Phase 0 gate is met and reviewed.
 - The GNU Make directory was added to the user PATH on 2026-05-29, but the current Codex host process has not inherited that PATH refresh. Use `C:\Program Files (x86)\GnuWin32\bin\make.exe` directly in this process if plain `make` is still unresolved; new user shells should pick up the user PATH.
-- Real Addgene dev-mode ingestion is blocked because `.env` does not contain `ADDGENE_API_TOKEN` and `ADDGENE_DATA_LICENSE_ACCEPTED` is still `false`. The job stops before any network call rather than using mock data.
+- Addgene dev-mode ingestion is blocked pending Addgene partner-program response on API access, terms, and commercial licensing. This is not a quick local credential/config unblock; keep the existing ingester parked until the partner access path is resolved.
+- NCBI real dev-mode ingestion is blocked because local `.env` still contains the placeholder `NCBI_EMAIL=researcher@example.com`. The job stops before any Entrez request until a real contact email is configured.
 
 ## QUESTIONS FOR THE HUMAN
 - Which synthesis provider profile should be the default for "synthesis-ready" when no provider is selected: conservative cross-provider, Twist, IDT, GenScript, or user-selected only?
@@ -116,6 +117,10 @@ Addgene ingestion implementation and fake-backed tests are complete. Real dev-mo
 - [ ] **GATE:** A full loop runs automatically — a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-05-29 — Built the NCBI GenBank ingestion job at `packages/data_pipeline/ingest/genbank.py` with Entrez/SeqIO, cache-first raw GenBank text storage under `raw/genbank/<accession>.gb`, NCBI-aware rate limits, exponential backoff, idempotent Postgres upserts, `ingestion_runs` logging, dev/bulk/refresh modes, and a `make ingest-genbank MODE=dev N=10` entrypoint.
+- 2026-05-29 — Added fake-backed GenBank tests and fixture records covering minimal annotations, rich annotations, multiple feature types, unusual organism, short/long sequences, cache-before-network behavior, and idempotent upserts.
+- 2026-05-29 — Attempted real NCBI dev mode for 10 records; blocked before network access because `.env` still has placeholder `NCBI_EMAIL=researcher@example.com`.
+- 2026-05-29 — Pivoted Phase 0 ingestion work from Addgene to NCBI GenBank because Addgene API access requires partner-program approval; re-read `PROGRESS.md`, SYSTEM_DESIGN Section 5.2, and the NCBI portions of `research/findings/data_sources.md`; confirmed `make test` passes before coding.
 - 2026-05-29 — Built the Addgene ingestion job at `packages/data_pipeline/ingest/addgene.py` with cache-first raw JSON storage under `raw/addgene/<id>.json`, conservative rate limiting/backoff, idempotent Postgres upserts, `ingestion_runs` logging, dev/bulk/refresh modes, and a `make ingest-addgene MODE=dev N=10` entrypoint.
 - 2026-05-29 — Added fake-backed Addgene tests and fixture blobs covering minimal metadata, missing sequence, multiple markers/promoters, unusual organism, cache-before-network behavior, idempotent upsert behavior, and structured mapping-error logging.
 - 2026-05-29 — Attempted real Addgene dev mode for 10 records; blocked before network access because approved Addgene credentials and explicit data-license acceptance are not configured in `.env`.

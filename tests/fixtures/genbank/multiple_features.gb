@@ -1,0 +1,28 @@
+LOCUS       MULT0001                  86 bp    DNA     circular SYN 01-JAN-2026
+DEFINITION  Multiple selectable marker and promoter plasmid complete sequence.
+ACCESSION   MULT0001
+VERSION     MULT0001.1
+KEYWORDS    plasmid; cloning vector.
+SOURCE      synthetic DNA construct
+  ORGANISM  synthetic DNA construct
+            other sequences; artificial sequences.
+FEATURES             Location/Qualifiers
+     source          1..86
+                     /organism="synthetic DNA construct"
+                     /mol_type="other DNA"
+                     /plasmid="pMulti"
+     promoter        1..12
+                     /label="T7 promoter"
+     regulatory      18..30
+                     /regulatory_class="promoter"
+                     /note="lac promoter"
+     CDS             35..55
+                     /gene="neo"
+                     /product="neomycin resistance protein"
+     misc_feature    60..80
+                     /label="cat marker"
+                     /note="chloramphenicol resistance cassette"
+ORIGIN
+        1 atgcgtacgt agctagctaa gcatgcatgc atgcgtacgt agctagctaa
+       61 gcatgcatgc atgcgtacgt agctagctaa gcatgc
+//

@@ -2,8 +2,9 @@
 
 PYTHON ?= python
 MODE ?= dev
-N ?= 10
+N ?=
 ADDGENE_STALE_DAYS ?= 1
+GENBANK_STALE_DAYS ?= 60
 
 setup:
 	$(PYTHON) -m pip install -r requirements.txt
@@ -21,7 +22,10 @@ ingest-all:
 	@echo "TODO: run all Phase 0 ingestion jobs"
 
 ingest-addgene:
-	$(PYTHON) -m packages.data_pipeline.ingest.addgene --mode $(MODE) --limit $(N) --stale-days $(ADDGENE_STALE_DAYS)
+	$(PYTHON) -m packages.data_pipeline.ingest.addgene --mode $(MODE) $(if $(N),--limit $(N),) --stale-days $(ADDGENE_STALE_DAYS)
+
+ingest-genbank:
+	$(PYTHON) -m packages.data_pipeline.ingest.genbank --mode $(MODE) $(if $(N),--limit $(N),) --stale-days $(GENBANK_STALE_DAYS)
 
 eval-retrieval:
 	@echo "TODO: run Phase 1 retrieval evaluation"

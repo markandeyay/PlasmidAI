@@ -1,0 +1,16 @@
+LOCUS       MIN0001                   24 bp    DNA     circular SYN 01-JAN-2026
+DEFINITION  Minimal plasmid complete sequence.
+ACCESSION   MIN0001
+VERSION     MIN0001.1
+KEYWORDS    plasmid.
+SOURCE      synthetic DNA construct
+  ORGANISM  synthetic DNA construct
+            other sequences; artificial sequences.
+FEATURES             Location/Qualifiers
+     source          1..24
+                     /organism="synthetic DNA construct"
+                     /mol_type="other DNA"
+                     /plasmid="pMinimal"
+ORIGIN
+        1 atgcgtacgt agctagctaa gcat
+//
