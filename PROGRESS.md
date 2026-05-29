@@ -4,15 +4,15 @@
 - **Current Phase:** Phase R — Research and knowledge acquisition
 - **Next Concrete Task:** Human review of Phase R findings and questions before authorizing Phase 0
 - **Overall completion estimate:** 5%
-- **Last session date:** 2026-05-24
-- **Codebase known-good?** (tests passing) No — `make` is not installed in the current shell, so `make test` could not run
+- **Last session date:** 2026-05-29
+- **Codebase known-good?** (tests passing) Yes — GNU Make is installed at `C:\Program Files (x86)\GnuWin32\bin\make.exe`, and the installed executable passes the current stub `test` target
 
 ## RESUME HERE (only if mid-task)
 <none>
 
 ## KNOWN ISSUES / BLOCKERS
-- `make test` could not run on 2026-05-24 because `make` is not installed in the current shell.
 - Phase 0 must not begin until the human reviews Phase R questions and authorizes the next phase.
+- The GNU Make directory was added to the user PATH on 2026-05-29, but the current Codex host process has not inherited that PATH refresh. Use `C:\Program Files (x86)\GnuWin32\bin\make.exe` directly in this process if plain `make` is still unresolved; new user shells should pick up the user PATH.
 
 ## QUESTIONS FOR THE HUMAN
 - Which synthesis provider profile should be the default for "synthesis-ready" when no provider is selected: conservative cross-provider, Twist, IDT, GenScript, or user-selected only?
@@ -27,7 +27,7 @@
 - Which vector types are in the first supported validity profile set: generic mammalian expression, lentiviral, AAV, bacterial expression, CRISPR/shRNA, or another subset?
 
 ## PHASE GATE STATUS
-- [ ] Phase R gate met (see SYSTEM_DESIGN 3.05) — artifacts complete; awaiting human review and test baseline is unavailable because `make` is missing
+- [ ] Phase R gate met (see SYSTEM_DESIGN 3.05) — artifacts complete; awaiting human review before Phase 0
 - [ ] Phase 0 gate met (see SYSTEM_DESIGN 3.1)
 - [ ] Phase 1 gate met
 - [ ] Phase 2 gate met
@@ -49,7 +49,7 @@
 - [x] Visualization approaches synthesized into `research/findings/visualization.md` (seqviz, circular/linear map rendering)
 - [x] An annotated bibliography (`research/bibliography.md`) lists every paper/source read, with a one-line takeaway and citation
 - [x] A consolidated `research/SYNTHESIS.md` distills everything into the decisions that affect the build, with open questions flagged for the human
-- [ ] **GATE:** Every research track has a findings file with cited sources; `research/SYNTHESIS.md` exists and explicitly answers the "questions the build needs answered" list (Section 4.5.2); any unresolved biological questions are logged under "Questions for the human" in `PROGRESS.md`. Artifact criteria are complete; left unticked pending human review and because `make test` could not run.
+- [ ] **GATE:** Every research track has a findings file with cited sources; `research/SYNTHESIS.md` exists and explicitly answers the "questions the build needs answered" list (Section 4.5.2); any unresolved biological questions are logged under "Questions for the human" in `PROGRESS.md`. Artifact criteria are complete; left unticked pending human review before Phase 0.
 
 ### 3.1 Phase 0 — Foundations & data pipeline
 
@@ -115,6 +115,9 @@
 - [ ] **GATE:** A full loop runs automatically — a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-05-29 — Generated consolidated Phase R report source at `research/phase_r_report.tex` from existing `research/findings/`, `research/SYNTHESIS.md`, `research/bibliography.md`, and `PROGRESS.md` questions without modifying the source research files.
+- 2026-05-29 — Compiled `research/phase_r_report.pdf` with `pdflatex` run twice; transient LaTeX aux/out/toc artifacts were removed.
+- 2026-05-29 — Installed GNU Make via winget (`GnuWin32.Make`), added it to the user PATH, and confirmed the installed GNU Make executable passes the current stub `test` target. Machine PATH update was denied by Windows registry permissions.
 - 2026-05-24 — Completed Phase R research tracks A-J in `research/findings/`: plasmid biology, design rules, sequence models, prior art, data sources, representation, validation tooling, visualization, architecture patterns, and biosecurity.
 - 2026-05-24 — Wrote `research/SYNTHESIS.md` answering all SYSTEM_DESIGN Section 4.5.2 questions and recording build decisions.
 - 2026-05-24 — Wrote `research/bibliography.md` with an annotated source list grouped by research track.
