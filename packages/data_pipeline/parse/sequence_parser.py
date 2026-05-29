@@ -61,8 +61,8 @@ class ReferenceComponent:
 
 @dataclass(frozen=True)
 class ParserConfig:
-    reference_identity_threshold: float = 0.90
-    reference_coverage_threshold: float = 0.80
+    reference_identity_threshold: float = 0.85
+    reference_coverage_threshold: float = 0.70
     trusted_annotation_confidence: float = 0.95
     reference_match_confidence: float = 0.82
     motif_confidence: float = 0.55
