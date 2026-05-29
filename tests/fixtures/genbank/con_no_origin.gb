@@ -1,0 +1,15 @@
+LOCUS       NZ_CP191780            33064 bp    DNA     circular CON 27-MAY-2026
+DEFINITION  Crocosphaera watsonii WH 8501 plasmid pCW3, complete sequence.
+ACCESSION   NZ_CP191780
+VERSION     NZ_CP191780.1
+KEYWORDS    RefSeq.
+SOURCE      Crocosphaera watsonii WH 8501
+  ORGANISM  Crocosphaera watsonii WH 8501
+            Bacteria; Cyanobacteriota.
+FEATURES             Location/Qualifiers
+     source          1..33064
+                     /organism="Crocosphaera watsonii WH 8501"
+                     /mol_type="genomic DNA"
+                     /plasmid="pCW3"
+CONTIG      join(CP191780.1:1..33064)
+//

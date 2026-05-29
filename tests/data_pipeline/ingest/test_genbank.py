@@ -6,6 +6,7 @@ from typing import Iterable
 
 from packages.core.schemas import Plasmid
 from packages.data_pipeline.ingest.genbank import (
+    GenbankMappingError,
     GenbankIngestionConfig,
     IngestionResult,
     map_genbank_text_to_plasmid,
@@ -129,6 +130,15 @@ def test_map_very_short_and_long_fixtures() -> None:
     assert long.length == 200
     assert long.promoters == ["EF1a promoter"]
     assert long.markers == ["puro"]
+
+
+def test_map_con_record_without_origin_raises_structured_error() -> None:
+    try:
+        map_genbank_text_to_plasmid(load_fixture("con_no_origin.gb"), raw_ref="raw/genbank/NZ_CP191780.1.gb")
+    except GenbankMappingError as exc:
+        assert "no ORIGIN" in str(exc)
+    else:
+        raise AssertionError("CON record without concrete sequence should not map to Plasmid")
 
 
 def test_ingestion_uses_fresh_cache_before_network_and_upserts_idempotently() -> None:

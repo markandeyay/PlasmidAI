@@ -26,7 +26,15 @@ from packages.core.schemas import Plasmid
 SOURCE = "genbank"
 DEFAULT_DEV_LIMIT = 10
 DEFAULT_STALE_DAYS = 60
-DEFAULT_QUERY = 'plasmid[Title] AND "complete sequence"[Title] AND 1000:50000[SLEN]'
+# The dev/bulk query deliberately excludes CON/WGS/TSA master or constructed records:
+# those records can describe a complete plasmid but contain only CONTIG assembly
+# instructions and no concrete ORIGIN sequence for downstream parsing.
+DEFAULT_QUERY = (
+    'plasmid[Title] AND "complete sequence"[Title] AND 1000:50000[SLEN] '
+    "AND biomol_genomic[PROP] AND genbank[FILTER] "
+    "NOT gbdiv_con[PROP] NOT wgs[FILTER] NOT tsa[FILTER]"
+)
+IUPAC_DNA_ALPHABET = frozenset("ACGTRYSWKMBDHVN")
 PLACEHOLDER_EMAILS = {"", "researcher@example.com", "user@example.com", "your.email@example.com"}
 MARKER_TERMS = (
     "resistance",
@@ -494,14 +502,23 @@ def raw_cache_key(accession: str) -> str:
 
 
 def map_genbank_text_to_plasmid(raw_text: str, *, raw_ref: str) -> Plasmid:
+    validated_sequence = validate_raw_genbank_sequence(raw_text)
     try:
         record = SeqIO.read(StringIO(raw_text), "genbank")
     except Exception as exc:
         raise GenbankMappingError("cached GenBank text could not be parsed") from exc
 
-    sequence = str(record.seq).upper()
+    try:
+        sequence = str(record.seq).upper()
+    except Exception as exc:
+        raise GenbankMappingError("GenBank record sequence content is undefined") from exc
     if not sequence:
         raise GenbankMappingError("GenBank record is missing a sequence")
+    if sequence != validated_sequence:
+        raise GenbankMappingError(
+            "GenBank parser sequence does not match raw ORIGIN sequence",
+            details={"parsed_length": len(sequence), "origin_length": len(validated_sequence)},
+        )
 
     accession = record.id or record.name
     if not accession:
@@ -529,6 +546,53 @@ def map_genbank_text_to_plasmid(raw_text: str, *, raw_ref: str) -> Plasmid:
         annotation_complete=False,
         raw_ref=raw_ref,
     )
+
+
+def validate_raw_genbank_sequence(raw_text: str) -> str:
+    locus_length = extract_locus_length(raw_text)
+    origin_sequence = extract_origin_sequence(raw_text)
+    if origin_sequence is None:
+        raise GenbankMappingError("GenBank record has no ORIGIN sequence block")
+    if not origin_sequence:
+        raise GenbankMappingError("GenBank ORIGIN block has no nucleotide content")
+    invalid = sorted(set(origin_sequence) - IUPAC_DNA_ALPHABET)
+    if invalid:
+        raise GenbankMappingError(
+            "GenBank ORIGIN block contains non-IUPAC nucleotide characters",
+            details={"invalid_characters": "".join(invalid)},
+        )
+    if locus_length is not None and len(origin_sequence) != locus_length:
+        raise GenbankMappingError(
+            "GenBank ORIGIN sequence length does not match LOCUS length",
+            details={"locus_length": locus_length, "origin_length": len(origin_sequence)},
+        )
+    return origin_sequence
+
+
+def extract_locus_length(raw_text: str) -> int | None:
+    for line in raw_text.splitlines():
+        if not line.startswith("LOCUS"):
+            continue
+        match = re.search(r"\s(\d+)\s+bp\s", line)
+        return int(match.group(1)) if match else None
+    return None
+
+
+def extract_origin_sequence(raw_text: str) -> str | None:
+    in_origin = False
+    pieces: list[str] = []
+    for line in raw_text.splitlines():
+        if line.startswith("ORIGIN"):
+            in_origin = True
+            continue
+        if not in_origin:
+            continue
+        if line.startswith("//"):
+            break
+        pieces.append("".join(character for character in line.upper() if character.isalpha()))
+    if not in_origin:
+        return None
+    return "".join(pieces)
 
 
 def extract_organism(record: SeqRecord) -> str | None:
