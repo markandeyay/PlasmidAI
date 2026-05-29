@@ -1,17 +1,17 @@
 # PROGRESS — Build State (mutable)
 
 ## AT-A-GLANCE (update every session)
-- **Current Phase:** Phase R — Research and knowledge acquisition
-- **Next Concrete Task:** Human review of Phase R findings and questions before authorizing Phase 0
+- **Current Phase:** Phase 0: Foundations and Data Pipeline
+- **Next Concrete Task:** Stand up the local Docker Compose development stack and wire `make setup` / `make test` service connectivity checks
 - **Overall completion estimate:** 5%
 - **Last session date:** 2026-05-29
-- **Codebase known-good?** (tests passing) Yes — GNU Make is installed at `C:\Program Files (x86)\GnuWin32\bin\make.exe`, and the installed executable passes the current stub `test` target
+- **Codebase known-good?** (tests passing) Yes — `C:\Program Files (x86)\GnuWin32\bin\make.exe test` passes the current stub target as of the Phase 0 startup ritual
 
 ## RESUME HERE (only if mid-task)
 <none>
 
 ## KNOWN ISSUES / BLOCKERS
-- Phase 0 must not begin until the human reviews Phase R questions and authorizes the next phase.
+- Phase 0 is authorized as of 2026-05-29; do not begin Phase 1 until the Phase 0 gate is met and reviewed.
 - The GNU Make directory was added to the user PATH on 2026-05-29, but the current Codex host process has not inherited that PATH refresh. Use `C:\Program Files (x86)\GnuWin32\bin\make.exe` directly in this process if plain `make` is still unresolved; new user shells should pick up the user PATH.
 
 ## QUESTIONS FOR THE HUMAN
@@ -27,7 +27,7 @@
 - Which vector types are in the first supported validity profile set: generic mammalian expression, lentiviral, AAV, bacterial expression, CRISPR/shRNA, or another subset?
 
 ## PHASE GATE STATUS
-- [ ] Phase R gate met (see SYSTEM_DESIGN 3.05) — artifacts complete; awaiting human review before Phase 0
+- [x] Phase R gate met (see SYSTEM_DESIGN 3.05) — artifacts reviewed and Phase 0 authorized by the human on 2026-05-29
 - [ ] Phase 0 gate met (see SYSTEM_DESIGN 3.1)
 - [ ] Phase 1 gate met
 - [ ] Phase 2 gate met
@@ -49,7 +49,7 @@
 - [x] Visualization approaches synthesized into `research/findings/visualization.md` (seqviz, circular/linear map rendering)
 - [x] An annotated bibliography (`research/bibliography.md`) lists every paper/source read, with a one-line takeaway and citation
 - [x] A consolidated `research/SYNTHESIS.md` distills everything into the decisions that affect the build, with open questions flagged for the human
-- [ ] **GATE:** Every research track has a findings file with cited sources; `research/SYNTHESIS.md` exists and explicitly answers the "questions the build needs answered" list (Section 4.5.2); any unresolved biological questions are logged under "Questions for the human" in `PROGRESS.md`. Artifact criteria are complete; left unticked pending human review before Phase 0.
+- [x] **GATE:** Every research track has a findings file with cited sources; `research/SYNTHESIS.md` exists and explicitly answers the "questions the build needs answered" list (Section 4.5.2); any unresolved biological questions are logged under "Questions for the human" in `PROGRESS.md`. Human reviewed Phase R and authorized Phase 0 on 2026-05-29.
 
 ### 3.1 Phase 0 — Foundations & data pipeline
 
@@ -115,6 +115,7 @@
 - [ ] **GATE:** A full loop runs automatically — a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-05-29 — Completed the Phase 0 startup ritual: re-read the Phase 0/system schema specs, re-read the Phase R data-source and plasmid-biology findings, confirmed the current stub `make test` target passes, and moved the active phase to Phase 0.
 - 2026-05-29 — Generated consolidated Phase R report source at `research/phase_r_report.tex` from existing `research/findings/`, `research/SYNTHESIS.md`, `research/bibliography.md`, and `PROGRESS.md` questions without modifying the source research files.
 - 2026-05-29 — Compiled `research/phase_r_report.pdf` with `pdflatex` run twice; transient LaTeX aux/out/toc artifacts were removed.
 - 2026-05-29 — Installed GNU Make via winget (`GnuWin32.Make`), added it to the user PATH, and confirmed the installed GNU Make executable passes the current stub `test` target. Machine PATH update was denied by Windows registry permissions.
