@@ -1,0 +1,38 @@
+{
+  "id": 1003,
+  "name": "Multi marker promoter record",
+  "purpose": "Fluorescent expression",
+  "description": "Multiple marker and promoter labels",
+  "experimental_use": "Expression",
+  "expression": ["Mammalian"],
+  "inserts": [
+    {
+      "name": "EGFP",
+      "species": [{"ncbi_taxonomy_id": 9606, "species": "Homo sapiens"}],
+      "cloning": {"promoter": "TRE3G"}
+    }
+  ],
+  "cloning": {
+    "promoter": "CMV",
+    "vector_types": ["Lentiviral", "Mammalian Expression"]
+  },
+  "tags": [{"tag": "GFP", "location": "C-terminal"}],
+  "bacterial_resistance": "Ampicillin",
+  "resistance_markers": ["Ampicillin", "Puromycin"],
+  "article": {
+    "doi": "10.1000/multi"
+  },
+  "terms": "fixture terms",
+  "sequences": {
+    "public_addgene_full_sequences": [],
+    "public_user_full_sequences": [
+      {
+        "sequence_description": "depositor full plasmid",
+        "sequence": "ATGCGTACGTAGCTAGCTAA",
+        "genbank_url": "https://example.test/multi.gb"
+      }
+    ],
+    "public_addgene_partial_sequences": [],
+    "public_user_partial_sequences": []
+  }
+}

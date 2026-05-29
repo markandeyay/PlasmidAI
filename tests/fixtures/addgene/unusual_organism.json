@@ -1,0 +1,35 @@
+{
+  "id": 1004,
+  "name": "Unusual organism record",
+  "description": "Record with a non-model insert organism",
+  "inserts": [
+    {
+      "name": "opsin",
+      "species": [{"ncbi_taxonomy_id": 60711, "species": "Chlamydomonas reinhardtii"}],
+      "cloning": null
+    }
+  ],
+  "cloning": {
+    "promoter": "U6",
+    "vector_types": ["shRNA"]
+  },
+  "tags": [],
+  "bacterial_resistance": "Spectinomycin",
+  "resistance_markers": ["Spectinomycin"],
+  "article": {
+    "doi": "10.1000/unusual"
+  },
+  "terms": "fixture terms",
+  "sequences": {
+    "public_addgene_full_sequences": [],
+    "public_user_full_sequences": [],
+    "public_addgene_partial_sequences": [
+      {
+        "sequence_description": "partial plasmid",
+        "sequence": "GGGAAATTTCCCGGGAAATTTCCC",
+        "genbank_url": "https://example.test/unusual.gb"
+      }
+    ],
+    "public_user_partial_sequences": []
+  }
+}

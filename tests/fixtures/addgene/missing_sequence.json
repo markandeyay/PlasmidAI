@@ -1,0 +1,23 @@
+{
+  "id": 1002,
+  "name": "Missing sequence record",
+  "description": "No sequence arrays contain sequence strings",
+  "inserts": [],
+  "cloning": {
+    "promoter": "CMV",
+    "vector_types": ["Mammalian Expression"]
+  },
+  "tags": [],
+  "bacterial_resistance": "Kanamycin",
+  "resistance_markers": ["Kanamycin"],
+  "article": {
+    "doi": "10.1000/missing"
+  },
+  "terms": "fixture terms",
+  "sequences": {
+    "public_addgene_full_sequences": [],
+    "public_user_full_sequences": [],
+    "public_addgene_partial_sequences": [],
+    "public_user_partial_sequences": []
+  }
+}

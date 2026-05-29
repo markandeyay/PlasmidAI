@@ -1,0 +1,29 @@
+{
+  "id": 1001,
+  "name": "Minimal GFP reporter",
+  "description": "Minimal metadata record",
+  "inserts": [],
+  "cloning": {
+    "promoter": "",
+    "vector_types": []
+  },
+  "tags": [],
+  "bacterial_resistance": "Ampicillin",
+  "resistance_markers": [],
+  "article": {
+    "doi": null
+  },
+  "terms": "fixture terms",
+  "sequences": {
+    "public_addgene_full_sequences": [
+      {
+        "sequence_description": "full plasmid",
+        "sequence": "atgcgtacgtagctaa",
+        "genbank_url": "https://example.test/minimal.gb"
+      }
+    ],
+    "public_user_full_sequences": [],
+    "public_addgene_partial_sequences": [],
+    "public_user_partial_sequences": []
+  }
+}

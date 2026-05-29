@@ -2,17 +2,18 @@
 
 ## AT-A-GLANCE (update every session)
 - **Current Phase:** Phase 0: Foundations and Data Pipeline
-- **Next Concrete Task:** Build the idempotent Addgene ingestion job with raw object-store caching and ingestion run logging
+- **Next Concrete Task:** Provide approved Addgene API credentials/license acceptance, then run `make ingest-addgene MODE=dev N=10` against the real API
 - **Overall completion estimate:** 5%
 - **Last session date:** 2026-05-29
-- **Codebase known-good?** (tests passing) Yes — `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 7 schema unit tests
+- **Codebase known-good?** (tests passing) Yes — `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, 7 schema tests, and 7 fake-backed Addgene ingestion tests
 
 ## RESUME HERE (only if mid-task)
-Checkpoint commit after Phase 0 milestone 2: canonical Pydantic schemas and representative validation tests are complete. Resume with the Addgene ingestion job.
+Addgene ingestion implementation and fake-backed tests are complete. Real dev-mode run is blocked until `.env` contains an approved `ADDGENE_API_TOKEN` and `ADDGENE_DATA_LICENSE_ACCEPTED=true`; resume by running `make ingest-addgene MODE=dev N=10`, then verify 10 Postgres rows, 10 MinIO blobs under `raw/addgene/`, and one `ingestion_runs` row.
 
 ## KNOWN ISSUES / BLOCKERS
 - Phase 0 is authorized as of 2026-05-29; do not begin Phase 1 until the Phase 0 gate is met and reviewed.
 - The GNU Make directory was added to the user PATH on 2026-05-29, but the current Codex host process has not inherited that PATH refresh. Use `C:\Program Files (x86)\GnuWin32\bin\make.exe` directly in this process if plain `make` is still unresolved; new user shells should pick up the user PATH.
+- Real Addgene dev-mode ingestion is blocked because `.env` does not contain `ADDGENE_API_TOKEN` and `ADDGENE_DATA_LICENSE_ACCEPTED` is still `false`. The job stops before any network call rather than using mock data.
 
 ## QUESTIONS FOR THE HUMAN
 - Which synthesis provider profile should be the default for "synthesis-ready" when no provider is selected: conservative cross-provider, Twist, IDT, GenScript, or user-selected only?
@@ -115,6 +116,10 @@ Checkpoint commit after Phase 0 milestone 2: canonical Pydantic schemas and repr
 - [ ] **GATE:** A full loop runs automatically — a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-05-29 — Built the Addgene ingestion job at `packages/data_pipeline/ingest/addgene.py` with cache-first raw JSON storage under `raw/addgene/<id>.json`, conservative rate limiting/backoff, idempotent Postgres upserts, `ingestion_runs` logging, dev/bulk/refresh modes, and a `make ingest-addgene MODE=dev N=10` entrypoint.
+- 2026-05-29 — Added fake-backed Addgene tests and fixture blobs covering minimal metadata, missing sequence, multiple markers/promoters, unusual organism, cache-before-network behavior, idempotent upsert behavior, and structured mapping-error logging.
+- 2026-05-29 — Attempted real Addgene dev mode for 10 records; blocked before network access because approved Addgene credentials and explicit data-license acceptance are not configured in `.env`.
+- 2026-05-29 — Started the Addgene ingestion session: re-read `PROGRESS.md`, SYSTEM_DESIGN Section 5.2, and `research/findings/data_sources.md`; confirmed the existing `make test` target passes before coding.
 - 2026-05-29 — Completed Phase 0 milestone 2: defined canonical Pydantic schemas for `Plasmid`, `ExperimentalContext`, `AnnotatedSequence`, `DesignSpec`, `ValidationReport`, and supporting types; added representative schema tests; confirmed `make test` passes.
 - 2026-05-29 — Completed Phase 0 milestone 1: added Docker Compose services for Postgres/pgvector, MinIO, and Redis; wired `make setup` to create `.env` and start the stack; wired `make test` to verify connectivity to each service; confirmed the stack is running locally.
 - 2026-05-29 — Completed the Phase 0 startup ritual: re-read the Phase 0/system schema specs, re-read the Phase R data-source and plasmid-biology findings, confirmed the current stub `make test` target passes, and moved the active phase to Phase 0.
