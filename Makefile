@@ -27,6 +27,9 @@ ingest-addgene:
 ingest-genbank:
 	$(PYTHON) -m packages.data_pipeline.ingest.genbank --mode $(MODE) $(if $(N),--limit $(N),) --stale-days $(GENBANK_STALE_DAYS)
 
+parse-sample:
+	$(PYTHON) scripts/parse_sample.py $(if $(N),--limit $(N),)
+
 eval-retrieval:
 	@echo "TODO: run Phase 1 retrieval evaluation"
 

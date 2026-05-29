@@ -118,6 +118,7 @@ GenBank real dev-mode verification is complete with the refined query: 10 record
 - [ ] **GATE:** A full loop runs automatically — a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-05-29 — Implemented the Phase 0 sequence parser/component detector with trusted GenBank annotation normalization, reference-component matching, conservative MCS motif detection, a versioned seed component library, pUC19 fixture tests with coordinate assertions, and a `make parse-sample N=10` target. Unit tests pass.
 - 2026-05-29 — Refined the GenBank query to require genomic GenBank plasmid records while excluding `CON`, WGS, and TSA records; added post-fetch validation that rejects cached GenBank blobs without concrete ORIGIN sequence content before upsert.
 - 2026-05-29 — Verified real `make ingest-genbank MODE=dev N=10` after query refinement: 10 records seen, 10 records upserted, 10 raw blobs in MinIO under `raw/genbank/`, and latest `ingestion_runs` row `genbank,dev,10,10,0`.
 - 2026-05-29 — Diagnosed the failed GenBank dev run: 9 failing cached records were `CON` division constructed records with plasmid LOCUS/DEFINITION text and `CONTIG join(...)` pointers but no concrete `ORIGIN` sequence; the single successful record had a normal `ORIGIN` block.
