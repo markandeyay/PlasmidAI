@@ -49,6 +49,8 @@ RESTRICTION_SITES = {
     "GCATGC",
     "CCGCGG",
 }
+DNA_BASES = set("ACGTRYSWKMBDHVN")
+REVERSE_COMPLEMENT_TABLE = str.maketrans("ACGTRYSWKMBDHVN", "TGCAYRSWMKVHDBN")
 
 
 @dataclass(frozen=True)
@@ -177,6 +179,83 @@ def find_reference_match(
     direct = sequence.find(ref)
     if direct >= 0:
         return direct, direct + len(ref), 1, 1.0, 1.0
+    reverse_ref = reverse_complement(ref)
+    reverse_direct = sequence.find(reverse_ref)
+    if reverse_direct >= 0:
+        return reverse_direct, reverse_direct + len(reverse_ref), -1, 1.0, 1.0
+
+    best_match: tuple[int, int, int, float, float] | None = None
+    for candidate in seeded_reference_alignments(sequence, ref, 1, config):
+        if best_match is None or candidate[3] * candidate[4] > best_match[3] * best_match[4]:
+            best_match = candidate
+    for candidate in seeded_reference_alignments(sequence, reverse_ref, -1, config):
+        if best_match is None or candidate[3] * candidate[4] > best_match[3] * best_match[4]:
+            best_match = candidate
+    return best_match
+
+
+def seeded_reference_alignments(
+    sequence: str,
+    ref: str,
+    strand: int,
+    config: ParserConfig,
+    *,
+    max_windows: int = 20,
+    padding: int = 80,
+) -> list[tuple[int, int, int, float, float]]:
+    windows = candidate_windows(sequence, ref, max_windows=max_windows, padding=padding)
+    matches: list[tuple[int, int, int, float, float]] = []
+    for window_start, window_end in windows:
+        window = sequence[window_start:window_end]
+        match = align_reference_window(window, ref, strand, config)
+        if match is None:
+            continue
+        start, end, match_strand, identity, coverage = match
+        matches.append((window_start + start, window_start + end, match_strand, identity, coverage))
+    return matches
+
+
+def candidate_windows(
+    sequence: str,
+    ref: str,
+    *,
+    max_windows: int,
+    padding: int,
+) -> list[tuple[int, int]]:
+    if len(ref) < 24:
+        return []
+    seed_length = min(24, max(12, len(ref) // 4))
+    seed_starts = list(range(0, max(1, len(ref) - seed_length + 1), seed_length))
+    final_seed_start = len(ref) - seed_length
+    if final_seed_start not in seed_starts:
+        seed_starts.append(final_seed_start)
+
+    windows: list[tuple[int, int]] = []
+    seen: set[tuple[int, int]] = set()
+    for seed_start in seed_starts:
+        seed = ref[seed_start : seed_start + seed_length]
+        if len(seed) < seed_length or set(seed) - DNA_BASES:
+            continue
+        offset = sequence.find(seed)
+        while offset >= 0 and len(windows) < max_windows:
+            start = max(0, offset - seed_start - padding)
+            end = min(len(sequence), offset - seed_start + len(ref) + padding)
+            window = (start, end)
+            if window not in seen:
+                seen.add(window)
+                windows.append(window)
+            offset = sequence.find(seed, offset + 1)
+        if len(windows) >= max_windows:
+            break
+    return windows
+
+
+def align_reference_window(
+    sequence: str,
+    ref: str,
+    strand: int,
+    config: ParserConfig,
+) -> tuple[int, int, int, float, float] | None:
     alignments = pairwise2.align.localms(sequence, ref, 2, -1, -5, -1, one_alignment_only=True)
     if not alignments:
         return None
@@ -194,7 +273,11 @@ def find_reference_match(
     coverage = ref_aligned_bases / len(ref)
     if identity < config.reference_identity_threshold or coverage < config.reference_coverage_threshold:
         return None
-    return int(start), int(end), 1, identity, coverage
+    return int(start), int(end), strand, identity, coverage
+
+
+def reverse_complement(sequence: str) -> str:
+    return sequence.translate(REVERSE_COMPLEMENT_TABLE)[::-1]
 
 
 def features_from_motifs(
