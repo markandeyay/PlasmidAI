@@ -2,13 +2,13 @@
 
 ## AT-A-GLANCE (update every session)
 - **Current Phase:** Phase 0: Foundations and Data Pipeline
-- **Next Concrete Task:** Build the sequence parser and component detector in `packages/data_pipeline/parse/`, then run `make parse-sample N=10` on the verified GenBank records
+- **Next Concrete Task:** Human review of the `make parse-sample N=10` output quality before scaling parser work or broadening the reference library
 - **Overall completion estimate:** 5%
 - **Last session date:** 2026-05-29
 - **Codebase known-good?** (tests passing) Yes — `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, 7 schema tests, 7 fake-backed Addgene ingestion tests, and 7 fake-backed GenBank ingestion tests
 
 ## RESUME HERE (only if mid-task)
-GenBank real dev-mode verification is complete with the refined query: 10 records seen, 10 upserted, 10 raw blobs under `raw/genbank/`, and the latest `ingestion_runs` row has zero errors. Resume with the sequence parser and component detector.
+Parser checkpoint ready for human review. `make parse-sample N=10` ran on the 10 verified real GenBank records and produced a clean report, but no records were annotation-complete yet because the current sample mostly contains CDS/marker annotations and lacks promoter/terminator labels. Resume by reviewing output quality and deciding whether to broaden the reference library/heuristics before parsing at scale.
 
 ## KNOWN ISSUES / BLOCKERS
 - Phase 0 is authorized as of 2026-05-29; do not begin Phase 1 until the Phase 0 gate is met and reviewed.
@@ -60,7 +60,7 @@ GenBank real dev-mode verification is complete with the refined query: 10 record
 - [x] Local dev environment reproducible (`make setup` brings up Postgres + object store + vector DB locally via Docker Compose)
 - [ ] CI runs lint + tests on every commit
 - [ ] Addgene ingestion job pulls plasmid metadata + sequences into the canonical `plasmids` table (Section 12.1)
-- [ ] NCBI GenBank ingestion job pulls plasmid-annotated sequences
+- [x] NCBI GenBank ingestion job pulls plasmid-annotated sequences
 - [ ] Literature/context extraction job populates the `experimental_contexts` table (Section 12.2)
 - [ ] Sequence parser normalizes every sequence into canonical annotated form (Section 12.3) with component detection (ORI, promoter, GOI, marker, MCS, terminator)
 - [ ] Data quality report job produces counts, null-rates, and dedup stats
@@ -118,6 +118,8 @@ GenBank real dev-mode verification is complete with the refined query: 10 record
 - [ ] **GATE:** A full loop runs automatically — a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-05-29 — Ran `make parse-sample N=10` on the 10 verified real GenBank records. Report: 10 records parsed, 126 high-confidence features, `annotation_complete=0/10`; detected mostly GOI/CDS and marker annotations, with one ORI and no promoter/terminator calls in this sample.
+- 2026-05-29 — Confirmed `make test` passes after parser sample work: 25 tests pass plus Docker service connectivity checks.
 - 2026-05-29 — Implemented the Phase 0 sequence parser/component detector with trusted GenBank annotation normalization, reference-component matching, conservative MCS motif detection, a versioned seed component library, pUC19 fixture tests with coordinate assertions, and a `make parse-sample N=10` target. Unit tests pass.
 - 2026-05-29 — Refined the GenBank query to require genomic GenBank plasmid records while excluding `CON`, WGS, and TSA records; added post-fetch validation that rejects cached GenBank blobs without concrete ORIGIN sequence content before upsert.
 - 2026-05-29 — Verified real `make ingest-genbank MODE=dev N=10` after query refinement: 10 records seen, 10 records upserted, 10 raw blobs in MinIO under `raw/genbank/`, and latest `ingestion_runs` row `genbank,dev,10,10,0`.

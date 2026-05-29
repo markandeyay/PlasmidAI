@@ -2,11 +2,16 @@ from __future__ import annotations
 
 import os
 import argparse
+import sys
 from collections import Counter
 from pathlib import Path
 
 import boto3
 import psycopg
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from packages.data_pipeline.parse.sequence_parser import parse_genbank_text
 
