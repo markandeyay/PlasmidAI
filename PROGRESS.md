@@ -2,13 +2,13 @@
 
 ## AT-A-GLANCE (update every session)
 - **Current Phase:** Phase 0: Foundations and Data Pipeline
-- **Next Concrete Task:** Define the canonical Pydantic schemas in `packages/core/schemas` and add representative schema validation tests
+- **Next Concrete Task:** Build the idempotent Addgene ingestion job with raw object-store caching and ingestion run logging
 - **Overall completion estimate:** 5%
 - **Last session date:** 2026-05-29
-- **Codebase known-good?** (tests passing) Yes — `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, and Redis
+- **Codebase known-good?** (tests passing) Yes — `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 7 schema unit tests
 
 ## RESUME HERE (only if mid-task)
-Checkpoint commit after Phase 0 milestone 1: local Docker Compose stack and service connectivity checks are complete. Resume with canonical Pydantic schemas in `packages/core/schemas`.
+Checkpoint commit after Phase 0 milestone 2: canonical Pydantic schemas and representative validation tests are complete. Resume with the Addgene ingestion job.
 
 ## KNOWN ISSUES / BLOCKERS
 - Phase 0 is authorized as of 2026-05-29; do not begin Phase 1 until the Phase 0 gate is met and reviewed.
@@ -115,6 +115,7 @@ Checkpoint commit after Phase 0 milestone 1: local Docker Compose stack and serv
 - [ ] **GATE:** A full loop runs automatically — a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-05-29 — Completed Phase 0 milestone 2: defined canonical Pydantic schemas for `Plasmid`, `ExperimentalContext`, `AnnotatedSequence`, `DesignSpec`, `ValidationReport`, and supporting types; added representative schema tests; confirmed `make test` passes.
 - 2026-05-29 — Completed Phase 0 milestone 1: added Docker Compose services for Postgres/pgvector, MinIO, and Redis; wired `make setup` to create `.env` and start the stack; wired `make test` to verify connectivity to each service; confirmed the stack is running locally.
 - 2026-05-29 — Completed the Phase 0 startup ritual: re-read the Phase 0/system schema specs, re-read the Phase R data-source and plasmid-biology findings, confirmed the current stub `make test` target passes, and moved the active phase to Phase 0.
 - 2026-05-29 — Generated consolidated Phase R report source at `research/phase_r_report.tex` from existing `research/findings/`, `research/SYNTHESIS.md`, `research/bibliography.md`, and `PROGRESS.md` questions without modifying the source research files.

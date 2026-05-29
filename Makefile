@@ -8,6 +8,7 @@ setup:
 
 test:
 	$(PYTHON) scripts/check_services.py
+	$(PYTHON) -m pytest
 
 lint:
 	@echo "No lint configured yet."
