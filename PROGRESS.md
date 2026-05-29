@@ -2,13 +2,13 @@
 
 ## AT-A-GLANCE (update every session)
 - **Current Phase:** Phase 0: Foundations and Data Pipeline
-- **Next Concrete Task:** Human review of the `make parse-sample N=10` output quality before scaling parser work or broadening the reference library
+- **Next Concrete Task:** Human review of the `make parse-sample N=50` corpus-quality result before scaling parser work; decide whether to change the GenBank query/source mix toward synthetic vectors or add a vetted external feature library
 - **Overall completion estimate:** 5%
 - **Last session date:** 2026-05-29
-- **Codebase known-good?** (tests passing) Yes — `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, 7 schema tests, 7 fake-backed Addgene ingestion tests, and 7 fake-backed GenBank ingestion tests
+- **Codebase known-good?** (tests passing) Yes — `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, 7 schema tests, 7 fake-backed Addgene ingestion tests, 8 fake-backed GenBank ingestion tests, and 3 parser tests
 
 ## RESUME HERE (only if mid-task)
-Parser checkpoint ready for human review. `make parse-sample N=10` ran on the 10 verified real GenBank records and produced a clean report, but no records were annotation-complete yet because the current sample mostly contains CDS/marker annotations and lacks promoter/terminator labels. Resume by reviewing output quality and deciding whether to broaden the reference library/heuristics before parsing at scale.
+RESUME HERE: Parser checkpoint needs human review. After expanding the reference component library and loosening Tier 2 thresholds, `make parse-sample N=50` still produced `annotation_complete=0/50`: 670 high-confidence features, almost entirely GenBank trusted CDS/marker annotations, with one ORI and no promoter/terminator calls. The sampled NCBI records appear to be natural complete bacterial plasmids rather than synthetic cloning/expression vectors, so do not bulk-parse until the corpus/source strategy is reviewed.
 
 ## KNOWN ISSUES / BLOCKERS
 - Phase 0 is authorized as of 2026-05-29; do not begin Phase 1 until the Phase 0 gate is met and reviewed.
@@ -16,6 +16,7 @@ Parser checkpoint ready for human review. `make parse-sample N=10` ran on the 10
 - Addgene dev-mode ingestion is blocked pending Addgene partner-program response on API access, terms, and commercial licensing. This is not a quick local credential/config unblock; keep the existing ingester parked until the partner access path is resolved.
 - Local gitignored `.env` uses `POSTGRES_PORT=55432` because a native Windows `postgres` process owns port `5432`; committed Docker defaults still use local-dev defaults and were not changed.
 - NCBI GenBank dev-mode ingestion is verified on 10 real records after excluding `CON` division constructed records and adding post-fetch ORIGIN validation.
+- Parser N=50 sample remains structurally sparse for Phase 0 completeness: the current GenBank query returns complete natural plasmids with many CDS/marker annotations but almost no source-labeled or reference-matched synthetic regulatory elements.
 
 ## QUESTIONS FOR THE HUMAN
 - Which synthesis provider profile should be the default for "synthesis-ready" when no provider is selected: conservative cross-provider, Twist, IDT, GenScript, or user-selected only?
@@ -28,6 +29,8 @@ Parser checkpoint ready for human review. `make parse-sample N=10` ran on the 10
 - For circular plasmids, where should canonical base 1 be placed in generated designs: source record origin, ORI start, MCS/cloning site, or synthesis-provider convention?
 - Should the MVP map be read-only, or should browser-side feature/sequence editing be in scope?
 - Which vector types are in the first supported validity profile set: generic mammalian expression, lentiviral, AAV, bacterial expression, CRISPR/shRNA, or another subset?
+- Should the GenBank corpus strategy shift from broad natural plasmid complete sequences toward named synthetic vectors/backbones, or should Phase 0 depend on Addgene/another vector-specific source for promoter/terminator-rich records?
+- Which exact canonical variants should be approved for ambiguous elements not yet added to the reference library: EF1a, SV40 early, U6, tac, trc, araBAD, SV40 polyA, BGH polyA, rabbit beta-globin polyA, rrnB T1/T2, lambda T0, ZeoR, BSD, HygR, NeoR/G418, f1 origin, and 2-micron origin?
 
 ## PHASE GATE STATUS
 - [x] Phase R gate met (see SYSTEM_DESIGN 3.05) — artifacts reviewed and Phase 0 authorized by the human on 2026-05-29
@@ -118,6 +121,10 @@ Parser checkpoint ready for human review. `make parse-sample N=10` ran on the 10
 - [ ] **GATE:** A full loop runs automatically — a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-05-29 — Expanded the parser reference library with provenance-backed CMV, CAG, PGK, H1, T7, T3, and SP6 promoter references plus a T7 terminator reference; left ambiguous element variants out rather than guessing.
+- 2026-05-29 — Tuned Tier 2 reference matching thresholds to 85% identity over 70% reference coverage, then added k-mer seeded local alignment so parser samples remain fast after the reference library expansion.
+- 2026-05-29 — Ran `make ingest-genbank MODE=dev N=50`: 50 records seen, 50 records upserted, no errors.
+- 2026-05-29 — Ran `make parse-sample N=50` after reference expansion and threshold tuning. Report: 50 records parsed, 670 high-confidence features, `annotation_complete=0/50`; detected almost entirely GOI/CDS and marker features, one ORI, and no promoter/terminator calls. This points to current GenBank corpus shape rather than parser execution failure.
 - 2026-05-29 — Ran `make parse-sample N=10` on the 10 verified real GenBank records. Report: 10 records parsed, 126 high-confidence features, `annotation_complete=0/10`; detected mostly GOI/CDS and marker annotations, with one ORI and no promoter/terminator calls in this sample.
 - 2026-05-29 — Confirmed `make test` passes after parser sample work: 25 tests pass plus Docker service connectivity checks.
 - 2026-05-29 — Implemented the Phase 0 sequence parser/component detector with trusted GenBank annotation normalization, reference-component matching, conservative MCS motif detection, a versioned seed component library, pUC19 fixture tests with coordinate assertions, and a `make parse-sample N=10` target. Unit tests pass.
