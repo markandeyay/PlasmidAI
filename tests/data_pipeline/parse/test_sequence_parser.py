@@ -25,7 +25,8 @@ def test_puc19_trusted_annotations_detect_expected_components() -> None:
     assert (ori.start, ori.end, ori.name) == (866, 1455, "pMB1/pUC origin")
     assert (marker.start, marker.end, marker.name) == (1628, 2417, "bla")
     assert all(feature.confidence == 0.95 for feature in [promoter, mcs, ori, marker])
-    assert annotated.annotation_complete is False
+    assert annotated.vector_profile == "bacterial_cloning_vector"
+    assert annotated.annotation_complete is True
 
 
 def test_reference_matching_finds_unannotated_puc19_components() -> None:

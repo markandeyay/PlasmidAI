@@ -11,10 +11,10 @@ from Bio.SeqFeature import SeqFeature
 from Bio.SeqRecord import SeqRecord
 
 from packages.core.schemas import AnnotatedFeature, AnnotatedSequence
+from packages.data_pipeline.parse.classify import classify, is_annotation_complete
 
 
 REFERENCE_PATH = Path(__file__).resolve().parent / "references" / "component_library.json"
-CORE_TYPES = {"ORI", "promoter", "marker", "terminator"}
 MARKER_TERMS = {
     "resistance",
     "resistant",
@@ -87,12 +87,19 @@ def parse_seqrecord(record: SeqRecord, config: ParserConfig | None = None) -> An
     features.extend(features_from_motifs(sequence, features, config))
 
     features = sorted(dedupe_features(features), key=lambda item: (item.start, item.end, item.type, item.name))
-    observed_types = {feature.type for feature in features}
+    provisional = AnnotatedSequence(
+        sequence=sequence,
+        topology=topology,
+        features=features,
+        annotation_complete=False,
+    )
+    classification = classify(provisional)
     return AnnotatedSequence(
         sequence=sequence,
         topology=topology,
         features=features,
-        annotation_complete=CORE_TYPES.issubset(observed_types),
+        vector_profile=classification.profile,
+        annotation_complete=is_annotation_complete(provisional, classification.profile),
     )
 
 
