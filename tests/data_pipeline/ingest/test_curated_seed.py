@@ -60,7 +60,7 @@ class FakeRepository:
         self.schema_ensured = True
 
     def start_run(self, *, source: str, mode: str, started_at) -> int:  # type: ignore[no-untyped-def]
-        assert source == "curated"
+        assert source == "curated_seed"
         assert mode == "seed"
         return 1
 
@@ -130,7 +130,7 @@ def test_curated_seed_ingestion_is_cache_first_and_idempotent(tmp_path: Path) ->
     assert client.fetches == ["MIN0001.1"]
     assert store.puts == [raw_cache_key(load_manifest(manifest)[0])]
     assert list(repository.plasmids) == ["curated:minimal-seed"]
-    assert repository.plasmids["curated:minimal-seed"].source == "curated"
+    assert repository.plasmids["curated:minimal-seed"].source == "genbank"
     assert repository.plasmids["curated:minimal-seed"].raw_ref == "raw/curated/minimal-seed.gb"
     assert repository.finished is not None
     assert repository.finished.errors == []

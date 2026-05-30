@@ -27,7 +27,8 @@ from packages.data_pipeline.ingest.genbank import (
 )
 
 
-SOURCE = "curated"
+SOURCE = "curated_seed"
+PLASMID_SOURCE = "genbank"
 DEFAULT_MANIFEST = Path(__file__).with_name("curated_seed_manifest.yaml")
 PLACEHOLDER_EMAILS = {"", "researcher@example.com", "user@example.com", "your.email@example.com"}
 
@@ -213,7 +214,7 @@ def map_curated_record_to_plasmid(record: CuratedSeedRecord, raw_text: str, *, r
     return plasmid.model_copy(
         update={
             "id": f"curated:{record.id}",
-            "source": SOURCE,
+            "source": PLASMID_SOURCE,
             "name": record.name,
             "raw_ref": raw_ref,
             "use_cases": dedupe(use_cases),
