@@ -88,7 +88,7 @@ def main() -> int:
             elif feature.confidence >= 0.75:
                 confidence_buckets["medium_high"] += 1
             else:
-            confidence_buckets["low"] += 1
+                confidence_buckets["low"] += 1
         if annotated.annotation_complete:
             complete += 1
             profile_complete[annotated.vector_profile] += 1
