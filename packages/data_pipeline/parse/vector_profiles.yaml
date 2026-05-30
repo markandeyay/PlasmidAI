@@ -1,0 +1,124 @@
+{
+  "version": "2026-05-29",
+  "unknown_policy": {
+    "profile": "unknown",
+    "annotation_complete": false,
+    "rationale": "Unclassifiable plasmids remain usable for inspection and retrieval, but are excluded from training-eligible complete records until a profile-specific rule can be applied.",
+    "citations": [
+      "Addgene Molecular Biology Reference: plasmid features vary by plasmid purpose and host context. https://www.addgene.org/mol-bio-reference/",
+      "Addgene Plasmids 101: promoters, terminators, origins, and selectable markers are functional modules selected for the intended expression system. https://www.addgene.org/mol-bio-reference/promoters/",
+      "Addgene Plasmids 101: viral vectors require viral transfer elements distinct from bacterial propagation elements. https://www.addgene.org/mol-bio-reference/viral-vectors/"
+    ]
+  },
+  "profiles": {
+    "bacterial_cloning_vector": {
+      "description": "Bacterial plasmid backbone used primarily for propagation and DNA cloning, not expression of a complete insert cassette.",
+      "examples": ["pUC19", "pUC18", "pBR322", "pBluescript II SK(+/-)", "pACYC184"],
+      "required": ["bacterial_origin", "bacterial_selectable_marker", "cloning_site_or_equivalent_insert_disruption_site"],
+      "optional": ["lacZ_alpha_screening", "sequencing_primer_promoters", "additional_selectable_marker"],
+      "not_required": ["expression_promoter", "polyadenylation_signal", "terminator"],
+      "completion_rule": {
+        "any_of": [
+          {"all": ["ORI", "marker", "MCS"]},
+          {"all": ["ORI"], "minimum_counts": {"marker": 2}}
+        ]
+      },
+      "citations": [
+        "Yanisch-Perron C, Vieira J, Messing J. Improved M13 phage cloning vectors and host strains: nucleotide sequences of the M13mp18 and pUC19 vectors. Gene. 1985;33(1):103-119. doi:10.1016/0378-1119(85)90120-9",
+        "Sutcliffe JG. Complete nucleotide sequence of the Escherichia coli plasmid pBR322. Cold Spring Harb Symp Quant Biol. 1979;43 Pt 1:77-90. doi:10.1101/SQB.1979.043.01.012",
+        "Agilent/Stratagene pBluescript vectors manual describes pUC-derived cloning backbones with lacZ alpha/MCS and T3/T7 primer sites. https://www.agilent.com/cs/library/usermanuals/public/212205.pdf"
+      ]
+    },
+    "bacterial_expression_vector": {
+      "description": "Bacterial vector intended to express an inserted coding sequence from a bacterial promoter/RBS cassette.",
+      "examples": ["pET-28a", "pET-21a", "pET-22b", "pBAD", "pGEX-4T", "pMAL-c"],
+      "required": ["bacterial_origin", "bacterial_selectable_marker", "bacterial_expression_promoter", "translation_or_cloning_slot"],
+      "optional": ["terminator", "affinity_tag", "lac_operator", "signal_peptide", "fusion_partner"],
+      "not_required": ["mammalian_polyadenylation_signal"],
+      "completion_rule": {"all": ["ORI", "marker", "promoter"], "any": ["GOI", "MCS"]},
+      "citations": [
+        "Studier FW, Moffatt BA. Use of bacteriophage T7 RNA polymerase to direct selective high-level expression of cloned genes. J Mol Biol. 1986;189(1):113-130. doi:10.1016/0022-2836(86)90385-2",
+        "Guzman LM, Belin D, Carson MJ, Beckwith J. Tight regulation, modulation, and high-level expression by vectors containing the arabinose PBAD promoter. J Bacteriol. 1995;177(14):4121-4130. doi:10.1128/jb.177.14.4121-4130.1995",
+        "Cytiva/GE pGEX GST Gene Fusion System handbook documents pGEX expression cassette architecture. https://www.cytivalifesciences.com/en/us/shop/protein-analysis/protein-sample-preparation/purification/gst-tagged-protein-purification"
+      ]
+    },
+    "mammalian_expression_vector": {
+      "description": "Bacterial-propagated plasmid intended to express a coding sequence in mammalian cells.",
+      "examples": ["pcDNA3.1", "pCMV-Tag", "pCAGGS", "pEF-BOS", "pTRE3G"],
+      "required": ["bacterial_origin", "bacterial_selectable_marker", "mammalian_promoter", "coding_sequence_or_cloning_slot", "mammalian_polyadenylation_signal"],
+      "optional": ["mammalian_selection_marker", "enhancer", "epitope_tag", "inducible_operator"],
+      "not_required": ["viral_ltr", "yeast_replication_element"],
+      "completion_rule": {"all": ["ORI", "marker", "promoter", "terminator"], "any": ["GOI", "MCS"]},
+      "citations": [
+        "Thermo Fisher pcDNA3.1 vector documentation describes CMV promoter, multiple cloning site, BGH polyadenylation signal, bacterial origin, and antibiotic resistance marker. https://www.thermofisher.com/order/catalog/product/V79020",
+        "Niwa H, Yamamura K, Miyazaki J. Efficient selection for high-expression transfectants with a novel eukaryotic vector. Gene. 1991;108(2):193-199. doi:10.1016/0378-1119(91)90434-D",
+        "Mizushima S, Nagata S. pEF-BOS, a powerful mammalian expression vector. Nucleic Acids Res. 1990;18(17):5322. doi:10.1093/nar/18.17.5322"
+      ]
+    },
+    "mammalian_reporter_vector": {
+      "description": "Mammalian vector in which a reporter gene or reporter assay cassette is the main payload.",
+      "examples": ["pEGFP-N1", "pGL3", "pGL4", "pmCherry-C1", "pDsRed"],
+      "required": ["bacterial_origin", "bacterial_selectable_marker", "reporter_gene", "polyadenylation_or_reporter_termination_signal"],
+      "optional": ["mammalian_promoter", "multiple_cloning_site", "enhancer", "mammalian_selection_marker"],
+      "not_required": ["separate_non_reporter_goi"],
+      "completion_rule": {"all": ["ORI", "marker", "GOI"], "any": ["terminator", "MCS"]},
+      "citations": [
+        "Promega pGL3 luciferase reporter vector technical manual describes luciferase reporter backbones with bacterial propagation and reporter assay elements. https://www.promega.com/resources/protocols/technical-manuals/0/pgl3-luciferase-reporter-vectors-protocol/",
+        "Promega pGL4 luciferase reporter vector documentation describes modern luciferase reporter vectors and response element/promoter variants. https://www.promega.com/products/reporter-assays-and-transfection/reporter-vectors-and-cell-lines/pgl4-luciferase-reporter-vectors/",
+        "Clontech/Takara pEGFP-N1 vector information describes EGFP reporter/fusion vector architecture. https://www.takarabio.com/products/gene-function/fluorescent-proteins/fluorescent-protein-vectors"
+      ]
+    },
+    "lentiviral_or_retroviral_transfer_vector": {
+      "description": "Transfer plasmid for lentiviral or retroviral delivery; packaging genes are supplied separately and should not be required in the transfer plasmid.",
+      "examples": ["pLenti-CMV-Puro", "pLKO.1", "pLVX", "pMSCV"],
+      "required": ["bacterial_origin", "bacterial_selectable_marker", "viral_terminal_or_packaging_elements", "payload_or_cloning_site"],
+      "optional": ["internal_promoter", "polyadenylation_signal", "WPRE", "cPPT", "selection_marker"],
+      "not_required": ["gag", "pol", "env"],
+      "completion_rule": {"all": ["ORI", "marker"], "any": ["GOI", "MCS"], "required_named_signals": ["viral_transfer_element"]},
+      "citations": [
+        "Addgene Viral Vector Guide describes transfer plasmids as containing LTRs and packaging signal, with gag/pol/env supplied in packaging plasmids. https://www.addgene.org/viral-vectors/",
+        "Zufferey R et al. Multiply attenuated lentiviral vector achieves efficient gene delivery in vivo. Nat Biotechnol. 1997;15:871-875. doi:10.1038/nbt0997-871",
+        "Miller AD, Rosman GJ. Improved retroviral vectors for gene transfer and expression. Biotechniques. 1989;7(9):980-990."
+      ]
+    },
+    "crispr_vector": {
+      "description": "Vector carrying CRISPR machinery, guide expression, or both.",
+      "examples": ["pX330", "pX458", "pX459", "lentiCRISPR v2", "lentiGuide-Puro"],
+      "required": ["bacterial_origin", "bacterial_selectable_marker", "crispr_module"],
+      "optional": ["Cas_nuclease", "sgRNA_scaffold", "U6_or_H1_promoter", "lentiviral_transfer_elements", "fluorescent_or_drug_selection_marker"],
+      "not_required": ["separate_non_crispr_goi"],
+      "completion_rule": {"all": ["ORI", "marker"], "required_named_signals": ["crispr_module"]},
+      "citations": [
+        "Cong L et al. Multiplex genome engineering using CRISPR/Cas systems. Science. 2013;339(6121):819-823. doi:10.1126/science.1231143",
+        "Sanjana NE, Shalem O, Zhang F. Improved vectors and genome-wide libraries for CRISPR screening. Nat Methods. 2014;11:783-784. doi:10.1038/nmeth.3047",
+        "Addgene CRISPR Guide describes all-in-one, Cas-only, and guide-only CRISPR plasmid formats. https://www.addgene.org/guides/crispr/"
+      ]
+    },
+    "yeast_shuttle_vector": {
+      "description": "Vector propagated in E. coli and Saccharomyces cerevisiae using bacterial and yeast maintenance/selection elements.",
+      "examples": ["pRS415", "pRS416", "pYES2"],
+      "required": ["bacterial_origin", "bacterial_selectable_marker", "yeast_replication_or_maintenance_element", "yeast_selectable_marker"],
+      "optional": ["MCS", "yeast_promoter", "yeast_terminator", "2_micron_origin", "CEN_ARS"],
+      "not_required": ["mammalian_polyadenylation_signal", "viral_ltr"],
+      "completion_rule": {"all": ["ORI", "marker"], "any": ["MCS", "GOI"], "profile_specific_note": "Base shuttle backbones can be complete without an expression cassette."},
+      "citations": [
+        "Sikorski RS, Hieter P. A system of shuttle vectors and yeast host strains designed for efficient manipulation of DNA in Saccharomyces cerevisiae. Genetics. 1989;122(1):19-27. doi:10.1093/genetics/122.1.19",
+        "Christianson TW et al. Multifunctional yeast high-copy-number shuttle vectors. Gene. 1992;110(1):119-122. doi:10.1016/0378-1119(92)90454-W",
+        "Thermo Fisher pYES2 documentation describes yeast 2-micron origin, URA3 selection, GAL1 promoter, and bacterial propagation elements. https://www.thermofisher.com/order/catalog/product/V82520"
+      ]
+    },
+    "general_shuttle_vector": {
+      "description": "Multi-host plasmid outside a specific yeast or mammalian/viral class.",
+      "examples": ["broad-host-range bacterial shuttle vectors", "E. coli-mycobacteria shuttle vectors"],
+      "required": ["bacterial_origin", "bacterial_selectable_marker", "second_host_replication_or_maintenance_element"],
+      "optional": ["second_host_selectable_marker", "MCS", "expression_cassette"],
+      "not_required": ["profile-specific expression cassette unless the vector is sold or deposited as an expression vector"],
+      "completion_rule": {"minimum_counts": {"ORI": 2}, "all": ["marker"], "any": ["MCS", "GOI", "promoter"]},
+      "citations": [
+        "Shuman HA. Shuttle vectors for genetic analysis of multiple host systems. General shuttle-vector convention: replication/selection functions for each host are required.",
+        "Stoker NG et al. Development of mycobacterial shuttle vectors and their use in studying mycobacterial genetics. Gene. 1991;106(1):83-88. doi:10.1016/0378-1119(91)90569-C",
+        "Addgene Molecular Biology Reference describes host-specific origins and selectable markers as core plasmid design elements. https://www.addgene.org/mol-bio-reference/"
+      ]
+    }
+  }
+}
