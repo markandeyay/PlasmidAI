@@ -90,3 +90,28 @@ This track investigated programmatic access to Addgene and NCBI sequence data, w
 13. NCBI, 2025, "FASTA Format for Nucleotide Sequences," https://www.ncbi.nlm.nih.gov/genbank/fastaformat/
 14. DDBJ/ENA/GenBank, 2026, "The DDBJ/ENA/GenBank Feature Table Definition," https://www.ddbj.nig.ac.jp/ddbj/feature-table.html
 15. NCBI Datasets, 2026, "`datasets download genome` reference," https://www.ncbi.nlm.nih.gov/datasets/docs/v2/reference-docs/command-line/datasets/download/genome/
+
+## Appendix: GenBank corpus composition and engineered-vector sourcing update
+
+### Established facts
+
+- The current broad GenBank query for plasmid records is technically valid for retrieving complete plasmid sequences, but project evidence shows it is not aligned with the product corpus target. After the Phase 0 parser and reference library were implemented, `make parse-sample N=50` on the broad GenBank sample produced `annotation_complete=0/50`: 670 high-confidence features, mostly trusted GenBank CDS/marker annotations, one ORI, and no promoter/terminator calls. [Source: `PROGRESS.md`, Build Log and RESUME HERE, 2026-05-29]
+- GenBank is a broad annotated collection of publicly available nucleotide sequences, not a vector-specific repository. NCBI describes GenBank as an annotated collection of all publicly available DNA sequences and part of the INSDC exchange with DDBJ and ENA. That scope explains why a broad plasmid query can return environmental, clinical, and naturally occurring plasmids instead of synthetic research vectors. [Source: NCBI, 2026, "GenBank Overview," https://www.ncbi.nlm.nih.gov/genbank/]
+- NCBI sequence search supports fielded queries, including title and property filters. Entrez sequence search documentation lists searchable fields for sequence databases, and NCBI Entrez help documents `[Properties]` filters for sequence records. Engineered-vector retrieval should therefore use curated accessions and/or tighter title/property filters targeting named vector backbones and cloning/expression-vector terminology. [Source: NCBI Bookshelf, "Search Field Descriptions for Sequence Database," https://www.ncbi.nlm.nih.gov/books/NBK49540/; Source: NCBI Entrez Help, https://www.ncbi.nlm.nih.gov/sites/books/NBK3837/]
+- The current GenBank ingestion guardrails are still necessary. Earlier real-data verification found plasmid-looking `CON` division records with LOCUS/DEFINITION text but no concrete `ORIGIN` sequence, so the project added query-time exclusion of `CON`, WGS, and TSA records plus post-fetch ORIGIN validation. [Source: `PROGRESS.md`, Build Log, 2026-05-29; Source: NCBI, "Sample GenBank Record," https://www.ncbi.nlm.nih.gov/genbank/samplerecord/]
+- NCBI places no restrictions on use or distribution of GenBank data, but warns that submitters may claim patent, copyright, or other intellectual-property rights in submitted data and that NCBI cannot assess or grant permissions for those claims. Commercial model-training eligibility should remain a provenance/legal-review field rather than an assumed technical property. [Source: NCBI, 2026, "GenBank Overview," https://www.ncbi.nlm.nih.gov/genbank/]
+- Addgene remains the strongest source for engineered plasmid context because its catalog/API model exposes plasmid purpose, vector type, expression system, promoters, resistance markers, cloning metadata, depositor comments, articles, and terms. Addgene access is approval- and license-gated for programmatic/bulk use, and the current project state records Addgene ingestion as blocked pending partner-program response on API access, terms, and commercial licensing. [Source: `PROGRESS.md`, Known Issues / Blockers, 2026-05-29; Source: Addgene Developers Portal, https://developers.addgene.org/; Source: Addgene Help Center, "What is the Developers Portal?", https://help.addgene.org/hc/en-us/articles/38241923181453-What-is-the-Developers-Portal]
+
+### Recommendations
+
+- Split Phase 0 sequence sourcing into two lanes: a broad GenBank lane for open sequence coverage and natural-plasmid diversity, and a curated engineered-vector seed lane for parser calibration, retrieval exemplars, and promoter/GOI/terminator-rich records.
+- Build the curated seed lane from exact named vectors with authoritative full-sequence sources. Prefer NCBI accessions or manufacturer-published GenBank/vector files. Use Addgene free-to-view pages only as provenance or secondary metadata unless legal/provenance review explicitly approves their use for a small calibration set.
+- Refine GenBank search toward engineered vectors using named backbones and stricter title/property filters rather than broad `plasmid complete sequence` queries.
+- Keep the post-fetch validity check after query refinement. GenBank search filters reduce bad records but do not guarantee usable sequence content, source topology, or engineered cassette structure.
+- Preserve provenance fields per record: source database, accession or page URL, sequence source type, license/terms reference, commercial-use review status, training-use review status, and whether the record is part of the curated calibration seed set.
+
+### Open questions for human/legal review
+
+- Should GenBank-derived engineered vectors be considered commercially trainable by default, or should records with submitter-IP caveats require manual review before training use?
+- Can Addgene-derived records be used for a small parser-calibration seed set under the eventual partner/API agreement, or only for retrieval/display after an approved data-access license is in place?
+- Which exact vector variants should be treated as canonical when names are ambiguous, such as pBAD, pCMV-Tag, pDsRed, pGL3, pGL4, pCDH, pLenti-CMV-Puro, pMAL-c, and pAG-series vectors?
