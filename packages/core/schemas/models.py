@@ -86,6 +86,7 @@ class AnnotatedSequence(SchemaModel):
     sequence: str
     topology: SequenceTopology
     features: list[AnnotatedFeature] = Field(default_factory=list)
+    vector_profile: str = Field(default="unknown", min_length=1)
     annotation_complete: bool
 
     @field_validator("sequence", mode="before")
