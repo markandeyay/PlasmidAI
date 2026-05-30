@@ -1,0 +1,147 @@
+version: "2026-05-29-p0"
+description: >
+  Curated Phase 0 seed set for parser calibration. This first manifest includes
+  only NCBI GenBank accessions identified by the A-track curation agents as
+  confident full-sequence sources. Addgene-only and ambiguous family-name
+  candidates are intentionally excluded pending provenance/legal review.
+vectors:
+  - id: pGEX-4T-1
+    name: pGEX-4T-1
+    source: ncbi_genbank
+    accession: U13853.1
+    vector_family: bacterial_expression
+    expected_features: [tac promoter, GST, AmpR, pBR322 ori]
+    citations:
+      - https://www.ncbi.nlm.nih.gov/nuccore/U13853.1
+      - https://www.ecoliwiki.org/colipedia/index.php/pGEX-4T-1
+  - id: pUC19
+    name: pUC19c
+    source: ncbi_genbank
+    accession: L09137.2
+    vector_family: bacterial_cloning
+    expected_features: [lac promoter, pUC MCS, AmpR, pMB1 ori]
+    citations:
+      - https://www.ncbi.nlm.nih.gov/nuccore/L09137.2
+      - https://www.neb.com/en/-/media/nebus/page-images/tools-and-resources/interactive-tools/dna-sequences-and-maps/puc19_map.pdf
+  - id: pUC18
+    name: pUC18
+    source: ncbi_genbank
+    accession: A02710.1
+    vector_family: bacterial_cloning
+    expected_features: [lac promoter, pUC MCS, AmpR, pMB1 ori]
+    notes:
+      - pUC18 commercial/current-sequence caveats exist; retain as calibration seed only after parsed sequence review.
+    citations:
+      - https://www.ncbi.nlm.nih.gov/nuccore/A02710.1
+      - https://www.addgene.org/vector-database/4490/
+  - id: pBR322
+    name: pBR322
+    source: ncbi_genbank
+    accession: J01749.1
+    vector_family: bacterial_cloning
+    expected_features: [AmpR, TetR, pMB1 ori, rop]
+    citations:
+      - https://www.ncbi.nlm.nih.gov/nuccore/J01749.1
+      - https://pubmed.ncbi.nlm.nih.gov/383387/
+  - id: pBluescript-II-SK-plus
+    name: pBluescript II SK(+)
+    source: ncbi_genbank
+    accession: X52328.1
+    vector_family: bacterial_cloning
+    expected_features: [T7 promoter, T3 promoter, lac promoter, MCS, AmpR, pUC ori, f1 ori]
+    citations:
+      - https://www.addgene.org/vector-database/1946/
+      - https://www.agilent.com/cs/library/usermanuals/Public/212205.pdf
+  - id: pBluescript-II-SK-minus
+    name: pBluescript II SK(-)
+    source: ncbi_genbank
+    accession: X52330
+    vector_family: bacterial_cloning
+    expected_features: [T7 promoter, T3 promoter, lac promoter, MCS, AmpR, pUC ori, f1 ori]
+    notes:
+      - Direct NCBI page was not surfaced during curation; Agilent manual cites GenBank X52330.
+    citations:
+      - https://www.agilent.com/cs/library/usermanuals/Public/212205.pdf
+  - id: pACYC184
+    name: pACYC184
+    source: ncbi_genbank
+    accession: X06403.1
+    vector_family: bacterial_cloning
+    expected_features: [p15A ori, CmR, TetR]
+    citations:
+      - https://www.ncbi.nlm.nih.gov/nuccore/X06403.1
+      - https://www.neb.com/en/-/media/nebus/page-images/tools-and-resources/interactive-tools/dna-sequences-and-maps/pacyc184_map.pdf
+  - id: pEGFP-N1
+    name: pEGFP-N1
+    source: ncbi_genbank
+    accession: U55762.1
+    vector_family: mammalian_reporter
+    expected_features: [CMV promoter, EGFP, NeoR, KanR, SV40 polyA]
+    citations:
+      - https://www.ncbi.nlm.nih.gov/nuccore/U55762.1
+      - https://www.addgene.org/vector-database/2491/
+  - id: pGL3-Basic
+    name: pGL3-Basic
+    source: ncbi_genbank
+    accession: U47295.2
+    vector_family: mammalian_reporter
+    expected_features: [luciferase, SV40 polyA, AmpR, ColE1 ori, f1 ori]
+    citations:
+      - https://www.ncbi.nlm.nih.gov/nuccore/U47295.2
+      - https://www.promega.com/-/media/files/resources/protocols/technical-manuals/0/pgl3-luciferase-reporter-vectors-protocol.pdf
+  - id: pGL4-10-luc2
+    name: pGL4.10[luc2]
+    source: ncbi_genbank
+    accession: AY738222.1
+    vector_family: mammalian_reporter
+    expected_features: [luc2, polyA, AmpR, bacterial ori]
+    citations:
+      - https://www.ncbi.nlm.nih.gov/nuccore/AY738222.1
+      - https://www.promega.com/~/media/files/resources/protocols/technical%20manuals/0/pgl4%20luciferase%20reporter%20vectors%20protocol.pdf
+  - id: pRS415
+    name: pRS415
+    source: ncbi_genbank
+    accession: U03449.1
+    vector_family: yeast_shuttle
+    expected_features: [LEU2, CEN, ARS, AmpR, bacterial ori]
+    citations:
+      - https://www.ncbi.nlm.nih.gov/nuccore/U03449.1
+      - https://www.addgene.org/vector-database/3984/
+  - id: pRS416
+    name: pRS416
+    source: ncbi_genbank
+    accession: U03450.1
+    vector_family: yeast_shuttle
+    expected_features: [URA3, CEN, ARS, AmpR, bacterial ori]
+    citations:
+      - https://www.ncbi.nlm.nih.gov/nuccore/U03450.1
+      - https://www.atcc.org/products/87521
+excluded:
+  addgene_only_pending_review:
+    - pET-28a(+)
+    - pET-21a(+)
+    - pET-22b(+)
+    - pBAD/myc-His A
+    - pcDNA3.1(+)
+    - pcDNA3.1/Hygro(+)
+    - pCAGGS
+    - pEF-BOS
+    - pLKO.1
+    - pLVX-Puro
+    - pMSCVpuro
+    - pmCherry-C1
+  login_gated_or_noncommercial_addgene:
+    - pLenti CMV Puro DEST (w118-1)
+    - pX330-U6-Chimeric_BB-CBh-hSpCas9
+    - pSpCas9(BB)-2A-GFP (PX458)
+    - pSpCas9(BB)-2A-Puro (PX459) V2.0
+    - lentiCRISPR v2
+    - lentiGuide-Puro
+    - pAG series
+  ambiguous_or_unresolved:
+    - pMAL-c
+    - pCMV-Tag
+    - pDsRed
+    - pYES2
+    - pCDH
+    - pTRE3G
