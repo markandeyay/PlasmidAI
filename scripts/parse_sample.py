@@ -50,7 +50,7 @@ def main() -> int:
         region_name="us-east-1",
     )
 
-    if args.source == "curated_seed":
+    if args.source in {"curated", "curated_seed"}:
         query = """
         SELECT id, raw_ref
         FROM plasmids
@@ -74,26 +74,37 @@ def main() -> int:
 
     complete = 0
     confidence_buckets: Counter[str] = Counter()
+    profile_buckets: Counter[str] = Counter()
+    profile_complete: Counter[str] = Counter()
     print(f"records={len(rows)}")
     for plasmid_id, raw_ref in rows:
         raw = s3.get_object(Bucket=bucket, Key=raw_ref)["Body"].read().decode("utf-8")
         annotated = parse_genbank_text(raw)
         counts = Counter(str(feature.type) for feature in annotated.features)
+        profile_buckets[annotated.vector_profile] += 1
         for feature in annotated.features:
             if feature.confidence >= 0.90:
                 confidence_buckets["high"] += 1
             elif feature.confidence >= 0.75:
                 confidence_buckets["medium_high"] += 1
             else:
-                confidence_buckets["low"] += 1
+            confidence_buckets["low"] += 1
         if annotated.annotation_complete:
             complete += 1
+            profile_complete[annotated.vector_profile] += 1
         count_text = ", ".join(f"{key}:{value}" for key, value in sorted(counts.items())) or "none"
         print(
             f"{plasmid_id} complete={annotated.annotation_complete} "
+            f"profile={annotated.vector_profile} "
             f"features={len(annotated.features)} [{count_text}]"
         )
     print(f"annotation_complete={complete}/{len(rows)}")
+    print(
+        "profile_breakdown="
+        + ", ".join(
+            f"{profile}:{profile_complete[profile]}/{count}" for profile, count in sorted(profile_buckets.items())
+        )
+    )
     print("confidence_breakdown=" + ", ".join(f"{key}:{value}" for key, value in sorted(confidence_buckets.items())))
     return 0
 
