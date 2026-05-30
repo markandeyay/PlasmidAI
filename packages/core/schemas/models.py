@@ -38,6 +38,7 @@ class SchemaModel(BaseModel):
 class PlasmidSource(str, Enum):
     ADDGENE = "addgene"
     GENBANK = "genbank"
+    CURATED = "curated"
     LITERATURE = "literature"
     GENERATED = "generated"
 

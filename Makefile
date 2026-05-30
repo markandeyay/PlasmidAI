@@ -1,4 +1,4 @@
-.PHONY: setup test lint ingest-all eval-retrieval services-down
+.PHONY: setup test lint ingest-all eval-retrieval services-down ingest-addgene ingest-genbank ingest-curated parse-sample
 
 PYTHON ?= python
 MODE ?= dev
@@ -28,7 +28,10 @@ ingest-genbank:
 	$(PYTHON) -m packages.data_pipeline.ingest.genbank --mode $(MODE) $(if $(N),--limit $(N),) --stale-days $(GENBANK_STALE_DAYS)
 
 parse-sample:
-	$(PYTHON) scripts/parse_sample.py $(if $(N),--limit $(N),)
+	$(PYTHON) scripts/parse_sample.py $(if $(N),--limit $(N),) $(if $(SOURCE),--source $(SOURCE),)
+
+ingest-curated:
+	$(PYTHON) -m packages.data_pipeline.ingest.curated_seed
 
 eval-retrieval:
 	@echo "TODO: run Phase 1 retrieval evaluation"

@@ -36,6 +36,7 @@ def env(name: str, default: str, dotenv: dict[str, str]) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Parse a small sample of cached GenBank plasmid records.")
     parser.add_argument("--limit", type=int, default=10)
+    parser.add_argument("--source", default="genbank")
     args = parser.parse_args()
     dotenv = load_dotenv(Path(".env"))
     limit = args.limit
@@ -49,17 +50,27 @@ def main() -> int:
         region_name="us-east-1",
     )
 
+    if args.source == "curated_seed":
+        query = """
+        SELECT id, raw_ref
+        FROM plasmids
+        WHERE id LIKE 'curated:%%'
+        ORDER BY id
+        LIMIT %s
+        """
+        params = (limit,)
+    else:
+        query = """
+        SELECT id, raw_ref
+        FROM plasmids
+        WHERE source = %s
+        ORDER BY id
+        LIMIT %s
+        """
+        params = (args.source, limit)
+
     with psycopg.connect(database_url) as connection:
-        rows = connection.execute(
-            """
-            SELECT id, raw_ref
-            FROM plasmids
-            WHERE source = 'genbank'
-            ORDER BY id
-            LIMIT %s
-            """,
-            (limit,),
-        ).fetchall()
+        rows = connection.execute(query, params).fetchall()
 
     complete = 0
     confidence_buckets: Counter[str] = Counter()
