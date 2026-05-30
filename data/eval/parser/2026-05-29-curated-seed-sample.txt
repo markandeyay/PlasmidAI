@@ -1,0 +1,27 @@
+Command:
+C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -Command "& 'C:\Program Files (x86)\GnuWin32\bin\make.exe' parse-sample N=50 SOURCE=curated"
+
+Context:
+- Curated seed manifest version: 2026-05-29-p0.
+- Seed loader run: records_seen=12, records_upserted=12, errors=[].
+- Seed source policy: NCBI-backed records only; Addgene-only sequence sources excluded pending explicit legal/provenance approval.
+
+Output:
+records=12
+curated:pACYC184 complete=False features=2 [ORI:1, marker:1]
+curated:pBluescript-II-SK-minus complete=False features=5 [MCS:1, ORI:1, marker:1, promoter:2]
+curated:pBluescript-II-SK-plus complete=False features=5 [MCS:1, ORI:1, marker:1, promoter:2]
+curated:pBR322 complete=False features=7 [GOI:1, ORI:1, marker:2, promoter:3]
+curated:pEGFP-N1 complete=False features=5 [GOI:1, MCS:1, ORI:1, marker:1, promoter:1]
+curated:pGEX-4T-1 complete=False features=8 [GOI:2, MCS:1, ORI:1, marker:1, promoter:3]
+curated:pGL3-Basic complete=False features=8 [GOI:1, MCS:1, ORI:3, marker:1, terminator:2]
+curated:pGL4-10-luc2 complete=False features=6 [GOI:1, MCS:1, ORI:2, marker:1, terminator:1]
+curated:pRS415 complete=False features=5 [MCS:1, ORI:1, marker:1, promoter:2]
+curated:pRS416 complete=False features=5 [MCS:1, ORI:1, marker:1, promoter:2]
+curated:pUC18 complete=False features=4 [MCS:1, ORI:1, marker:1, promoter:1]
+curated:pUC19 complete=False features=4 [MCS:1, ORI:1, marker:1, promoter:1]
+annotation_complete=0/12
+confidence_breakdown=high:30, low:5, medium_high:29
+
+Interpretation:
+The corpus shift is working: engineered seed vectors produce promoter, MCS, ORI, marker, and some terminator annotations, unlike the broad natural-plasmid GenBank sample. The annotation_complete ratio remains 0/12 because the current completeness rule requires ORI + promoter + marker + terminator for every vector type. That rule is too strict for promoterless reporter controls, cloning backbones, and yeast shuttle vectors, and the terminator/reference library is still incomplete for several expression vectors. Stop here for human review before parser policy or reference-library refinement.

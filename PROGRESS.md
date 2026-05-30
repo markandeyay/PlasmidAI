@@ -2,13 +2,13 @@
 
 ## AT-A-GLANCE (update every session)
 - **Current Phase:** Phase 0: Foundations and Data Pipeline
-- **Next Concrete Task:** Human review of the `make parse-sample N=50` corpus-quality result before scaling parser work; decide whether to change the GenBank query/source mix toward synthetic vectors or add a vetted external feature library
+- **Next Concrete Task:** Human review of the curated seed parser sample. Decide whether `annotation_complete` should be vector-type specific before further parser/reference work, and whether Addgene-only seed sequences may be used after legal/provenance approval.
 - **Overall completion estimate:** 5%
 - **Last session date:** 2026-05-29
 - **Codebase known-good?** (tests passing) Yes — `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, 7 schema tests, 7 fake-backed Addgene ingestion tests, 8 fake-backed GenBank ingestion tests, and 3 parser tests
 
 ## RESUME HERE (only if mid-task)
-RESUME HERE: Parser checkpoint needs human review. After expanding the reference component library and loosening Tier 2 thresholds, `make parse-sample N=50` still produced `annotation_complete=0/50`: 670 high-confidence features, almost entirely GenBank trusted CDS/marker annotations, with one ORI and no promoter/terminator calls. The sampled NCBI records appear to be natural complete bacterial plasmids rather than synthetic cloning/expression vectors, so do not bulk-parse until the corpus/source strategy is reviewed.
+RESUME HERE: Curated seed checkpoint needs human review. Added an NCBI-only curated seed manifest and loader, loaded 12 curated seed records, and ran `make parse-sample N=50 SOURCE=curated`. The sample produced richer engineered-vector annotations than the broad GenBank natural-plasmid corpus, but `annotation_complete=0/12` because the current universal completeness rule requires ORI + promoter + marker + terminator for all vector types. Do not bulk-parse or tune the parser further until the human decides whether completeness should be vector-type specific and whether Addgene-only sequence sources are allowed for calibration after legal/provenance review.
 
 ## KNOWN ISSUES / BLOCKERS
 - Phase 0 is authorized as of 2026-05-29; do not begin Phase 1 until the Phase 0 gate is met and reviewed.
@@ -17,6 +17,7 @@ RESUME HERE: Parser checkpoint needs human review. After expanding the reference
 - Local gitignored `.env` uses `POSTGRES_PORT=55432` because a native Windows `postgres` process owns port `5432`; committed Docker defaults still use local-dev defaults and were not changed.
 - NCBI GenBank dev-mode ingestion is verified on 10 real records after excluding `CON` division constructed records and adding post-fetch ORIGIN validation.
 - Parser N=50 sample remains structurally sparse for Phase 0 completeness: the current GenBank query returns complete natural plasmids with many CDS/marker annotations but almost no source-labeled or reference-matched synthetic regulatory elements.
+- Curated seed sample is structurally better but still below the target completeness ratio: 12 NCBI-backed seed records loaded; `annotation_complete=0/12`; report saved at `data/eval/parser/2026-05-29-curated-seed-sample.txt`.
 
 ## QUESTIONS FOR THE HUMAN
 - Which synthesis provider profile should be the default for "synthesis-ready" when no provider is selected: conservative cross-provider, Twist, IDT, GenScript, or user-selected only?
@@ -31,6 +32,8 @@ RESUME HERE: Parser checkpoint needs human review. After expanding the reference
 - Which vector types are in the first supported validity profile set: generic mammalian expression, lentiviral, AAV, bacterial expression, CRISPR/shRNA, or another subset?
 - Should the GenBank corpus strategy shift from broad natural plasmid complete sequences toward named synthetic vectors/backbones, or should Phase 0 depend on Addgene/another vector-specific source for promoter/terminator-rich records?
 - Which exact canonical variants should be approved for ambiguous elements not yet added to the reference library: EF1a, SV40 early, U6, tac, trc, araBAD, SV40 polyA, BGH polyA, rabbit beta-globin polyA, rrnB T1/T2, lambda T0, ZeoR, BSD, HygR, NeoR/G418, f1 origin, and 2-micron origin?
+- Should `annotation_complete` be evaluated by vector-type validity profiles instead of one universal ORI + promoter + marker + terminator rule? The curated seed sample includes promoterless reporter controls, cloning backbones, and yeast shuttle vectors where missing a promoter or terminator can be expected rather than incomplete.
+- Pending legal/provenance approval, may Addgene Vector Database free-to-view sequences be used for a small parser-calibration seed set in a commercial product, or should the seed set remain NCBI/manufacturer-only until explicit partner terms are in place?
 
 ## PHASE GATE STATUS
 - [x] Phase R gate met (see SYSTEM_DESIGN 3.05) — artifacts reviewed and Phase 0 authorized by the human on 2026-05-29
@@ -121,6 +124,11 @@ RESUME HERE: Parser checkpoint needs human review. After expanding the reference
 - [ ] **GATE:** A full loop runs automatically — a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-05-29 - Added an NCBI-only curated seed manifest after provenance review excluded Addgene-only/login-gated/ambiguous sequence sources pending explicit commercial-use approval.
+- 2026-05-29 - Built `packages/data_pipeline/ingest/curated_seed.py`, wired `make ingest-curated`, added fake-backed curated ingestion tests, and extended `parse-sample` with `SOURCE=curated`.
+- 2026-05-29 - Refined the default GenBank query to bias toward engineered vector titles rather than broad natural complete plasmids.
+- 2026-05-29 - Ran `make ingest-curated`: 12 curated seed records seen, 12 upserted, no errors; raw GenBank blobs cached under `raw/curated/`.
+- 2026-05-29 - Ran `make parse-sample N=50 SOURCE=curated`: 12 records parsed, promoter/MCS/ORI/marker/terminator annotations present, but `annotation_complete=0/12`; report saved at `data/eval/parser/2026-05-29-curated-seed-sample.txt`.
 - 2026-05-29 — Expanded the parser reference library with provenance-backed CMV, CAG, PGK, H1, T7, T3, and SP6 promoter references plus a T7 terminator reference; left ambiguous element variants out rather than guessing.
 - 2026-05-29 — Tuned Tier 2 reference matching thresholds to 85% identity over 70% reference coverage, then added k-mer seeded local alignment so parser samples remain fast after the reference library expansion.
 - 2026-05-29 — Ran `make ingest-genbank MODE=dev N=50`: 50 records seen, 50 records upserted, no errors.
