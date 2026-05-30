@@ -106,7 +106,7 @@ def feature(feature_type: str, name: str, index: int) -> AnnotatedFeature:
             [
                 feature("ORI", "pUC origin", 0),
                 feature("marker", "AmpR/bla", 1),
-                feature("GOI", "firefly luciferase reporter", 2),
+                feature("GOI", "luc+", 2),
                 feature("terminator", "SV40 late polyA", 3),
             ],
             "mammalian_reporter_vector",

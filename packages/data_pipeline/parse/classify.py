@@ -112,6 +112,7 @@ class FeatureContext:
                 "mcherry",
                 "dsred",
                 "luciferase",
+                "luc+",
                 "luc2",
                 "renilla",
                 "reporter",
@@ -181,7 +182,7 @@ def yeast_shuttle_vector(context: FeatureContext) -> ClassificationResult | None
 
 
 def mammalian_reporter_vector(context: FeatureContext) -> ClassificationResult | None:
-    signals = context.terms("egfp", "gfp", "mcherry", "dsred", "luciferase", "luc2", "renilla", "reporter")
+    signals = context.terms("egfp", "gfp", "mcherry", "dsred", "luciferase", "luc+", "luc2", "renilla", "reporter")
     if not signals:
         return None
     confidence = 0.90 if context.has("GOI") else 0.75

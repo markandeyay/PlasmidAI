@@ -6,12 +6,12 @@ curated:pBluescript-II-SK-plus complete=True profile=bacterial_cloning_vector fe
 curated:pBR322 complete=True profile=bacterial_cloning_vector features=7 [GOI:1, ORI:1, marker:2, promoter:3]
 curated:pEGFP-N1 complete=True profile=mammalian_reporter_vector features=7 [GOI:1, MCS:1, ORI:2, marker:1, promoter:1, terminator:1]
 curated:pGEX-4T-1 complete=True profile=bacterial_expression_vector features=8 [GOI:2, MCS:1, ORI:1, marker:1, promoter:3]
-curated:pGL3-Basic complete=False profile=mammalian_expression_vector features=8 [GOI:1, MCS:1, ORI:3, marker:1, terminator:2]
+curated:pGL3-Basic complete=True profile=mammalian_reporter_vector features=8 [GOI:1, MCS:1, ORI:3, marker:1, terminator:2]
 curated:pGL4-10-luc2 complete=True profile=mammalian_reporter_vector features=7 [GOI:1, MCS:1, ORI:2, marker:1, terminator:2]
 curated:pRS415 complete=True profile=yeast_shuttle_vector features=7 [MCS:1, ORI:3, marker:1, promoter:2]
 curated:pRS416 complete=True profile=yeast_shuttle_vector features=7 [MCS:1, ORI:3, marker:1, promoter:2]
 curated:pUC18 complete=True profile=bacterial_cloning_vector features=4 [MCS:1, ORI:1, marker:1, promoter:1]
 curated:pUC19 complete=True profile=bacterial_cloning_vector features=4 [MCS:1, ORI:1, marker:1, promoter:1]
-annotation_complete=10/12
-profile_breakdown=bacterial_cloning_vector:5/6, bacterial_expression_vector:1/1, mammalian_expression_vector:0/1, mammalian_reporter_vector:2/2, yeast_shuttle_vector:2/2
+annotation_complete=11/12
+profile_breakdown=bacterial_cloning_vector:5/6, bacterial_expression_vector:1/1, mammalian_reporter_vector:3/3, yeast_shuttle_vector:2/2
 confidence_breakdown=high:30, low:5, medium_high:38
