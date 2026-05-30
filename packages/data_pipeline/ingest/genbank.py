@@ -26,12 +26,25 @@ from packages.core.schemas import Plasmid
 SOURCE = "genbank"
 DEFAULT_DEV_LIMIT = 10
 DEFAULT_STALE_DAYS = 60
-# The dev/bulk query deliberately excludes CON/WGS/TSA master or constructed records:
-# those records can describe a complete plasmid but contain only CONTIG assembly
-# instructions and no concrete ORIGIN sequence for downstream parsing.
+# The dev/bulk query is deliberately engineered-vector biased. The earlier
+# broad query for plasmid complete sequences mostly returned natural bacterial
+# plasmids from environmental/clinical isolates, which are valid GenBank
+# records but sparse for expression-cassette parser calibration. This query
+# uses NCBI title and sequence-length fields plus nucleotide properties/filters:
+# - [Title] narrows to definition-line words such as vector/expression/reporter.
+# - [SLEN] constrains sequence length.
+# - [PROP] and [FILTER] exclude assembly/master records where possible.
+# Docs:
+# https://www.ncbi.nlm.nih.gov/books/NBK49540/
+# https://www.ncbi.nlm.nih.gov/entrez/query/static/help/Summary_Matrices.html
+# Trade-off: high precision for engineered backbones, lower recall for records
+# whose title omits "vector" even when the sequence is a synthetic construct.
 DEFAULT_QUERY = (
-    'plasmid[Title] AND "complete sequence"[Title] AND 1000:50000[SLEN] '
-    "AND biomol_genomic[PROP] AND genbank[FILTER] "
+    '("cloning vector"[Title] OR "expression vector"[Title] OR "reporter vector"[Title] '
+    'OR "shuttle vector"[Title] OR "lentiviral vector"[Title] OR "retroviral vector"[Title] '
+    'OR "plasmid vector"[Title] OR vector[Title]) '
+    'AND ("complete sequence"[Title] OR "complete genome"[Title]) '
+    "AND 1000:50000[SLEN] AND biomol_genomic[PROP] AND genbank[FILTER] "
     "NOT gbdiv_con[PROP] NOT wgs[FILTER] NOT tsa[FILTER]"
 )
 IUPAC_DNA_ALPHABET = frozenset("ACGTRYSWKMBDHVN")
