@@ -17,6 +17,8 @@ ORGANISM_TERMS: tuple[ControlledTerm, ...] = (
     ControlledTerm("Homo sapiens", ("homo sapiens", "human", "human cells", "hek", "hela", "a549", "jurkat", "k562", "mammalian")),
     ControlledTerm("Mus musculus", ("mus musculus", "mouse", "murine", "nih3t3", "3t3", "mesc")),
     ControlledTerm("Rattus norvegicus", ("rattus norvegicus", "rat")),
+    ControlledTerm("Aeromonas salmonicida", ("aeromonas salmonicida", "a salmonicida")),
+    ControlledTerm("Zygosaccharomyces rouxii", ("zygosaccharomyces rouxii", "z rouxii")),
     ControlledTerm("Escherichia coli", ("escherichia coli", "e coli", "e. coli", "ecoli", "bacteria", "bacterial", "bl21", "dh5alpha", "dh5 alpha")),
     ControlledTerm("Saccharomyces cerevisiae", ("saccharomyces cerevisiae", "s cerevisiae", "yeast", "budding yeast")),
     ControlledTerm("Drosophila melanogaster", ("drosophila melanogaster", "drosophila", "fly")),

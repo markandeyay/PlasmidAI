@@ -156,6 +156,54 @@ FEW_SHOT_MESSAGES: list[dict[str, str]] = [
             }
         ),
     },
+    {
+        "role": "user",
+        "content": "For a bacterial resistance-plasmid comparison, retrieve the Aeromonas salmonicida pRAS1_2402_89 plasmid carrying tetracycline resistance, sul1, and dfrA16.",
+    },
+    {
+        "role": "assistant",
+        "content": json.dumps(
+            {
+                "organism": "Aeromonas salmonicida",
+                "cell_line": None,
+                "vector_type": None,
+                "genes": [],
+                "tags": [],
+                "promoter_type": None,
+                "inducer": None,
+                "markers": ["tetracycline"],
+                "application": None,
+                "cloning_method": None,
+                "constraints": ["pRAS1_2402_89", "sul1", "dfrA16"],
+                "clarification_needed": False,
+                "clarification_question": None,
+            }
+        ),
+    },
+    {
+        "role": "user",
+        "content": "I need a phagemid cloning vector with an f1 origin, lacZ alpha MCS, and T7/T3 promoter sites.",
+    },
+    {
+        "role": "assistant",
+        "content": json.dumps(
+            {
+                "organism": "Escherichia coli",
+                "cell_line": None,
+                "vector_type": "bacterial_cloning_vector",
+                "genes": [],
+                "tags": [],
+                "promoter_type": "T7",
+                "inducer": None,
+                "markers": [],
+                "application": "cloning",
+                "cloning_method": None,
+                "constraints": ["phagemid", "f1 origin", "lacZ alpha MCS", "T3"],
+                "clarification_needed": False,
+                "clarification_question": None,
+            }
+        ),
+    },
 ]
 
 
@@ -462,7 +510,31 @@ def _extract_constraints(text: str) -> list[str]:
         constraints.append(f"avoid {match.group(1)}")
     if any(term in normalized for term in ("toxin", "pathogen", "select agent", "gene therapy")):
         constraints.append("biosecurity_review_required")
+    constraints.extend(_extract_retrieval_keywords(text, normalized))
     return dedupe_preserve_order(constraints)
+
+
+def _extract_retrieval_keywords(text: str, normalized_text: str) -> list[str]:
+    constraints: list[str] = []
+    for match in re.finditer(r"\bp[A-Za-z0-9][A-Za-z0-9_.+-]{1,}\b", text):
+        value = match.group(0)
+        if normalize_text(value) not in {"plasmid", "promoter"}:
+            constraints.append(value)
+    phrase_constraints = [("phagemid", "phagemid"), ("f1 origin", "f1 origin"), ("ars region", "ARS region")]
+    if "lacz alpha mcs" in normalized_text:
+        phrase_constraints.append(("lacz alpha mcs", "lacZ alpha MCS"))
+    elif "lacz alpha" in normalized_text:
+        phrase_constraints.append(("lacz alpha", "lacZ alpha"))
+    for needle, label in phrase_constraints:
+        if needle in normalized_text:
+            constraints.append(label)
+    if "t7 t3" in normalized_text or "t7/t3" in text.casefold():
+        constraints.append("T3")
+    elif re.search(r"\bt3\b", text, flags=re.IGNORECASE):
+        constraints.append("T3")
+    for match in re.finditer(r"\b(?:sul\d+[a-z]?|dfr[a-z]*\d+[a-z]?)\b", text, flags=re.IGNORECASE):
+        constraints.append(match.group(0))
+    return constraints
 
 
 def _extract_excluded_markers(text: str) -> list[str]:

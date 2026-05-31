@@ -66,6 +66,29 @@ def test_fake_intent_parser_extracts_retrieval_gold_style_queries() -> None:
     assert pbr.markers == ["ampicillin", "tetracycline"]
 
 
+def test_fake_intent_parser_preserves_retrieval_identity_and_feature_constraints() -> None:
+    parser = FakeIntentParser()
+
+    prAS1 = parser.parse(
+        "For a bacterial resistance-plasmid comparison, retrieve the Aeromonas salmonicida pRAS1_2402_89 plasmid carrying tetracycline resistance, sul1, and dfrA16."
+    )
+    pbluescript = parser.parse("I need a phagemid cloning vector with an f1 origin, lacZ alpha MCS, and T7/T3 promoter sites.")
+    psb3 = parser.parse("For a yeast shuttle comparison, retrieve the Zygosaccharomyces rouxii pSB3 plasmid with an ARS region.")
+
+    assert prAS1.organism == "Aeromonas salmonicida"
+    assert prAS1.markers == ["tetracycline"]
+    assert prAS1.constraints == ["pRAS1_2402_89", "sul1", "dfrA16"]
+
+    assert pbluescript.organism == "Escherichia coli"
+    assert pbluescript.vector_type == "bacterial_cloning_vector"
+    assert pbluescript.promoter_type == "T7"
+    assert pbluescript.constraints == ["phagemid", "f1 origin", "lacZ alpha MCS", "T3"]
+
+    assert psb3.organism == "Zygosaccharomyces rouxii"
+    assert psb3.vector_type == "yeast_shuttle_vector"
+    assert psb3.constraints == ["pSB3", "ARS region"]
+
+
 def test_fake_intent_parser_clarifies_missing_or_ambiguous_critical_fields() -> None:
     generic = FakeIntentParser().parse("Make me a plasmid to express my gene in mammalian cells.")
     viral = FakeIntentParser().parse("I want a viral vector with antibiotic resistance.")

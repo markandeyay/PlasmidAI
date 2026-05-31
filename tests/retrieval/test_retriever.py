@@ -136,6 +136,7 @@ def test_compose_design_query_document_renders_non_empty_spec_fields() -> None:
     assert "GFP" in text
     assert "puromycin" in text
     assert "avoid BsmBI" in text
+    assert "Specific constraints and identity cues" in text
 
 
 def test_hybrid_retriever_applies_required_marker_hard_constraint() -> None:
@@ -188,6 +189,36 @@ def test_vector_type_and_organism_filters_use_profiles_and_host_buckets() -> Non
         DesignSpec(organism="Homo sapiens", vector_type="mammalian_reporter_vector"),
         bacterial,
         bacterial_meta,
+    )
+
+
+def test_general_shuttle_vector_without_host_bucket_passes_bacterial_filter_when_not_conflicting() -> None:
+    candidate = plasmid(
+        "genbank:AF216802.1",
+        name="pDL278",
+        organism="synthetic construct",
+        markers=["SpecR"],
+        use_cases=["shuttle vector"],
+    )
+
+    assert passes_structured_filters(
+        DesignSpec(organism="Escherichia coli", vector_type="general_shuttle_vector", markers=["spectinomycin"]),
+        candidate,
+        metadata(vector_profile="general_shuttle_vector", markers=["SpecR"]),
+    )
+
+
+def test_general_shuttle_vector_without_host_bucket_still_rejects_conflicting_host_evidence() -> None:
+    candidate = plasmid(
+        "curated:conflict",
+        organism="Homo sapiens",
+        use_cases=["shuttle vector", "mammalian expression"],
+    )
+
+    assert not passes_structured_filters(
+        DesignSpec(organism="Escherichia coli", vector_type="general_shuttle_vector"),
+        candidate,
+        metadata(vector_profile="general_shuttle_vector", use_cases=["mammalian expression"]),
     )
 
 
@@ -265,3 +296,17 @@ def test_retriever_rejects_invalid_k() -> None:
 
     with pytest.raises(ValueError, match="k must be positive"):
         retriever.retrieve(DesignSpec(organism="Escherichia coli"), k=0)
+
+
+def test_compose_design_query_document_preserves_identity_and_feature_constraints() -> None:
+    spec = DesignSpec(
+        organism="Aeromonas salmonicida",
+        markers=["tetracycline"],
+        constraints=["pRAS1_2402_89", "sul1", "dfrA16"],
+    )
+
+    text = compose_design_query_document(spec)
+
+    assert "Aeromonas salmonicida" in text
+    assert "tetracycline" in text
+    assert "pRAS1_2402_89, sul1, dfrA16" in text

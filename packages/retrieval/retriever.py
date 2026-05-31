@@ -129,7 +129,7 @@ def compose_design_query_document(spec: DesignSpec) -> str:
     if spec.cloning_method:
         clauses.append(f"Cloning method: {spec.cloning_method}.")
     if spec.constraints:
-        clauses.append(f"Constraints: {_join(spec.constraints)}.")
+        clauses.append(f"Specific constraints and identity cues: {_join(spec.constraints)}.")
     return " ".join(clauses)
 
 
@@ -194,6 +194,12 @@ def _organism_matches(requested: str, plasmid: Plasmid, metadata: Mapping[str, A
     if requested_bucket == "yeast" and "yeast" in vector_families:
         return True
     if candidate_bucket is None and vector_families:
+        if (
+            "shuttle" in vector_families
+            and requested_bucket in {"bacterial", "yeast"}
+            and not _has_conflicting_host_evidence(requested_bucket, candidate_text, vector_families)
+        ):
+            return True
         return requested_bucket in vector_families
     return candidate_bucket is None and not _has_conflicting_host_evidence(requested_bucket, candidate_text, vector_families)
 
