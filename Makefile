@@ -1,4 +1,4 @@
-.PHONY: setup test lint ingest-all eval-retrieval services-down ingest-addgene ingest-genbank ingest-curated parse-sample quality-report reprocess
+.PHONY: setup test lint ingest-all eval-retrieval services-down ingest-addgene ingest-genbank ingest-curated parse-sample quality-report reprocess embed-corpus
 
 PYTHON ?= python
 MODE ?= dev
@@ -6,6 +6,7 @@ N ?=
 ADDGENE_STALE_DAYS ?= 1
 GENBANK_STALE_DAYS ?= 60
 BATCH_SIZE ?= 100
+FAKE ?= 0
 
 setup:
 	$(PYTHON) -m pip install -r requirements.txt
@@ -42,6 +43,9 @@ reprocess:
 
 eval-retrieval:
 	@echo "TODO: run Phase 1 retrieval evaluation"
+
+embed-corpus:
+	$(PYTHON) -m packages.retrieval.embed_corpus --batch-size $(BATCH_SIZE) $(if $(N),--limit $(N),) $(if $(filter 1 true TRUE yes YES,$(FAKE)),--fake,) $(if $(filter offline OFFLINE,$(MODE)),--local-files-only,)
 
 services-down:
 	docker compose down
