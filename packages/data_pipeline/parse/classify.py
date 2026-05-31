@@ -7,6 +7,7 @@ from packages.data_pipeline.parse.expression_evidence import (
     bacterial_expression_evidence,
     mammalian_expression_evidence,
 )
+from packages.data_pipeline.parse.origin_support import general_shuttle_evidence
 from packages.data_pipeline.parse.text_signals import matching_signals
 from packages.data_pipeline.parse.viral_signals import evaluate_viral_signals
 
@@ -27,9 +28,9 @@ class ClassificationResult:
     signals: tuple[str, ...]
 
 
-def classify(annotated_sequence: AnnotatedSequence) -> ClassificationResult:
+def classify(annotated_sequence: AnnotatedSequence, metadata_text: str | None = None) -> ClassificationResult:
     """Classify a plasmid into a conservative vector profile from detected features."""
-    context = FeatureContext(annotated_sequence)
+    context = FeatureContext(annotated_sequence, metadata_text=metadata_text)
 
     checks = (
         crispr_vector,
@@ -48,8 +49,12 @@ def classify(annotated_sequence: AnnotatedSequence) -> ClassificationResult:
     return ClassificationResult(UNKNOWN_PROFILE, 0.0, ("no profile-specific signals met threshold",))
 
 
-def is_annotation_complete(annotated_sequence: AnnotatedSequence, profile: str) -> bool:
-    context = FeatureContext(annotated_sequence)
+def is_annotation_complete(
+    annotated_sequence: AnnotatedSequence,
+    profile: str,
+    metadata_text: str | None = None,
+) -> bool:
+    context = FeatureContext(annotated_sequence, metadata_text=metadata_text)
     if profile == "bacterial_cloning_vector":
         return context.has("ORI") and (
             (context.has("marker") and context.has("MCS")) or context.count("marker") >= 2
@@ -67,15 +72,20 @@ def is_annotation_complete(annotated_sequence: AnnotatedSequence, profile: str) 
     if profile == "yeast_shuttle_vector":
         return context.has_all("ORI", "marker") and context.has_any("MCS", "GOI")
     if profile == "general_shuttle_vector":
-        return context.count("ORI") >= 2 and context.has("marker") and context.has_any("MCS", "GOI", "promoter")
+        return (
+            general_shuttle_evidence(context.annotated_sequence, metadata_text=context.metadata_text).qualifies
+            and context.has("marker")
+            and context.has_any("MCS", "GOI", "promoter")
+        )
     return False
 
 
 class FeatureContext:
-    def __init__(self, annotated_sequence: AnnotatedSequence) -> None:
+    def __init__(self, annotated_sequence: AnnotatedSequence, metadata_text: str | None = None) -> None:
         self.annotated_sequence = annotated_sequence
         self.features = annotated_sequence.features
         self.types = [str(feature.type) for feature in self.features]
+        self.metadata_text = (metadata_text or "").lower()
         self.text = " ".join(
             [str(feature.type) for feature in self.features] + [feature.name for feature in self.features]
         ).lower()
@@ -227,6 +237,11 @@ def bacterial_cloning_vector(context: FeatureContext) -> ClassificationResult | 
 
 
 def general_shuttle_vector(context: FeatureContext) -> ClassificationResult | None:
-    if context.count("ORI") >= 2 and context.has("marker"):
-        return ClassificationResult("general_shuttle_vector", 0.68, ("multiple origins", "selectable marker"))
+    evidence = general_shuttle_evidence(context.annotated_sequence, metadata_text=context.metadata_text)
+    if evidence.qualifies and context.has("marker"):
+        return ClassificationResult(
+            "general_shuttle_vector",
+            0.68,
+            evidence.signals + ("selectable marker",),
+        )
     return None

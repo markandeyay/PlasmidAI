@@ -40,6 +40,9 @@ class ReferenceComponent:
     type: str
     sequence: str
     aliases: tuple[str, ...] = ()
+    replication_family: str | None = None
+    replication_role: str | None = None
+    host_class: str | None = None
 
 
 @dataclass(frozen=True)
@@ -60,6 +63,7 @@ def parse_seqrecord(record: SeqRecord, config: ParserConfig | None = None) -> An
     config = config or ParserConfig()
     sequence = str(record.seq).upper()
     topology = "circular" if record.annotations.get("topology") == "circular" else "linear"
+    metadata_text = trusted_metadata_text(record)
     features: list[AnnotatedFeature] = []
 
     features.extend(features_from_annotations(record, config))
@@ -74,13 +78,13 @@ def parse_seqrecord(record: SeqRecord, config: ParserConfig | None = None) -> An
         features=features,
         annotation_complete=False,
     )
-    classification = classify(provisional)
+    classification = classify(provisional, metadata_text=metadata_text)
     return AnnotatedSequence(
         sequence=sequence,
         topology=topology,
         features=features,
         vector_profile=classification.profile,
-        annotation_complete=is_annotation_complete(provisional, classification.profile),
+        annotation_complete=is_annotation_complete(provisional, classification.profile, metadata_text=metadata_text),
     )
 
 
@@ -317,9 +321,23 @@ def load_reference_components(path: Path = REFERENCE_PATH) -> list[ReferenceComp
                 type=item["type"],
                 sequence="".join(item["sequence"].upper().split()),
                 aliases=tuple(item.get("aliases", [])),
+                replication_family=item.get("replication_family"),
+                replication_role=item.get("replication_role"),
+                host_class=item.get("host_class"),
             )
         )
     return components
+
+
+def trusted_metadata_text(record: SeqRecord) -> str:
+    fields: list[str] = [record.id, record.name, record.description]
+    for key in ("source", "organism"):
+        value = record.annotations.get(key)
+        if value:
+            fields.append(str(value))
+    for keyword in record.annotations.get("keywords", []):
+        fields.append(str(keyword))
+    return " ".join(field for field in fields if field)
 
 
 def dedupe_features(features: Iterable[AnnotatedFeature]) -> list[AnnotatedFeature]:
