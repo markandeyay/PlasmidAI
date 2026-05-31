@@ -7,6 +7,7 @@ from packages.data_pipeline.parse.expression_evidence import (
     bacterial_expression_evidence,
     mammalian_expression_evidence,
 )
+from packages.data_pipeline.parse.marker_support import distinct_marker_classes
 from packages.data_pipeline.parse.origin_support import general_shuttle_evidence
 from packages.data_pipeline.parse.text_signals import matching_signals
 from packages.data_pipeline.parse.viral_signals import evaluate_viral_signals
@@ -57,7 +58,7 @@ def is_annotation_complete(
     context = FeatureContext(annotated_sequence, metadata_text=metadata_text)
     if profile == "bacterial_cloning_vector":
         return context.has("ORI") and (
-            (context.has("marker") and context.has("MCS")) or context.count("marker") >= 2
+            (context.has("marker") and context.has("MCS")) or len(context.marker_classes()) >= 2
         )
     if profile == "bacterial_expression_vector":
         return context.has_all("ORI", "marker", "promoter") and context.has_any("GOI", "MCS")
@@ -101,6 +102,9 @@ class FeatureContext:
 
     def has_any(self, *feature_types: str) -> bool:
         return any(self.has(feature_type) for feature_type in feature_types)
+
+    def marker_classes(self) -> set[str]:
+        return distinct_marker_classes(self.features)
 
     def terms(self, *terms: str) -> list[str]:
         return matching_signals(self.text, terms, aliases=TEXT_SIGNAL_ALIASES)
@@ -230,7 +234,7 @@ def bacterial_cloning_vector(context: FeatureContext) -> ClassificationResult | 
     )
     if not (context.has("ORI") and context.has("marker")):
         return None
-    if context.has("MCS") or context.count("marker") >= 2:
+    if context.has("MCS") or len(context.marker_classes()) >= 2:
         confidence = 0.84
         return ClassificationResult("bacterial_cloning_vector", confidence, tuple(signals or ["ORI+marker cloning backbone"]))
     return None
