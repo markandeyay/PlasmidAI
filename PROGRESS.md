@@ -2,13 +2,13 @@
 
 ## AT-A-GLANCE (update every session)
 - **Current Phase:** Phase 0: Foundations and Data Pipeline
-- **Next Concrete Task:** Human review of the two metadata-lane completeness changes from offline reprocess run `5` before landing reports: `AY180162.1` / pRHBR17 changed complete `true -> false`; `U65076.1` / pNF2176 changed complete `false -> true`.
+- **Next Concrete Task:** Begin Phase 1 retrieval-layer foundation: choose the biomedical text encoder, define plasmid document composition, implement the Embedder interface with a deterministic fake, and persist idempotent pgvector embeddings.
 - **Overall completion estimate:** 5%
 - **Last session date:** 2026-05-30
 - **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 145 unit tests
 
 ## RESUME HERE (only if mid-task)
-RESUME HERE: Host-aware shuttle classification is committed locally and `make test` passes 145 tests. General shuttle admission now requires autonomous ORIs from at least two distinct host classes or trusted metadata containing the exact phrase `shuttle vector`; `f1` rescue origin and `oriT` transfer origin do not count. pOR262 now classifies as `bacterial_expression_vector`; curated pBluescript +/- classify as `bacterial_cloning_vector`; pCI and pCI-neo classify as `bacterial_cloning_vector`. Offline all-record reprocess run `5` examined 82 rows and wrote two completeness updates outside DEBUG-2's predicted set, so `data/eval/reprocess/2026-05-31-165054-reprocess-all.json` is intentionally uncommitted pending human review. `genbank:AY180162.1` / pRHBR17 is metadata-admitted `general_shuttle_vector` but has only one detected ORI and two markers, no MCS/GOI/promoter, so complete changed `true -> false`. `genbank:U65076.1` / pNF2176 is metadata-admitted `general_shuttle_vector` with MCS and marker, so complete changed `false -> true`. Do not commit run `5`, run the second idempotence pass, or run `make quality-report` until reviewed.
+RESUME HERE: Phase 0 corpus repair checkpoint is clean. The human approved run `5` metadata-lane changes: pRHBR17 correctly became incomplete because no MCS/GOI/promoter was detected; pNF2176 correctly became complete because its trusted shuttle metadata is paired with required components. Run `6` repeated `make reprocess MODE=all` across 82 records with 0 updates, proving idempotence. Updated quality baseline: `data/eval/quality/2026-05-31-165742-quality-report.{json,md}`. `make test` passes 145 tests. Next: perform Phase 1 startup ritual and build the retrieval embedder foundation.
 
 ## KNOWN ISSUES / BLOCKERS
 - Phase 0 is authorized as of 2026-05-29; do not begin Phase 1 until the Phase 0 gate is met and reviewed.
@@ -22,7 +22,7 @@ RESUME HERE: Host-aware shuttle classification is committed locally and `make te
 - Refined GenBank query dev verification succeeded on 2026-05-30: ingestion run `4` saw and upserted `20/20` engineered-vector-titled records with `0` errors. Observation note: `data/eval/genbank/2026-05-30-refined-query-dev-observation.md`.
 - Classifier hardening fixed the reviewed run `3` issues: `ltr` no longer matches inside transferase names, viral classification requires corroboration, SP6/T3/lone-T7 do not establish expression purpose, parser text checks use token boundaries, and marker-family aliases use an allowlist.
 - Host-aware shuttle classification fixed the run `4` pOR262 issue. General shuttle admission now requires host-diverse autonomous ORIs or trusted exact `shuttle vector` metadata; `f1`, `oriT`, and conditional SV40 origin signals do not independently establish cross-host support.
-- All-record reprocessing run `5` is blocked from landing pending human review of two explainable but previously unpredicted metadata-lane completeness changes: pRHBR17 `true -> false` and pNF2176 `false -> true`.
+- Human approved run `5` metadata-lane shuttle completeness changes on 2026-05-31. Run `6` verified idempotence with 82 examined, 0 updates, 0 missing caches, and 0 errors.
 
 ## QUESTIONS FOR THE HUMAN
 - Which synthesis provider profile should be the default for "synthesis-ready" when no provider is selected: conservative cross-provider, Twist, IDT, GenScript, or user-selected only?
@@ -128,6 +128,9 @@ RESUME HERE: Host-aware shuttle classification is committed locally and `make te
 - [ ] **GATE:** A full loop runs automatically â€” a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-05-31 - Human approved run `5` metadata-lane completeness outcomes: pRHBR17 correctly changed complete `true -> false` because it lacks detected MCS/GOI/promoter evidence; pNF2176 correctly changed complete `false -> true` because trusted shuttle metadata is paired with required components. Committed the reviewed audit.
+- 2026-05-31 - Verified offline reprocessing idempotence with run `6`: 82 examined, 0 updates, 82 skipped, 0 missing caches, 0 errors.
+- 2026-05-31 - Generated post-reprocess quality baseline `data/eval/quality/2026-05-31-165742-quality-report.{json,md}`: 82 records, 24 complete (29.3%), 55 unknown, profile breakdown `bacterial_cloning_vector:9`, `bacterial_expression_vector:3`, `general_shuttle_vector:7`, `mammalian_expression_vector:1`, `mammalian_reporter_vector:4`, `yeast_shuttle_vector:3`, `unknown:55`. Marker distribution is substantially cleaner than the prior baseline because stale replication-protein false positives were removed.
 - 2026-05-31 - Added ORI replication metadata, host-aware shuttle evidence, exact `shuttle vector` metadata admission, `f1`/`oriT` exclusions, conditional SV40-origin handling, pHK2 archaeal-origin support, source-backed `lpp-lac` bacterial-expression evidence, and distinct selectable-marker classes for cloning fallback. `make test` passes 145 tests.
 - 2026-05-31 - Ran offline `make reprocess MODE=all` as run `5`: 82 examined, 2 updates, 0 missing caches, 0 errors. Stopped before committing its report or running idempotence/quality metrics because metadata-lane shuttle completeness changed for `AY180162.1` / pRHBR17 (`true -> false`) and `U65076.1` / pNF2176 (`false -> true`), outside DEBUG-2's predicted set.
 - 2026-05-30 - Hardened profile classification with token-boundary signal matching, corroborated lentiviral hallmarks, explicit bacterial/mammalian expression-cassette evidence, sequencing-promoter cloning fallback, parser normalization boundaries, and a marker-gene allowlist. Added a 35-case labeled classifier regression matrix plus focused tests; `make test` passes 129 tests.
