@@ -1,4 +1,4 @@
-.PHONY: setup test lint ingest-all eval-retrieval services-down ingest-addgene ingest-genbank ingest-curated parse-sample
+.PHONY: setup test lint ingest-all eval-retrieval services-down ingest-addgene ingest-genbank ingest-curated parse-sample quality-report
 
 PYTHON ?= python
 MODE ?= dev
@@ -32,6 +32,9 @@ parse-sample:
 
 ingest-curated:
 	$(PYTHON) -m packages.data_pipeline.ingest.curated_seed
+
+quality-report:
+	$(PYTHON) -m packages.data_pipeline.quality_report
 
 eval-retrieval:
 	@echo "TODO: run Phase 1 retrieval evaluation"
