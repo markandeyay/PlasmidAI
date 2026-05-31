@@ -151,7 +151,7 @@ def summarize_results(
         raise ValueError("cannot summarize an empty retrieval evaluation")
     return RetrievalEvalReport(
         generated_at=generated_at.astimezone(UTC).isoformat(),
-        gold_path=str(gold_path),
+        gold_path=_display_path(gold_path),
         total_queries=total,
         top_k=top_k,
         top1_hit_rate=sum(1 for result in results if result.top1_hit) / total,
@@ -286,6 +286,12 @@ def _required_string_list(payload: Mapping[str, Any], key: str, line_number: int
     if not all(isinstance(item, str) and item.strip() for item in value):
         raise TypeError(f"retrieval gold line {line_number} field {key!r} must contain non-empty strings")
     return list(value)
+
+
+def _display_path(path: Path | str) -> str:
+    if isinstance(path, Path):
+        return path.as_posix()
+    return str(path).replace("\\", "/")
 
 
 if __name__ == "__main__":
