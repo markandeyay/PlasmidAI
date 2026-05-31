@@ -21,6 +21,7 @@ from botocore.exceptions import ClientError
 from psycopg.types.json import Jsonb
 
 from packages.core.schemas import Plasmid
+from packages.data_pipeline.marker_terms import contains_marker_term
 
 
 SOURCE = "genbank"
@@ -49,31 +50,6 @@ DEFAULT_QUERY = (
 )
 IUPAC_DNA_ALPHABET = frozenset("ACGTRYSWKMBDHVN")
 PLACEHOLDER_EMAILS = {"", "researcher@example.com", "user@example.com", "your.email@example.com"}
-MARKER_TERMS = (
-    "resistance",
-    "resistant",
-    "antibiotic",
-    "ampicillin",
-    "ampr",
-    "bla",
-    "beta-lactamase",
-    "kanamycin",
-    "kanr",
-    "neomycin",
-    "neo",
-    "chloramphenicol",
-    "cat",
-    "hygromycin",
-    "hyg",
-    "puromycin",
-    "puro",
-    "spectinomycin",
-    "streptomycin",
-    "tetracycline",
-    "zeocin",
-)
-
-
 class GenbankIngestionError(Exception):
     code = "genbank_ingestion_error"
 
@@ -654,7 +630,7 @@ def extract_markers(record: SeqRecord) -> list[str]:
         if feature.type not in {"CDS", "gene", "misc_feature"}:
             continue
         text = qualifier_text(feature).lower()
-        if any(term in text for term in MARKER_TERMS):
+        if contains_marker_term(text):
             candidates.append(best_feature_name(feature, fallback="selectable marker"))
     return dedupe_strings(candidates)
 

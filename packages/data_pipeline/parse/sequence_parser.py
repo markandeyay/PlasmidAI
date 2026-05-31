@@ -11,31 +11,11 @@ from Bio.SeqFeature import SeqFeature
 from Bio.SeqRecord import SeqRecord
 
 from packages.core.schemas import AnnotatedFeature, AnnotatedSequence
+from packages.data_pipeline.marker_terms import contains_marker_term
 from packages.data_pipeline.parse.classify import classify, is_annotation_complete
 
 
 REFERENCE_PATH = Path(__file__).resolve().parent / "references" / "component_library.json"
-MARKER_TERMS = {
-    "resistance",
-    "resistant",
-    "ampicillin",
-    "ampr",
-    "bla",
-    "beta-lactamase",
-    "kanamycin",
-    "kanr",
-    "neomycin",
-    "neo",
-    "chloramphenicol",
-    "cat",
-    "hygromycin",
-    "puromycin",
-    "puro",
-    "spectinomycin",
-    "streptomycin",
-    "tetracycline",
-    "zeocin",
-}
 RESTRICTION_SITES = {
     "GAATTC",
     "AAGCTT",
@@ -140,7 +120,7 @@ def normalize_feature_type(feature: SeqFeature) -> str | None:
         return "terminator"
     if feature_type == "misc_feature" and ("multiple cloning" in text or "polylinker" in text or "mcs" in text):
         return "MCS"
-    if feature_type in {"cds", "gene", "misc_feature"} and any(term in text for term in MARKER_TERMS):
+    if feature_type in {"cds", "gene", "misc_feature"} and contains_marker_term(text):
         return "marker"
     if feature_type == "cds":
         return "GOI"
