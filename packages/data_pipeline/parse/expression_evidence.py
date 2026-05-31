@@ -18,6 +18,7 @@ from packages.core.schemas import AnnotatedFeature, AnnotatedSequence
 # https://www.agilent.com/cs/library/usermanuals/public/212205.pdf
 # https://www.neb.com/en-us/tools-and-resources/feature-articles/protein-expression-with-t7-express-strains
 # https://www.merckmillipore.com/INTERSHOP/web/WFS/Merck-US-Site/en_US/-/USD/ShowDocument-File?ProductSKU=EMD_BIO-71827&DocumentId=TB055
+# https://www.ncbi.nlm.nih.gov/nuccore/U40578.1
 
 
 @dataclass(frozen=True)
@@ -39,6 +40,7 @@ def bacterial_expression_evidence(
             "tac": ("tac",),
             "trc": ("trc",),
             "araBAD/pBAD": ("arabad", "pbad"),
+            "lpp-lac": ("lpp-lac",),
             "T7": ("t7",),
             "SP6": ("sp6",),
             "T3": ("t3",),
@@ -55,7 +57,7 @@ def bacterial_expression_evidence(
         },
     )
     weak_promoters = tuple(label for label in ("SP6", "T3") if label in promoter_matches)
-    for label in ("tac", "trc", "araBAD/pBAD"):
+    for label in ("tac", "trc", "araBAD/pBAD", "lpp-lac"):
         oriented_slot = _first_oriented_slot(features, promoter_matches.get(label, ()))
         if oriented_slot is not None:
             signals = _ordered_unique((label, _slot_signal(oriented_slot), *corroboration))

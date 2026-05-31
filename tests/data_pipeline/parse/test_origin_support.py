@@ -37,7 +37,7 @@ def test_por262_like_two_bacterial_origins_do_not_trigger_general_shuttle() -> N
 
     result = classify(sequence)
 
-    assert result.profile == "unknown"
+    assert result.profile == "bacterial_expression_vector"
     assert is_annotation_complete(sequence, "general_shuttle_vector") is False
 
 

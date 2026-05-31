@@ -20,7 +20,7 @@
       "completion_rule": {
         "any_of": [
           {"all": ["ORI", "marker", "MCS"]},
-          {"all": ["ORI"], "minimum_counts": {"marker": 2}}
+          {"all": ["ORI"], "minimum_distinct_marker_classes": 2}
         ]
       },
       "citations": [
@@ -113,7 +113,7 @@
       "required": ["bacterial_origin", "bacterial_selectable_marker", "second_host_replication_or_maintenance_element"],
       "optional": ["second_host_selectable_marker", "MCS", "expression_cassette"],
       "not_required": ["profile-specific expression cassette unless the vector is sold or deposited as an expression vector"],
-      "completion_rule": {"minimum_counts": {"ORI": 2}, "all": ["marker"], "any": ["MCS", "GOI", "promoter"]},
+      "completion_rule": {"required_shuttle_evidence": "autonomous replication origins from at least two distinct host classes or trusted source metadata containing the exact phrase shuttle vector", "all": ["marker"], "any": ["MCS", "GOI", "promoter"]},
       "citations": [
         "Shuman HA. Shuttle vectors for genetic analysis of multiple host systems. General shuttle-vector convention: replication/selection functions for each host are required.",
         "Stoker NG et al. Development of mycobacterial shuttle vectors and their use in studying mycobacterial genetics. Gene. 1991;106(1):83-88. doi:10.1016/0378-1119(91)90569-C",

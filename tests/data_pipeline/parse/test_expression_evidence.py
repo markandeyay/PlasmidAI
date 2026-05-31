@@ -80,6 +80,19 @@ def test_trc_and_pbad_are_strong_bacterial_promoters_with_oriented_slots() -> No
         assert expected_signal in evidence.signals
 
 
+def test_lpp_lac_fusion_promoter_with_oriented_payload_is_expression_evidence() -> None:
+    evidence = bacterial_expression_evidence(
+        annotated(
+            feature("promoter", "lpp-lac fusion promoter", 0, 391),
+            feature("GOI", "NADPH-cytochrome P450 reductase", 454, 2515),
+            feature("terminator", "lpp transcription terminator", 2927, 3209),
+        )
+    )
+
+    assert evidence.qualifies is True
+    assert evidence.signals[:2] == ("lpp-lac", "oriented GOI: NADPH-cytochrome P450 reductase")
+
+
 def test_t7_requires_expression_cassette_corroboration() -> None:
     without_corroboration = bacterial_expression_evidence(
         annotated(

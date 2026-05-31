@@ -95,8 +95,15 @@ FALLBACK_ORIGIN_REFERENCES: tuple[OriginReference, ...] = (
         name="SV40 origin",
         aliases=("sv40 origin", "sv40 minimum origin", "sv40 ori"),
         replication_family="sv40",
-        replication_role="autonomous",
+        replication_role="conditional_replication",
         host_class="mammalian",
+    ),
+    OriginReference(
+        name="pHK2 replicon",
+        aliases=("phk2 replicon", "phk2 archaeal origin", "phk2 origin", "phk2"),
+        replication_family="phk2",
+        replication_role="autonomous",
+        host_class="archaeal",
     ),
     OriginReference(
         name="second-host replication origin",
@@ -219,6 +226,8 @@ def _normalized_role(replication_role: str | None) -> str | None:
         return "autonomous"
     if normalized in {"ssdna_rescue", "single_strand_rescue"}:
         return "ssdna_rescue"
+    if normalized in {"conditional", "conditional_replication"}:
+        return "conditional_replication"
     if normalized in {"transfer", "origin_of_transfer"}:
         return "transfer"
     return normalized

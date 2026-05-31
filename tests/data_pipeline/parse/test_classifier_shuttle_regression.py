@@ -27,18 +27,19 @@ def annotated(*items: tuple[str, str]) -> AnnotatedSequence:
     )
 
 
-@pytest.mark.xfail(reason="Current classifier still overcalls dual bacterial origins as general shuttle.")
-def test_por262_like_pbr322_plus_pmb1_stays_bacterial_cloning() -> None:
+def test_por262_like_pbr322_plus_pmb1_is_bacterial_expression_not_shuttle() -> None:
     result = classify(
         annotated(
+            ("promoter", "lpp-lac fusion promoter"),
+            ("GOI", "NADPH-cytochrome P450 reductase"),
+            ("terminator", "lpp transcription terminator"),
             ("ORI", "pBR322 origin"),
             ("ORI", "pMB1 origin"),
             ("marker", "AmpR/bla"),
-            ("MCS", "multiple cloning site"),
         )
     )
 
-    assert result.profile == "bacterial_cloning_vector"
+    assert result.profile == "bacterial_expression_vector"
     assert result.profile != "general_shuttle_vector"
 
 
@@ -46,6 +47,7 @@ def test_pbluescript_like_stays_bacterial_cloning() -> None:
     result = classify(
         annotated(
             ("ORI", "pUC origin"),
+            ("ORI", "f1 origin"),
             ("marker", "AmpR/bla"),
             ("MCS", "pBluescript polylinker"),
             ("promoter", "T7 sequencing promoter"),
@@ -82,9 +84,6 @@ def test_pyes2_like_stays_yeast_shuttle() -> None:
     assert result.profile == "yeast_shuttle_vector"
 
 
-@pytest.mark.xfail(
-    reason="Host-aware archaeal-origin handling is not wired into the public classifier yet.",
-)
 def test_colE1_plus_pHK2_with_marker_and_mcs_becomes_general_shuttle() -> None:
     result = classify(
         annotated(
