@@ -1,0 +1,433 @@
+{
+  "batches": [
+    {
+      "batch": 1,
+      "errors": 0,
+      "records_examined": 82,
+      "records_missing_cache": 0,
+      "records_updated": 0
+    }
+  ],
+  "changes": [],
+  "classifications": [
+    {
+      "annotation_complete": false,
+      "id": "curated:pACYC184",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": true,
+      "id": "curated:pBluescript-II-SK-minus",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "curated:pBluescript-II-SK-plus",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "curated:pBR322",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "curated:pEGFP-N1",
+      "vector_profile": "mammalian_reporter_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "curated:pGEX-4T-1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "curated:pGL3-Basic",
+      "vector_profile": "mammalian_reporter_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "curated:pGL4-10-luc2",
+      "vector_profile": "mammalian_reporter_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "curated:pRS415",
+      "vector_profile": "yeast_shuttle_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "curated:pRS416",
+      "vector_profile": "yeast_shuttle_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "curated:pUC18",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "curated:pUC19",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF058756.1",
+      "vector_profile": "mammalian_reporter_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:AF097552.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:AF147463.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF216802.1",
+      "vector_profile": "general_shuttle_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:AF519766.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:AY180162.1",
+      "vector_profile": "general_shuttle_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AY428809.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP121282.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190835.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190836.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190842.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190845.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190847.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190849.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190850.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190851.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190852.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190854.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190855.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190857.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190859.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190864.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190865.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190867.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190868.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190870.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190872.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190873.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190874.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190875.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190876.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190878.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190879.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191035.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191036.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191037.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191042.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191051.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191052.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191053.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191054.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191060.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191063.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191068.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191069.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191070.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191071.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191072.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191074.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191075.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191076.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191078.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP196381.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:PV135004.1",
+      "vector_profile": "yeast_shuttle_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:PX275371.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:PZ138287.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:PZ407647.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U07164.1",
+      "vector_profile": "general_shuttle_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U07165.1",
+      "vector_profile": "general_shuttle_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U07166.1",
+      "vector_profile": "general_shuttle_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:U07167.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U07168.1",
+      "vector_profile": "general_shuttle_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U40578.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U47119.2",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U47120.2",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U47121.2",
+      "vector_profile": "mammalian_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U47626.2",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:U47670.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U65076.1",
+      "vector_profile": "general_shuttle_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:U65078.1",
+      "vector_profile": "unknown"
+    }
+  ],
+  "errors": [],
+  "finished_at": "2026-05-31T16:57:25.335815+00:00",
+  "mode": "all",
+  "records_examined": 82,
+  "records_missing_cache": 0,
+  "records_skipped": 82,
+  "records_updated": 0,
+  "run_id": 6,
+  "started_at": "2026-05-31T16:56:42.708040+00:00"
+}
