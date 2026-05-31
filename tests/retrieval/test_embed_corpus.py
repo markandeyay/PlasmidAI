@@ -26,6 +26,24 @@ class FakeObjectStore:
         return self.payloads.get(key)
 
 
+class RecordingFakeEmbedder:
+    def __init__(self) -> None:
+        self.delegate = FakeEmbedder()
+        self.batch_sizes: list[int] = []
+
+    @property
+    def dim(self) -> int:
+        return self.delegate.dim
+
+    @property
+    def model_name(self) -> str:
+        return self.delegate.model_name
+
+    def embed(self, texts: list[str]) -> list[list[float]]:
+        self.batch_sizes.append(len(texts))
+        return self.delegate.embed(texts)
+
+
 def plasmid(plasmid_id: str, raw_ref: str, *, use_cases: list[str] | None = None) -> Plasmid:
     return Plasmid(
         id=plasmid_id,
@@ -73,7 +91,7 @@ ORIGIN
     )
     store = FakeObjectStore({"raw/curated/pUC19.gb": genbank_blob, "raw/addgene/1001.json": None})
     vector_index = InMemoryVectorStore(model_name="fake-hash-embedder-v1", dimension=768)
-    embedder = FakeEmbedder()
+    embedder = RecordingFakeEmbedder()
 
     first = embed_corpus(repo, store, vector_index, embedder, batch_size=1)
     second = embed_corpus(repo, store, vector_index, embedder, batch_size=2)
@@ -88,6 +106,8 @@ ORIGIN
     assert second.inserted == 0
     assert second.updated == 0
     assert second.skipped == 2
+    assert second.attempted_embeddings == 0
+    assert embedder.batch_sizes == [1, 1, 0]
 
     row = vector_index.get_row("curated:pUC19")
     assert row is not None

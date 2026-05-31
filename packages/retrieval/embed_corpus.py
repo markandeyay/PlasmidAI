@@ -41,6 +41,8 @@ class VectorIndex(Protocol):
 
     def ensure_schema(self) -> None: ...
 
+    def filter_changed(self, documents: dict[str, str]) -> set[str]: ...
+
     def upsert(self, records: list[EmbeddingRecord]) -> UpsertResult: ...
 
 
@@ -190,8 +192,11 @@ def embed_corpus(
             annotated_sequence = _load_annotation(plasmid, object_store, report)
             composed.append((plasmid, compose_plasmid_document(plasmid, annotated_sequence)))
 
-        report.attempted_embeddings += len(composed)
-        vectors = embedder.embed([item.text for _, item in composed])
+        changed_ids = vector_index.filter_changed({plasmid.id: item.text for plasmid, item in composed})
+        pending = [(plasmid, item) for plasmid, item in composed if plasmid.id in changed_ids]
+        report.skipped += len(composed) - len(pending)
+        report.attempted_embeddings += len(pending)
+        vectors = embedder.embed([item.text for _, item in pending])
         records = [
             EmbeddingRecord(
                 plasmid_id=plasmid.id,
@@ -199,7 +204,7 @@ def embed_corpus(
                 embedding=vector,
                 metadata=document.metadata,
             )
-            for (plasmid, document), vector in zip(composed, vectors, strict=True)
+            for (plasmid, document), vector in zip(pending, vectors, strict=True)
         ]
         result = vector_index.upsert(records)
         report.inserted += result.inserted

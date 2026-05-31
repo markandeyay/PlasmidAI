@@ -159,6 +159,9 @@ class VectorIndex(Protocol):
     def ensure_schema(self) -> None:
         ...
 
+    def filter_changed(self, documents: Mapping[str, str]) -> set[str]:
+        ...
+
     def upsert(self, records: Sequence[EmbeddingRecord]) -> UpsertResult:
         ...
 
@@ -270,6 +273,39 @@ class PgVectorStore:
                         updated += 1
             connection.commit()
         return UpsertResult(inserted=inserted, updated=updated, skipped=skipped)
+
+    def filter_changed(self, documents: Mapping[str, str]) -> set[str]:
+        if not documents:
+            return set()
+        with self._connection_factory() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    f"""
+                    SELECT plasmid_id, document_sha256, model_name, embedding_dim
+                    FROM {self.table_name}
+                    WHERE plasmid_id = ANY(%s)
+                    """,
+                    (list(documents),),
+                )
+                rows = cursor.fetchall()
+        existing = {
+            row[0]: EmbeddingRowState(
+                document_sha256=row[1],
+                model_name=row[2],
+                embedding_dim=int(row[3]),
+            )
+            for row in rows
+        }
+        return {
+            plasmid_id
+            for plasmid_id, document in documents.items()
+            if not decide_embedding_upsert(
+                existing.get(plasmid_id),
+                composed_document=document,
+                model_name=self.model_name,
+                embedding_dim=self.dimension,
+            ).should_skip
+        }
 
     def query(
         self,
@@ -400,6 +436,26 @@ class InMemoryVectorStore:
             else:
                 updated += 1
         return UpsertResult(inserted=inserted, updated=updated, skipped=skipped)
+
+    def filter_changed(self, documents: Mapping[str, str]) -> set[str]:
+        changed: set[str] = set()
+        for plasmid_id, document in documents.items():
+            row = self._rows.get(plasmid_id)
+            existing = None
+            if row is not None:
+                existing = EmbeddingRowState(
+                    document_sha256=row["document_sha256"],
+                    model_name=row["model_name"],
+                    embedding_dim=row["embedding_dim"],
+                )
+            if not decide_embedding_upsert(
+                existing,
+                composed_document=document,
+                model_name=self.model_name,
+                embedding_dim=self.dimension,
+            ).should_skip:
+                changed.add(plasmid_id)
+        return changed
 
     def query(
         self,
