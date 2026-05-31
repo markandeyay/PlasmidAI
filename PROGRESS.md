@@ -1,14 +1,14 @@
 ﻿# PROGRESS â€” Build State (mutable)
 
 ## AT-A-GLANCE (update every session)
-- **Current Phase:** Phase 0: Foundations and Data Pipeline
-- **Next Concrete Task:** Begin Phase 1 retrieval-layer foundation: choose the biomedical text encoder, define plasmid document composition, implement the Embedder interface with a deterministic fake, and persist idempotent pgvector embeddings.
+- **Current Phase:** Phase 1: Retrieval layer
+- **Next Concrete Task:** Build the Phase 1 embedding foundation: choose a commercially usable biomedical text encoder, define composed plasmid documents, implement the `Embedder` interface with a deterministic fake, and persist idempotent pgvector embeddings.
 - **Overall completion estimate:** 5%
 - **Last session date:** 2026-05-30
 - **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 145 unit tests
 
 ## RESUME HERE (only if mid-task)
-RESUME HERE: Phase 0 corpus repair checkpoint is clean. The human approved run `5` metadata-lane changes: pRHBR17 correctly became incomplete because no MCS/GOI/promoter was detected; pNF2176 correctly became complete because its trusted shuttle metadata is paired with required components. Run `6` repeated `make reprocess MODE=all` across 82 records with 0 updates, proving idempotence. Updated quality baseline: `data/eval/quality/2026-05-31-165742-quality-report.{json,md}`. `make test` passes 145 tests. Next: perform Phase 1 startup ritual and build the retrieval embedder foundation.
+RESUME HERE: Phase 0 corpus repair checkpoint is clean. The human approved run `5` metadata-lane changes: pRHBR17 correctly became incomplete because no MCS/GOI/promoter was detected; pNF2176 correctly became complete because its trusted shuttle metadata is paired with required components. Run `6` repeated `make reprocess MODE=all` across 82 records with 0 updates, proving idempotence. Updated quality baseline: `data/eval/quality/2026-05-31-165742-quality-report.{json,md}`. `make test` passes 145 tests. Phase 1 startup ritual completed: re-read Section 6, the `Embedder` contract, and representation/model findings. Next: build and verify the retrieval embedder foundation.
 
 ## KNOWN ISSUES / BLOCKERS
 - Phase 0 is authorized as of 2026-05-29; do not begin Phase 1 until the Phase 0 gate is met and reviewed.
@@ -128,6 +128,7 @@ RESUME HERE: Phase 0 corpus repair checkpoint is clean. The human approved run `
 - [ ] **GATE:** A full loop runs automatically â€” a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-05-31 - Started Phase 1 retrieval layer after the approved Phase 0 corpus-repair checkpoint. Re-read SYSTEM_DESIGN Section 6 and the `Embedder` contract plus `research/findings/representation.md` and `research/findings/sequence_models.md`; selected embedding service and composed-document foundation as the first vertical slice.
 - 2026-05-31 - Human approved run `5` metadata-lane completeness outcomes: pRHBR17 correctly changed complete `true -> false` because it lacks detected MCS/GOI/promoter evidence; pNF2176 correctly changed complete `false -> true` because trusted shuttle metadata is paired with required components. Committed the reviewed audit.
 - 2026-05-31 - Verified offline reprocessing idempotence with run `6`: 82 examined, 0 updates, 82 skipped, 0 missing caches, 0 errors.
 - 2026-05-31 - Generated post-reprocess quality baseline `data/eval/quality/2026-05-31-165742-quality-report.{json,md}`: 82 records, 24 complete (29.3%), 55 unknown, profile breakdown `bacterial_cloning_vector:9`, `bacterial_expression_vector:3`, `general_shuttle_vector:7`, `mammalian_expression_vector:1`, `mammalian_reporter_vector:4`, `yeast_shuttle_vector:3`, `unknown:55`. Marker distribution is substantially cleaner than the prior baseline because stale replication-protein false positives were removed.
