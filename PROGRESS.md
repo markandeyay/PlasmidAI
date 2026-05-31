@@ -2,15 +2,17 @@
 
 ## AT-A-GLANCE (update every session)
 - **Current Phase:** Phase 1: Retrieval layer
-- **Next Concrete Task:** Build the hybrid retrieval service over the composed-document pgvector index, then add the first retrieval evaluation harness pass against `data/eval/retrieval_gold.jsonl`.
-- **Overall completion estimate:** 8%
+- **Next Concrete Task:** Expand the retrieval gold set to 20+ queries, then tune the hybrid retrieval ranking/filters against the expanded set before assessing the Phase 1 gate.
+- **Overall completion estimate:** 10%
 - **Last session date:** 2026-05-31
-- **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 155 unit tests
+- **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 187 passing tests / 1 skipped real-LLM smoke test
 
 ## RESUME HERE (only if mid-task)
-RESUME HERE: Phase 1 embedding foundation is complete. The selected encoder is pinned `NeuML/pubmedbert-base-embeddings@b79526d6ef3645e0df4530322e266f24c829f5ef` with 768-dimensional normalized vectors. `make embed-corpus FAKE=1` inserted 82 fake vectors and repeated as a true pre-inference no-op. The real-model pass replaced them with 82 PubMedBERT vectors; its warm repeat skipped all 82 unchanged composed documents before inference. A `--local-files-only --limit 1` probe verified the cached checkpoint can initialize offline. Baseline: `data/eval/retrieval/2026-05-31-172450-embedding-baseline.md`. `make test` passes 155 tests. Next: implement hybrid semantic + structured-filter retrieval and an evaluation harness against the starter gold set.
+RESUME HERE: Phase 1 retrieval MVP vertical slice now runs end to end. `make design MODE=offline TEXT="I need a yeast centromere shuttle plasmid specifically selected by URA3 rather than LEU2."` returns `curated:pRS416` as the top match with grounded recommendation text. Hybrid retrieval, intent parsing, recommendation generation, and retrieval eval harness are implemented. Latest baseline: `data/eval/retrieval/2026-05-31-211351-retrieval-baseline.md` / `.json` on 12 starter queries, top-1 `0.750`, top-5 `1.000`, MRR `0.850`. `make test` passes 187 tests with 1 skipped real-LLM smoke test. Next: grow `data/eval/retrieval_gold.jsonl` to 20+ queries and tune ranking/filter behavior before claiming the Phase 1 gate.
 
 ## KNOWN ISSUES / BLOCKERS
+- Phase 1 retrieval baseline on the expanded 12-query starter gold set is strong but not a gate result: Phase 1 gate still requires 20 realistic queries and top-5 hit rate >= 80%. Current baseline is `data/eval/retrieval/2026-05-31-211351-retrieval-baseline.md` with top-1 `0.750`, top-5 `1.000`, MRR `0.850`.
+- Baseline retrieval still shows ranking/tie-break opportunities before the gate set: pACYC184 and pBR322 appear at rank 2 behind GenBank pSUP202 for chloramphenicol/tetracycline-style cloning queries, and pBluescript appears at rank 5 for the phagemid query.
 - Phase 1 is authorized and active as of 2026-05-31. Phase 0 remains below its final scale gate while Addgene partner access is pending; current Phase 1 work uses the verified local corpus foundation.
 - The GNU Make directory was added to the user PATH on 2026-05-29, but the current Codex host process has not inherited that PATH refresh. Use `C:\Program Files (x86)\GnuWin32\bin\make.exe` directly in this process if plain `make` is still unresolved; new user shells should pick up the user PATH.
 - Addgene dev-mode ingestion is blocked pending Addgene partner-program response on API access, terms, and commercial licensing. This is not a quick local credential/config unblock; keep the existing ingester parked until the partner access path is resolved.
@@ -80,10 +82,10 @@ RESUME HERE: Phase 1 embedding foundation is complete. The selected encoder is p
 
 - [x] Embedding service wraps a biomedical encoder (Section 6.2) behind the `Embedder` interface
 - [x] Every plasmid record embedded and indexed in the vector DB
-- [ ] NLU parser converts free-text experimental goals into the structured `DesignSpec` (Section 12.4) via an LLM behind the `IntentParser` interface
-- [ ] Retrieval service returns top-K relevant plasmids for a `DesignSpec`, with hybrid (semantic + structured-filter) search
-- [ ] Recommendation generator produces a plain-English, ranked explanation of how to adapt each retrieved plasmid
-- [ ] Evaluation harness measures retrieval quality against a hand-labeled gold set (Section 6.6)
+- [x] NLU parser converts free-text experimental goals into the structured `DesignSpec` (Section 12.4) via an LLM behind the `IntentParser` interface
+- [x] Retrieval service returns top-K relevant plasmids for a `DesignSpec`, with hybrid (semantic + structured-filter) search
+- [x] Recommendation generator produces a plain-English, ranked explanation of how to adapt each retrieved plasmid
+- [x] Evaluation harness measures retrieval quality against a hand-labeled gold set (Section 6.6)
 - [ ] **GATE:** Given 20 realistic natural-language queries, the system returns relevant plasmids with a top-5 hit rate â‰¥ 80% on the gold set, end-to-end, via a single function call.
 
 ### 3.3 Phase 2 â€” Sequence generation
@@ -128,6 +130,11 @@ RESUME HERE: Phase 1 embedding foundation is complete. The selected encoder is p
 - [ ] **GATE:** A full loop runs automatically â€” a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-05-31 - Completed Phase 1 hybrid retrieval MVP slice. Added controlled vocabularies in `packages/core/vocabularies.py`, `packages/retrieval/intent_parser.py` with deterministic `FakeIntentParser` and LLM-backed parser wrapper, `packages/retrieval/retriever.py` with structured hard filters plus pgvector semantic ranking, `packages/retrieval/recommender.py` with grounded template and LLM recommendation generators, and `packages/retrieval/pipeline.py` with `design_retrieval` / `make design`.
+- 2026-05-31 - Expanded `data/eval/retrieval_gold.jsonl` from 7 to 12 labeled curated-seed queries, adding pBR322, pBluescript, pUC orientation, pEGFP-N1 marker, and pRS416/URA3 cases.
+- 2026-05-31 - Added `packages/retrieval/eval.py` and `make eval-retrieval`. Baseline report saved at `data/eval/retrieval/2026-05-31-211351-retrieval-baseline.{md,json}`: 12 queries, top-1 `0.750`, top-5 `1.000`, MRR `0.850`.
+- 2026-05-31 - Verified end-to-end retrieval on a real local query with cached PubMedBERT embeddings and pgvector: `make design MODE=offline TEXT="I need a yeast centromere shuttle plasmid specifically selected by URA3 rather than LEU2."` returns `curated:pRS416` as top match.
+- 2026-05-31 - Final verification: `C:\Program Files (x86)\GnuWin32\bin\make.exe test` passes Docker Compose, Postgres with pgvector, MinIO, Redis, and 187 tests with 1 skipped real-LLM smoke test.
 - 2026-05-31 - Completed the Phase 1 embedding foundation. Selected and pinned Apache-2.0 `NeuML/pubmedbert-base-embeddings@b79526d6ef3645e0df4530322e266f24c829f5ef`; added deterministic composed retrieval documents, a hash-based `FakeEmbedder`, real Transformers loading with mean pooling and L2 normalization, pgvector HNSW storage, starter retrieval gold set, and `make embed-corpus`.
 - 2026-05-31 - Hardened corpus embedding idempotence so unchanged composed-document hashes are filtered before model inference. Live fake run inserted 82 vectors; its immediate repeat attempted 0 embeddings and skipped all 82 documents.
 - 2026-05-31 - Ran the pinned real biomedical encoder against 82 cached plasmid records: 82 annotations loaded from MinIO, 82 normalized 768-dimensional vectors written to pgvector, 0 missing caches, 0 parse failures. Warm repeat skipped all 82 before inference. Verified one cached checkpoint startup with `--local-files-only --limit 1`. Baseline saved at `data/eval/retrieval/2026-05-31-172450-embedding-baseline.md`.
