@@ -10,22 +10,8 @@ MANIFEST_PATH = ROOT / "packages" / "data_pipeline" / "ingest" / "curated_seed_m
 
 
 def _load_curated_ids() -> set[str]:
-    ids: set[str] = set()
-    in_records = False
-    current_id = None
-    for line in MANIFEST_PATH.read_text(encoding="utf-8").splitlines():
-        stripped = line.strip()
-        if stripped == "records:":
-            in_records = True
-            continue
-        if not in_records:
-            continue
-        if stripped.startswith("- id: "):
-            current_id = stripped.split(": ", 1)[1].strip().strip('"')
-            ids.add(current_id)
-        elif stripped.startswith("id: ") and current_id is None:
-            ids.add(stripped.split(": ", 1)[1].strip().strip('"'))
-    return ids
+    manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+    return {record["id"] for record in manifest["records"]}
 
 
 def test_retrieval_gold_jsonl_structure_and_targets():
