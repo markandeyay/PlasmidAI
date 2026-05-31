@@ -98,7 +98,41 @@ def test_evaluate_pipeline_computes_top1_top5_and_mrr() -> None:
     assert report.top1_hit_rate == pytest.approx(1 / 3)
     assert report.top5_hit_rate == pytest.approx(2 / 3)
     assert report.mrr == pytest.approx((1.0 + (1.0 / 3.0)) / 3.0)
+    assert report.retrieval_queries == 3
+    assert report.clarification_queries == 0
+    assert report.clarification_pass_rate is None
     assert pipeline.calls == [("q1", 5), ("q2", 5), ("q3", 5)]
+
+
+def test_evaluate_pipeline_scores_expected_clarification_separately() -> None:
+    records = [
+        GoldRecord("q1", ["pUC19"], "r1", "s1"),
+        GoldRecord("ambiguous", [], "ask first", "human label", expected_clarification=True),
+    ]
+    clarified = RetrievalResult(
+        spec=DesignSpec(
+            organism="unknown",
+            clarification_needed=True,
+            clarification_question="Which host?",
+        ),
+        retrieved=[],
+        recommendations=[],
+        generated_by="fake",
+        clarification_needed=True,
+        clarification_question="Which host?",
+    )
+    pipeline = FakePipeline({"q1": retrieval_result(["curated:pUC19"]), "ambiguous": clarified})
+
+    report = evaluate_pipeline(records, pipeline, generated_at=datetime(2026, 5, 31, tzinfo=UTC))
+
+    assert report.total_queries == 2
+    assert report.retrieval_queries == 1
+    assert report.clarification_queries == 1
+    assert report.top1_hit_rate == 1.0
+    assert report.top5_hit_rate == 1.0
+    assert report.mrr == 1.0
+    assert report.clarification_pass_rate == 1.0
+    assert report.results[1].clarification_pass is True
 
 
 def test_load_gold_validates_jsonl_records(tmp_path) -> None:
@@ -115,6 +149,20 @@ def test_load_gold_validates_jsonl_records(tmp_path) -> None:
     path.write_text(json.dumps({"query": "q", "acceptable_target_ids": [], "rationale": "because", "source": "manifest"}), encoding="utf-8")
     with pytest.raises(ValueError, match="acceptable_target_ids"):
         load_gold(path)
+
+    path.write_text(
+        json.dumps(
+            {
+                "query": "underspecified",
+                "acceptable_target_ids": [],
+                "rationale": "ask first",
+                "source": "human label",
+                "expected_clarification": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+    assert load_gold(path) == [GoldRecord("underspecified", [], "ask first", "human label", expected_clarification=True)]
 
 
 def test_render_markdown_report_and_write_report(tmp_path) -> None:

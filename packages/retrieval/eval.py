@@ -22,6 +22,7 @@ class GoldRecord:
     acceptable_target_ids: list[str]
     rationale: str
     source: str
+    expected_clarification: bool = False
 
 
 @dataclass(frozen=True)
@@ -43,6 +44,8 @@ class QueryEvalResult:
     top5_hit: bool
     clarification_needed: bool
     clarification_question: str | None
+    expected_clarification: bool
+    clarification_pass: bool | None
     rationale: str
     source: str
 
@@ -52,10 +55,13 @@ class RetrievalEvalReport:
     generated_at: str
     gold_path: str
     total_queries: int
+    retrieval_queries: int
+    clarification_queries: int
     top_k: int
     top1_hit_rate: float
     top5_hit_rate: float
     mrr: float
+    clarification_pass_rate: float | None
     results: list[QueryEvalResult]
 
 
@@ -75,9 +81,15 @@ def load_gold(path: Path) -> list[GoldRecord]:
         try:
             record = GoldRecord(
                 query=_required_string(payload, "query", line_number),
-                acceptable_target_ids=_required_string_list(payload, "acceptable_target_ids", line_number),
+                acceptable_target_ids=_required_string_list(
+                    payload,
+                    "acceptable_target_ids",
+                    line_number,
+                    allow_empty=payload.get("expected_clarification") is True,
+                ),
                 rationale=_required_string(payload, "rationale", line_number),
                 source=_required_string(payload, "source", line_number),
+                expected_clarification=_optional_bool(payload, "expected_clarification", line_number),
             )
         except TypeError as exc:
             raise ValueError(str(exc)) from exc
@@ -134,6 +146,12 @@ def evaluate_query_result(
         top5_hit=rank is not None and rank <= 5,
         clarification_needed=result.clarification_needed if result is not None else False,
         clarification_question=result.clarification_question if result is not None else None,
+        expected_clarification=record.expected_clarification,
+        clarification_pass=(
+            (result.clarification_needed if result is not None else False)
+            if record.expected_clarification
+            else None
+        ),
         rationale=record.rationale,
         source=record.source,
     )
@@ -149,14 +167,25 @@ def summarize_results(
     total = len(results)
     if total == 0:
         raise ValueError("cannot summarize an empty retrieval evaluation")
+    retrieval_results = [result for result in results if not result.expected_clarification]
+    clarification_results = [result for result in results if result.expected_clarification]
+    if not retrieval_results:
+        raise ValueError("cannot summarize retrieval metrics without retrieval queries")
     return RetrievalEvalReport(
         generated_at=generated_at.astimezone(UTC).isoformat(),
         gold_path=_display_path(gold_path),
         total_queries=total,
+        retrieval_queries=len(retrieval_results),
+        clarification_queries=len(clarification_results),
         top_k=top_k,
-        top1_hit_rate=sum(1 for result in results if result.top1_hit) / total,
-        top5_hit_rate=sum(1 for result in results if result.top5_hit) / total,
-        mrr=sum(result.reciprocal_rank for result in results) / total,
+        top1_hit_rate=sum(1 for result in retrieval_results if result.top1_hit) / len(retrieval_results),
+        top5_hit_rate=sum(1 for result in retrieval_results if result.top5_hit) / len(retrieval_results),
+        mrr=sum(result.reciprocal_rank for result in retrieval_results) / len(retrieval_results),
+        clarification_pass_rate=(
+            sum(1 for result in clarification_results if result.clarification_pass) / len(clarification_results)
+            if clarification_results
+            else None
+        ),
         results=list(results),
     )
 
@@ -189,6 +218,8 @@ def render_markdown_report(report: RetrievalEvalReport) -> str:
         f"- Generated at: `{report.generated_at}`",
         f"- Gold file: `{report.gold_path}`",
         f"- Queries: `{report.total_queries}`",
+        f"- Retrieval queries scored: `{report.retrieval_queries}`",
+        f"- Clarification queries: `{report.clarification_queries}`",
         f"- Top K: `{report.top_k}`",
         f"- Top-1 hit rate: `{report.top1_hit_rate:.3f}`",
         f"- Top-5 hit rate: `{report.top5_hit_rate:.3f}`",
@@ -197,6 +228,8 @@ def render_markdown_report(report: RetrievalEvalReport) -> str:
         "## Per-Query Results",
         "",
     ]
+    if report.clarification_pass_rate is not None:
+        lines.insert(10, f"- Clarification pass rate: `{report.clarification_pass_rate:.3f}`")
     for index, result in enumerate(report.results, start=1):
         rank = "miss" if result.rank is None else f"hit at rank {result.rank}"
         lines.extend(
@@ -206,6 +239,7 @@ def render_markdown_report(report: RetrievalEvalReport) -> str:
                 f"- Acceptable IDs: `{', '.join(result.acceptable_target_ids)}`",
                 f"- Result: `{rank}`",
                 f"- Reciprocal rank: `{result.reciprocal_rank:.3f}`",
+                f"- Expected clarification: `{result.expected_clarification}`",
                 f"- Clarification needed: `{result.clarification_needed}`",
             ]
         )
@@ -279,13 +313,26 @@ def _required_string(payload: Mapping[str, Any], key: str, line_number: int) -> 
     return value
 
 
-def _required_string_list(payload: Mapping[str, Any], key: str, line_number: int) -> list[str]:
+def _required_string_list(
+    payload: Mapping[str, Any],
+    key: str,
+    line_number: int,
+    *,
+    allow_empty: bool = False,
+) -> list[str]:
     value = payload.get(key)
-    if not isinstance(value, list) or not value:
+    if not isinstance(value, list) or (not value and not allow_empty):
         raise TypeError(f"retrieval gold line {line_number} needs non-empty list field {key!r}")
     if not all(isinstance(item, str) and item.strip() for item in value):
         raise TypeError(f"retrieval gold line {line_number} field {key!r} must contain non-empty strings")
     return list(value)
+
+
+def _optional_bool(payload: Mapping[str, Any], key: str, line_number: int) -> bool:
+    value = payload.get(key, False)
+    if not isinstance(value, bool):
+        raise TypeError(f"retrieval gold line {line_number} field {key!r} must be a boolean")
+    return value
 
 
 def _display_path(path: Path | str) -> str:
