@@ -1,0 +1,321 @@
+{
+  "annotation_complete": {
+    "by_profile": {
+      "bacterial_cloning_vector": {
+        "count": 5,
+        "rate": 0.833333,
+        "total": 6
+      },
+      "bacterial_expression_vector": {
+        "count": 1,
+        "rate": 1.0,
+        "total": 1
+      },
+      "lentiviral_or_retroviral_transfer_vector": {
+        "count": 0,
+        "rate": 0.0,
+        "total": 5
+      },
+      "mammalian_reporter_vector": {
+        "count": 3,
+        "rate": 1.0,
+        "total": 3
+      },
+      "unknown": {
+        "count": 0,
+        "rate": 0.0,
+        "total": 41
+      },
+      "yeast_shuttle_vector": {
+        "count": 2,
+        "rate": 0.333333,
+        "total": 6
+      }
+    },
+    "count": 11,
+    "rate": 0.177419
+  },
+  "distributions": {
+    "applications": {
+      "Aeromonas salmonicida subsp. salmonicida strain 2402/89 plasmid pRAS1_2402_89, complete sequence": 1,
+      "CMV-driven C-terminal EGFP fusion vector with neomycin/G418 mammalian selectable marker and kanamycin bacterial marker.": 1,
+      "Classic cloning vector with pMB1-derived replication region, rop, bla/AmpR, and tetracycline resistance.": 1,
+      "Cloning vector pACYC184": 1,
+      "Cloning vector pBR322, complete sequence": 1,
+      "Cloning vector pEGFP-N1, complete sequence, enhanced green fluorescent protein (egfp) and neomycin phosphotransferase genes, complete cds": 1,
+      "Cloning vector pGL3-Basic, complete sequence": 1,
+      "Cloning vector pUC19c, complete sequence": 1,
+      "Corynebacterium accolens strain LaCa_108 plasmid pLaCa_108a, complete sequence": 1,
+      "Corynebacterium accolens strain LaCa_113 plasmid pLaCa_113a, complete sequence": 1,
+      "Corynebacterium accolens strain LaCa_114 plasmid pLaCa_114a, complete sequence": 1,
+      "Corynebacterium accolens strain LaCa_98 plasmid pLaCa_98a, complete sequence": 1,
+      "Corynebacterium sp. LaCa_100 plasmid pLaCa_100a, complete sequence": 1,
+      "Corynebacterium sp. LaCa_100 plasmid pLaCa_100b, complete sequence": 1,
+      "Corynebacterium sp. LaCa_102 plasmid pLaCa_102a, complete sequence": 1,
+      "Corynebacterium sp. LaCa_102 plasmid pLaCa_102b, complete sequence": 1,
+      "Corynebacterium sp. LaCa_204 plasmid pLaCa_204a, complete sequence": 1,
+      "Corynebacterium sp. LaCa_204 plasmid pLaCa_204b, complete sequence": 1,
+      "Corynebacterium sp. LaCa_204 plasmid pLaCa_204c, complete sequence": 1,
+      "Firefly luciferase reporter vector pGL4.10[luc2], complete sequence": 1,
+      "GST fusion bacterial expression backbone with tac/lac regulation and AmpR.": 1,
+      "Halobacterium sp. CBA1161 plasmid pCBA1161-02, complete sequence": 1,
+      "Herbiconiux sp. J20-18 plasmid unnamed1, complete sequence": 1,
+      "High-copy cloning vector with lacZ alpha/MCS, AmpR, and pUC/pMB1-derived origin.": 1,
+      "Low-copy p15A-origin vector with chloramphenicol and tetracycline resistance.": 1,
+      "Phagemid with f1 minus orientation; kept separate from SK(+) because orientation affects parser coordinates.": 1,
+      "Phagemid with f1 plus orientation, lacZ alpha/MCS, T7/T3 promoters, lac promoter, pUC origin, and bla.": 1,
+      "Promoterless firefly luciferase reporter vector; intentionally lacks a eukaryotic promoter.": 1,
+      "Promoterless luc2 reporter vector in the pGL4 family.": 1,
+      "Staphylococcus aureus strain LaCa_185 plasmid pLaCa_185a, complete sequence": 1,
+      "Staphylococcus aureus strain LaCa_187 plasmid pLaCa_187a, complete sequence": 1,
+      "Staphylococcus capitis strain LaCa_95 plasmid pLaCa_95a, complete sequence": 1,
+      "Staphylococcus capitis strain LaCa_95 plasmid pLaCa_95b, complete sequence": 1,
+      "Staphylococcus capitis strain LaCa_96 plasmid pLaCa_96a, complete sequence": 1,
+      "Staphylococcus capitis strain LaCa_96 plasmid pLaCa_96b, complete sequence": 1,
+      "Staphylococcus capitis strain LaCa_96 plasmid pLaCa_96c, complete sequence": 1,
+      "Staphylococcus capitis strain LaCa_96 plasmid pLaCa_96d, complete sequence": 1,
+      "Staphylococcus capitis strain LaCa_96 plasmid pLaCa_96e, complete sequence": 1,
+      "Staphylococcus epidermidis strain LaCa_109 plasmid pLaCa_109a, complete sequence": 1,
+      "Staphylococcus epidermidis strain LaCa_110 plasmid pLaCa_110a, complete sequence": 1,
+      "Staphylococcus epidermidis strain LaCa_110 plasmid pLaCa_110b, complete sequence": 1,
+      "Staphylococcus epidermidis strain LaCa_111 plasmid pLaCa_111a, complete sequence": 1,
+      "Staphylococcus epidermidis strain LaCa_111 plasmid pLaCa_111b, complete sequence": 1,
+      "Staphylococcus epidermidis strain LaCa_111 plasmid pLaCa_111c, complete sequence": 1,
+      "Staphylococcus epidermidis strain LaCa_111 plasmid pLaCa_111d, complete sequence": 1,
+      "Staphylococcus epidermidis strain LaCa_158 plasmid pLaCa_158a, complete sequence": 1,
+      "Staphylococcus epidermidis strain LaCa_159 plasmid pLaCa_159a, complete sequence": 1,
+      "Staphylococcus epidermidis strain LaCa_159 plasmid pLaCa_159b, complete sequence": 1,
+      "Staphylococcus epidermidis strain LaCa_159 plasmid pLaCa_159c, complete sequence": 1,
+      "Staphylococcus epidermidis strain LaCa_160 plasmid pLaCa_160a, complete sequence": 1,
+      "Staphylococcus epidermidis strain LaCa_160 plasmid pLaCa_160b, complete sequence": 1,
+      "Staphylococcus epidermidis strain LaCa_160 plasmid pLaCa_160c, complete sequence": 1,
+      "Staphylococcus epidermidis strain LaCa_160 plasmid pLaCa_160d, complete sequence": 1,
+      "Staphylococcus epidermidis strain LaCa_160 plasmid pLaCa_160e, complete sequence": 1,
+      "Staphylococcus epidermidis strain LaCa_194 plasmid pLaCa_194b, complete sequence": 1,
+      "Staphylococcus epidermidis strain LaCa_194 plasmid pLaCa_194c, complete sequence": 1,
+      "Staphylococcus epidermidis strain LaCa_194 plasmid pLaCa_194d, complete sequence": 1,
+      "Staphylococcus epidermidis strain LaCa_194 plasmid pLaCa_194e, complete sequence": 1,
+      "Staphylococcus epidermidis strain LaCa_201 plasmid pLaCa_201a, complete sequence": 1,
+      "Staphylococcus haemolyticus strain LaCa_147 plasmid pLaCa_147a, complete sequence": 1,
+      "Staphylococcus hominis strain LaCa_103 plasmid pLaCa_103a, complete sequence": 1,
+      "Staphylococcus hominis strain LaCa_103 plasmid pLaCa_103b, complete sequence": 1,
+      "UNVERIFIED": 1,
+      "UNVERIFIED: Staphylococcus aureus plasmid AAC (6') aminoglycoside N-acetyltransferase-like (aacA) gene, partial sequence; and APH (2') aminoglycoside phosphotransferase-like (aphD) gene, complete sequence": 1,
+      "Yeast centromere vector pRS415 with LEU2 marker, complete sequence": 1,
+      "Yeast centromere vector pRS416 with URA3 marker, complete sequence": 1,
+      "Yeast centromere vector with LEU2 marker; useful for yeast marker and CEN/ARS calibration, not expression-cassette completeness.": 1,
+      "Yeast centromere vector with URA3 marker; useful for yeast marker and CEN/ARS calibration, not expression-cassette completeness.": 1,
+      "Zygosaccharomyces bailii plasmid pZB1, complete sequence": 1,
+      "Zygosaccharomyces rouxii culture ATCC:56076 plasmid pSB3, complete sequence": 1,
+      "ampicillin resistance": 1,
+      "artificial sequence": 2,
+      "bacterial_cloning": 6,
+      "bacterial_expression": 1,
+      "beta-lactamase": 2,
+      "chloramphenicol resistance": 1,
+      "cloning vector": 4,
+      "drug resistance protein": 1,
+      "expression vector": 2,
+      "glutathione S-transferase": 1,
+      "lac repressor": 1,
+      "origin of replication": 1,
+      "pBluescript II SK(+) vector DNA, phagemid excised from lambda ZAPII": 1,
+      "pBluescript II SK(-) vector DNA, phagemid excised from lambda ZAPII": 1,
+      "pGEX-4T1 cloning vector, complete sequence": 1,
+      "pUC18 DNA sequence": 1,
+      "pUC19 sibling with reversed MCS orientation; exact commercial variant should be reviewed before treating coordinates as gold-standard.": 1,
+      "plasmid": 2,
+      "reporter": 2,
+      "reporter_fluorescent": 1,
+      "tetracycline resistance": 2,
+      "vector": 2,
+      "yeast_shuttle": 2
+    },
+    "length_ranges_bp": {
+      "1000-4999": 27,
+      "10000-49999": 25,
+      "5000-9999": 10,
+      "<1000": 0,
+      ">=50000": 0
+    },
+    "organisms": {
+      "Aeromonas salmonicida subsp. salmonicida": 1,
+      "Cloning vector pBR322": 1,
+      "Cloning vector pEGFP-N1": 1,
+      "Cloning vector pGL3-Basic": 1,
+      "Cloning vector pRS415": 1,
+      "Cloning vector pRS416": 1,
+      "Cloning vector pUC19c": 1,
+      "Corynebacterium accolens": 4,
+      "Corynebacterium sp. LaCa_100": 2,
+      "Corynebacterium sp. LaCa_102": 2,
+      "Corynebacterium sp. LaCa_204": 3,
+      "Firefly luciferase reporter vector pGL4.10[luc2]": 1,
+      "Halobacterium sp. CBA1161": 1,
+      "Herbiconiux sp. J20-18": 1,
+      "Staphylococcus aureus": 3,
+      "Staphylococcus capitis": 7,
+      "Staphylococcus epidermidis": 21,
+      "Staphylococcus haemolyticus": 1,
+      "Staphylococcus hominis": 2,
+      "Zygosaccharomyces bailii": 1,
+      "Zygosaccharomyces rouxii": 1,
+      "synthetic construct": 4,
+      "unidentified cloning vector": 1
+    },
+    "selectable_markers": {
+      "<none>": 16,
+      "AmpR": 1,
+      "ArdC-like ssDNA-binding domain-containing protein": 1,
+      "CHAP domain-containing protein": 2,
+      "CadD family cadmium resistance transporter": 2,
+      "DUF3991 domain-containing protein": 1,
+      "HNH endonuclease signature motif containing protein": 1,
+      "M23 family metallopeptidase": 1,
+      "Nramp family divalent metal transporter": 1,
+      "RepB family plasmid replication initiator protein": 10,
+      "Replication protein RepB": 1,
+      "ampR": 1,
+      "arcD": 2,
+      "bla": 2,
+      "blaI": 2,
+      "blaR1": 2,
+      "blaZ": 2,
+      "cadA": 2,
+      "cadD": 2,
+      "cation diffusion facilitator family transporter": 2,
+      "cation transporter": 2,
+      "chloramphenicol resistance gene": 1,
+      "dfrA16": 1,
+      "heavy metal translocating P-type ATPase": 2,
+      "hypothetical protein": 3,
+      "klcA": 1,
+      "lysostaphin resistance A-like protein": 2,
+      "neomycin phosphotransferase": 1,
+      "protein rep": 5,
+      "replication initiation factor domain-containing protein": 7,
+      "replication initiation protein": 9,
+      "replication initiator protein A": 14,
+      "replication protein": 1,
+      "replication protein RepA": 3,
+      "single-stranded DNA-binding protein": 1,
+      "sul1": 1,
+      "tdc": 1,
+      "tet": 1,
+      "tetA": 1,
+      "tetR": 1,
+      "tetracycline resistance gene": 1,
+      "type IV secretory system conjugative DNA transfer family protein": 1,
+      "tyrP": 1,
+      "virB4": 1,
+      "virB9": 1
+    },
+    "vector_types": {
+      "<null>": 10,
+      "plasmid": 52
+    }
+  },
+  "duplicate_cluster_count": 2,
+  "duplicate_clusters": [
+    {
+      "count": 2,
+      "length": 3230,
+      "prefix_sha256": "2dc60562b70792a48683c37df45c22f75827bfae19e3fdf307956a79dba60243",
+      "record_ids": [
+        "genbank:CP190845.1",
+        "genbank:CP190847.1"
+      ],
+      "sequence_sha256": "16b9408c8581a5d138e19a03436dff1ac4aa7f533de8eeb47b5f08b9245986bf"
+    },
+    {
+      "count": 2,
+      "length": 10737,
+      "prefix_sha256": "e4144ee6a66d01157c7c0159cd0314af6f68ba88a99c44ceb1fdd86340c3907a",
+      "record_ids": [
+        "genbank:CP190851.1",
+        "genbank:CP190855.1"
+      ],
+      "sequence_sha256": "318d237ff13f5476a5116a76acd68a80248d078624690e45e8f21e82790f34ec"
+    }
+  ],
+  "generated_at": "2026-05-31T01:40:04.118370+00:00",
+  "null_rates": {
+    "annotation_complete": {
+      "count": 0,
+      "rate": 0.0
+    },
+    "created_at": {
+      "count": 0,
+      "rate": 0.0
+    },
+    "id": {
+      "count": 0,
+      "rate": 0.0
+    },
+    "length": {
+      "count": 0,
+      "rate": 0.0
+    },
+    "markers": {
+      "count": 16,
+      "rate": 0.258065
+    },
+    "name": {
+      "count": 0,
+      "rate": 0.0
+    },
+    "organism": {
+      "count": 0,
+      "rate": 0.0
+    },
+    "promoters": {
+      "count": 60,
+      "rate": 0.967742
+    },
+    "publication_doi": {
+      "count": 62,
+      "rate": 1.0
+    },
+    "raw_ref": {
+      "count": 0,
+      "rate": 0.0
+    },
+    "sequence": {
+      "count": 0,
+      "rate": 0.0
+    },
+    "source": {
+      "count": 0,
+      "rate": 0.0
+    },
+    "updated_at": {
+      "count": 0,
+      "rate": 0.0
+    },
+    "use_cases": {
+      "count": 0,
+      "rate": 0.0
+    },
+    "vector_type": {
+      "count": 10,
+      "rate": 0.16129
+    }
+  },
+  "parse_errors": [],
+  "profiles": {
+    "breakdown": {
+      "bacterial_cloning_vector": 6,
+      "bacterial_expression_vector": 1,
+      "lentiviral_or_retroviral_transfer_vector": 5,
+      "mammalian_reporter_vector": 3,
+      "unknown": 41,
+      "yeast_shuttle_vector": 6
+    },
+    "unclassified": 41
+  },
+  "records_per_source": {
+    "curated": 12,
+    "genbank": 50
+  },
+  "total_records": 62
+}
