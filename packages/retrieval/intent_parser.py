@@ -282,7 +282,7 @@ def parse_design_spec_heuristic(free_text: str, clarifications: list[str] | None
     )
     clarification_needed = clarification_question is not None
     if organism is None:
-        organism = UNKNOWN_ORGANISM if clarification_needed else "Homo sapiens"
+        organism = UNKNOWN_ORGANISM if clarification_needed else _infer_organism_from_vector_type(vector_type)
     elif clarification_needed and cell_line is None and "mammalian cells" in normalized:
         organism = UNKNOWN_ORGANISM
 
@@ -343,7 +343,7 @@ def normalize_design_spec(spec: DesignSpec, *, source_text: str = "") -> DesignS
     if clarification_needed and not clarification_question:
         clarification_question = "Which target organism or cell line should this plasmid design use?"
     if organism is None:
-        organism = UNKNOWN_ORGANISM if clarification_needed else "Homo sapiens"
+        organism = UNKNOWN_ORGANISM if clarification_needed else _infer_organism_from_vector_type(vector_type)
 
     return DesignSpec(
         organism=organism,
@@ -491,7 +491,12 @@ def _clarification_question(
         return "Which selectable marker or antibiotic resistance should the plasmid carry?"
     if "inducible" in normalized_text and promoter_type is None:
         return "Which inducible promoter system should be used, such as doxycycline/Tet-On, IPTG/lac, or arabinose/pBAD?"
-    if "tet" in normalized_text and promoter_type not in {"doxycycline-inducible", "Tet-off"}:
+    if (
+        "tet" in normalized_text
+        and "tetracycline resistance" not in normalized_text
+        and "tetracycline" not in markers
+        and promoter_type not in {"doxycycline-inducible", "Tet-off"}
+    ):
         return "Should the Tet-regulated design be Tet-On or Tet-Off?"
     if organism is None and cell_line is None:
         if vector_type in {"bacterial_cloning_vector", "bacterial_expression_vector", "yeast_shuttle_vector"}:
@@ -506,3 +511,11 @@ def _clarification_question(
     if "my gene" in normalized_text and not genes:
         return "What gene or payload should the plasmid express?"
     return None
+
+
+def _infer_organism_from_vector_type(vector_type: str | None) -> str:
+    if vector_type in {"bacterial_cloning_vector", "bacterial_expression_vector", "general_shuttle_vector"}:
+        return "Escherichia coli"
+    if vector_type == "yeast_shuttle_vector":
+        return "Saccharomyces cerevisiae"
+    return "Homo sapiens"

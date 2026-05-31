@@ -45,6 +45,10 @@ def test_fake_intent_parser_normalizes_hek293t_and_bacterial_expression_query() 
 def test_fake_intent_parser_extracts_retrieval_gold_style_queries() -> None:
     cloning = FakeIntentParser().parse("Recommend a low-copy bacterial cloning plasmid with chloramphenicol resistance.")
     yeast = FakeIntentParser().parse("I need a yeast centromere shuttle plasmid specifically selected by URA3 rather than LEU2.")
+    puc = FakeIntentParser().parse("Recommend a high-copy ampicillin-resistant pUC plasmid when either MCS orientation is acceptable.")
+    pbr = FakeIntentParser().parse(
+        "Which curated cloning vector carries both ampicillin and tetracycline resistance with a pMB1-derived replication region?"
+    )
 
     assert cloning.organism == "Escherichia coli"
     assert cloning.vector_type == "bacterial_cloning_vector"
@@ -56,6 +60,10 @@ def test_fake_intent_parser_extracts_retrieval_gold_style_queries() -> None:
     assert yeast.markers == ["URA3"]
     assert "exclude LEU2" in yeast.constraints
     assert yeast.application == "yeast transformation"
+    assert puc.organism == "Escherichia coli"
+    assert puc.markers == ["ampicillin"]
+    assert pbr.clarification_needed is False
+    assert pbr.markers == ["ampicillin", "tetracycline"]
 
 
 def test_fake_intent_parser_clarifies_missing_or_ambiguous_critical_fields() -> None:
