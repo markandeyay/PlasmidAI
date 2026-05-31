@@ -1,0 +1,1149 @@
+{
+  "generated_at": "2026-05-31T21:56:48.264685+00:00",
+  "gold_path": "data/eval/retrieval_gold.jsonl",
+  "total_queries": 21,
+  "retrieval_queries": 20,
+  "clarification_queries": 1,
+  "top_k": 5,
+  "top1_hit_rate": 0.65,
+  "top5_hit_rate": 0.9,
+  "mrr": 0.7433333333333334,
+  "clarification_pass_rate": 1.0,
+  "results": [
+    {
+      "query": "I need a simple high-copy cloning vector for routine plasmid cloning in E. coli.",
+      "acceptable_target_ids": [
+        "pUC19",
+        "pUC18",
+        "pBluescript-II-SK-plus",
+        "pBluescript-II-SK-minus",
+        "pBR322",
+        "pACYC184"
+      ],
+      "retrieved": [
+        {
+          "plasmid_id": "curated:pUC19",
+          "name": "pUC19c",
+          "score": 0.7683352828025818,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pUC18",
+          "name": "pUC18",
+          "score": 0.7535659817715907,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:AY428809.1",
+          "name": "Cloning vector pSUP202, complete sequence",
+          "score": 0.727091372013092,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:U47626.2",
+          "name": "Cloning vector PinPoint<TM> Xa-1, complete sequence",
+          "score": 0.7120136618614197,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pBR322",
+          "name": "pBR322",
+          "score": 0.707646906375885,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "application"
+          ]
+        }
+      ],
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "top1_hit": true,
+      "top5_hit": true,
+      "clarification_needed": false,
+      "clarification_question": null,
+      "expected_clarification": false,
+      "clarification_pass": null,
+      "rationale": "These are curated bacterial cloning backbones with standard cloning-friendly features such as pUC/pMB1 origins, MCSs, and antibiotic selection.",
+      "source": "Curated seed manifest entries in packages/data_pipeline/ingest/curated_seed_manifest.yaml"
+    },
+    {
+      "query": "Which curated plasmid would you use for GST-tagged bacterial protein expression in E. coli?",
+      "acceptable_target_ids": [
+        "pGEX-4T-1"
+      ],
+      "retrieved": [
+        {
+          "plasmid_id": "curated:pGEX-4T-1",
+          "name": "pGEX-4T-1",
+          "score": 0.6758051707860737,
+          "matched_fields": [
+            "semantic",
+            "organism",
+            "genes",
+            "tags"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pUC18",
+          "name": "pUC18",
+          "score": 0.6512031970973972,
+          "matched_fields": [
+            "semantic",
+            "organism",
+            "genes"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:AF147463.1",
+          "name": "T7 Expression vector pNam, complete sequence",
+          "score": 0.6429285407066391,
+          "matched_fields": [
+            "semantic",
+            "organism"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:U47626.2",
+          "name": "Cloning vector PinPoint<TM> Xa-1, complete sequence",
+          "score": 0.6322911004846643,
+          "matched_fields": [
+            "semantic",
+            "organism"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pBR322",
+          "name": "pBR322",
+          "score": 0.6303073984201324,
+          "matched_fields": [
+            "semantic",
+            "organism",
+            "genes"
+          ]
+        }
+      ],
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "top1_hit": true,
+      "top5_hit": true,
+      "clarification_needed": false,
+      "clarification_question": null,
+      "expected_clarification": false,
+      "clarification_pass": null,
+      "rationale": "pGEX-4T-1 is explicitly annotated as a GST fusion bacterial expression backbone with tac/lac regulation.",
+      "source": "Curated seed manifest entry for pGEX-4T-1"
+    },
+    {
+      "query": "I need a mammalian reporter plasmid for GFP-based expression analysis in cultured cells.",
+      "acceptable_target_ids": [
+        "pEGFP-N1"
+      ],
+      "retrieved": [
+        {
+          "plasmid_id": "curated:pEGFP-N1",
+          "name": "pEGFP-N1",
+          "score": 0.6871574894002141,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "genes",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pGL3-Basic",
+          "name": "pGL3-Basic",
+          "score": 0.6367966316221149,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pGL4-10-luc2",
+          "name": "pGL4.10[luc2]",
+          "score": 0.6277436017990112,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:AF058756.1",
+          "name": "Cloning vector pFR-Luc, complete sequence",
+          "score": 0.6137129068374634,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:U47121.2",
+          "name": "Cloning vector pSI, mammalian expression vector, complete sequence",
+          "score": 0.5511299043220348,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism"
+          ]
+        }
+      ],
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "top1_hit": true,
+      "top5_hit": true,
+      "clarification_needed": false,
+      "clarification_question": null,
+      "expected_clarification": false,
+      "clarification_pass": null,
+      "rationale": "pEGFP-N1 is curated as a CMV-driven mammalian C-terminal EGFP fusion reporter with a neomycin selectable marker.",
+      "source": "Curated seed manifest entry for pEGFP-N1"
+    },
+    {
+      "query": "Which vector should I use for a luciferase reporter assay in mammalian cells?",
+      "acceptable_target_ids": [
+        "pGL3-Basic",
+        "pGL4-10-luc2"
+      ],
+      "retrieved": [
+        {
+          "plasmid_id": "curated:pGL4-10-luc2",
+          "name": "pGL4.10[luc2]",
+          "score": 0.7293532652048323,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "genes"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pGL3-Basic",
+          "name": "pGL3-Basic",
+          "score": 0.7192130088806203,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "genes"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:AF058756.1",
+          "name": "Cloning vector pFR-Luc, complete sequence",
+          "score": 0.6620850168415906,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "genes"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pEGFP-N1",
+          "name": "pEGFP-N1",
+          "score": 0.6315503183215299,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:U47121.2",
+          "name": "Cloning vector pSI, mammalian expression vector, complete sequence",
+          "score": 0.5587658216040348,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism"
+          ]
+        }
+      ],
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "top1_hit": true,
+      "top5_hit": true,
+      "clarification_needed": false,
+      "clarification_question": null,
+      "expected_clarification": false,
+      "clarification_pass": null,
+      "rationale": "Both curated plasmids are promoterless luciferase reporter vectors intended for reporter assays.",
+      "source": "Curated seed manifest entries for pGL3-Basic and pGL4.10[luc2]"
+    },
+    {
+      "query": "I need a yeast shuttle vector with a selectable marker for yeast transformation and maintenance.",
+      "acceptable_target_ids": [
+        "pRS415",
+        "pRS416"
+      ],
+      "retrieved": [
+        {
+          "plasmid_id": "curated:pRS415",
+          "name": "pRS415",
+          "score": 0.8340535064967591,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pRS416",
+          "name": "pRS416",
+          "score": 0.832661022702518,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:PV135004.1",
+          "name": "Zygosaccharomyces rouxii culture ATCC:56076 plasmid pSB3, complete sequence",
+          "score": 0.6005822062145445,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism"
+          ]
+        }
+      ],
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "top1_hit": true,
+      "top5_hit": true,
+      "clarification_needed": false,
+      "clarification_question": null,
+      "expected_clarification": false,
+      "clarification_pass": null,
+      "rationale": "These curated vectors are yeast centromere shuttle plasmids with LEU2 or URA3 selection and CEN/ARS maintenance features.",
+      "source": "Curated seed manifest entries for pRS415 and pRS416"
+    },
+    {
+      "query": "Recommend a low-copy bacterial cloning plasmid with chloramphenicol resistance.",
+      "acceptable_target_ids": [
+        "pACYC184"
+      ],
+      "retrieved": [
+        {
+          "plasmid_id": "genbank:AY428809.1",
+          "name": "Cloning vector pSUP202, complete sequence",
+          "score": 0.7693392496907278,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pACYC184",
+          "name": "pACYC184",
+          "score": 0.7328032691957528,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:AF519766.1",
+          "name": "Cloning vector pMAK705, complete sequence",
+          "score": 0.7249444991284012,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers",
+            "application"
+          ]
+        }
+      ],
+      "rank": 2,
+      "reciprocal_rank": 0.5,
+      "top1_hit": false,
+      "top5_hit": true,
+      "clarification_needed": false,
+      "clarification_question": null,
+      "expected_clarification": false,
+      "clarification_pass": null,
+      "rationale": "pACYC184 is curated as a low-copy p15A-origin cloning vector with chloramphenicol and tetracycline resistance.",
+      "source": "Curated seed manifest entry for pACYC184"
+    },
+    {
+      "query": "I want a bacterial cloning plasmid with lacZ alpha selection and a standard pUC backbone.",
+      "acceptable_target_ids": [
+        "pUC19",
+        "pUC18",
+        "pBluescript-II-SK-plus",
+        "pBluescript-II-SK-minus"
+      ],
+      "retrieved": [
+        {
+          "plasmid_id": "curated:pUC19",
+          "name": "pUC19c",
+          "score": 0.7722290022509709,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:AY428809.1",
+          "name": "Cloning vector pSUP202, complete sequence",
+          "score": 0.7579886173003101,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pUC18",
+          "name": "pUC18",
+          "score": 0.7547948360443169,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:U47670.1",
+          "name": "Cloning vector pJDC406, antisense expression vector for Escherichia coli, complete sequence",
+          "score": 0.7482213227880803,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pBR322",
+          "name": "pBR322",
+          "score": 0.7318711121005496,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "application"
+          ]
+        }
+      ],
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "top1_hit": true,
+      "top5_hit": true,
+      "clarification_needed": false,
+      "clarification_question": null,
+      "expected_clarification": false,
+      "clarification_pass": null,
+      "rationale": "These curated records include pUC-family or lacZ alpha/MCS cloning backbones suitable for blue-white screening workflows.",
+      "source": "Curated seed manifest entries for the pUC and pBluescript vectors"
+    },
+    {
+      "query": "Which curated cloning vector carries both ampicillin and tetracycline resistance with a pMB1-derived replication region?",
+      "acceptable_target_ids": [
+        "pBR322"
+      ],
+      "retrieved": [
+        {
+          "plasmid_id": "genbank:AY428809.1",
+          "name": "Cloning vector pSUP202, complete sequence",
+          "score": 0.8049010038375854,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pBR322",
+          "name": "pBR322",
+          "score": 0.7908746004104614,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers",
+            "application"
+          ]
+        }
+      ],
+      "rank": 2,
+      "reciprocal_rank": 0.5,
+      "top1_hit": false,
+      "top5_hit": true,
+      "clarification_needed": false,
+      "clarification_question": null,
+      "expected_clarification": false,
+      "clarification_pass": null,
+      "rationale": "pBR322 is curated as a classic cloning vector with pMB1-derived replication, rop, bla/AmpR, and tetracycline resistance.",
+      "source": "Curated seed manifest entry for pBR322"
+    },
+    {
+      "query": "I need a phagemid cloning vector with an f1 origin, lacZ alpha MCS, and T7/T3 promoter sites.",
+      "acceptable_target_ids": [
+        "pBluescript-II-SK-plus",
+        "pBluescript-II-SK-minus"
+      ],
+      "retrieved": [
+        {
+          "plasmid_id": "curated:pUC18",
+          "name": "pUC18",
+          "score": 0.7780900266063182,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pUC19",
+          "name": "pUC19c",
+          "score": 0.7777798308265323,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:U47626.2",
+          "name": "Cloning vector PinPoint<TM> Xa-1, complete sequence",
+          "score": 0.7646601936423677,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "promoters",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pBR322",
+          "name": "pBR322",
+          "score": 0.7463036330757373,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pBluescript-II-SK-minus",
+          "name": "pBluescript II SK(-)",
+          "score": 0.7435886859893852,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "application"
+          ]
+        }
+      ],
+      "rank": 5,
+      "reciprocal_rank": 0.2,
+      "top1_hit": false,
+      "top5_hit": true,
+      "clarification_needed": false,
+      "clarification_question": null,
+      "expected_clarification": false,
+      "clarification_pass": null,
+      "rationale": "The pBluescript II SK records are curated phagemid cloning vectors; SK(+) explicitly includes f1 plus orientation, lacZ alpha/MCS, T7/T3 promoters, pUC origin, and bla, while SK(-) is the corresponding minus-orientation variant.",
+      "source": "Curated seed manifest entries for pBluescript-II-SK-plus and pBluescript-II-SK-minus"
+    },
+    {
+      "query": "Recommend a high-copy ampicillin-resistant pUC plasmid when either MCS orientation is acceptable.",
+      "acceptable_target_ids": [
+        "pUC19",
+        "pUC18"
+      ],
+      "retrieved": [
+        {
+          "plasmid_id": "curated:pUC19",
+          "name": "pUC19c",
+          "score": 0.8039666414260864,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:AY428809.1",
+          "name": "Cloning vector pSUP202, complete sequence",
+          "score": 0.7769679427146912,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pUC18",
+          "name": "pUC18",
+          "score": 0.7726988331855053,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pBR322",
+          "name": "pBR322",
+          "score": 0.7549324035644531,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:U47670.1",
+          "name": "Cloning vector pJDC406, antisense expression vector for Escherichia coli, complete sequence",
+          "score": 0.7324926257133484,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers",
+            "application"
+          ]
+        }
+      ],
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "top1_hit": true,
+      "top5_hit": true,
+      "clarification_needed": false,
+      "clarification_question": null,
+      "expected_clarification": false,
+      "clarification_pass": null,
+      "rationale": "pUC19 is curated as a high-copy pUC/pMB1-derived AmpR cloning vector with lacZ alpha/MCS, and pUC18 is curated as its sibling with reversed MCS orientation.",
+      "source": "Curated seed manifest entries for pUC19 and pUC18"
+    },
+    {
+      "query": "Which mammalian EGFP fusion vector also provides G418 selection in cells and kanamycin selection in bacteria?",
+      "acceptable_target_ids": [
+        "pEGFP-N1"
+      ],
+      "retrieved": [
+        {
+          "plasmid_id": "curated:pEGFP-N1",
+          "name": "pEGFP-N1",
+          "score": 0.6354348498064504,
+          "matched_fields": [
+            "semantic",
+            "organism",
+            "markers",
+            "genes"
+          ]
+        }
+      ],
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "top1_hit": true,
+      "top5_hit": true,
+      "clarification_needed": false,
+      "clarification_question": null,
+      "expected_clarification": false,
+      "clarification_pass": null,
+      "rationale": "pEGFP-N1 is curated as a CMV-driven C-terminal EGFP fusion vector with neomycin/G418 mammalian selection and a kanamycin bacterial marker.",
+      "source": "Curated seed manifest entry for pEGFP-N1"
+    },
+    {
+      "query": "I need a yeast centromere shuttle plasmid specifically selected by URA3 rather than LEU2.",
+      "acceptable_target_ids": [
+        "pRS416"
+      ],
+      "retrieved": [
+        {
+          "plasmid_id": "curated:pRS416",
+          "name": "pRS416",
+          "score": 0.8670494218781422,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers"
+          ]
+        }
+      ],
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "top1_hit": true,
+      "top5_hit": true,
+      "clarification_needed": false,
+      "clarification_question": null,
+      "expected_clarification": false,
+      "clarification_pass": null,
+      "rationale": "pRS416 is curated as a yeast centromere vector with a URA3 marker, whereas pRS415 carries LEU2.",
+      "source": "Curated seed manifest entries for pRS416 and pRS415"
+    },
+    {
+      "query": "E. coli T7 expression vector, AmpR, with an MCS. Keep it simple.",
+      "acceptable_target_ids": [
+        "genbank:AF147463.1"
+      ],
+      "retrieved": [
+        {
+          "plasmid_id": "genbank:AF147463.1",
+          "name": "T7 Expression vector pNam, complete sequence",
+          "score": 0.7669082145040177,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers",
+            "promoters",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pGEX-4T-1",
+          "name": "pGEX-4T-1",
+          "score": 0.6639459133148193,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:U40578.1",
+          "name": "Cloning vector pOR262, pINIIIompA3-rat P450 reductase expression vector, complete sequence",
+          "score": 0.5860169427374712,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers",
+            "application"
+          ]
+        }
+      ],
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "top1_hit": true,
+      "top5_hit": true,
+      "clarification_needed": false,
+      "clarification_question": null,
+      "expected_clarification": false,
+      "clarification_pass": null,
+      "rationale": "The GenBank pNam record is indexed as a bacterial expression vector with a T7 promoter, bla/AmpR selection, and a multiple cloning site. This terse query exercises bacterial-expression, host, and marker filters together.",
+      "source": "Live local Postgres corpus verification on 2026-05-31; GenBank AF147463.1 indexed metadata"
+    },
+    {
+      "query": "For an E. coli cloning workflow, retrieve a backbone carrying ampicillin, tetracycline, and chloramphenicol resistance.",
+      "acceptable_target_ids": [
+        "genbank:AY428809.1"
+      ],
+      "retrieved": [
+        {
+          "plasmid_id": "genbank:AY428809.1",
+          "name": "Cloning vector pSUP202, complete sequence",
+          "score": 0.7262949563948801,
+          "matched_fields": [
+            "semantic",
+            "organism",
+            "markers",
+            "application"
+          ]
+        }
+      ],
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "top1_hit": true,
+      "top5_hit": true,
+      "clarification_needed": false,
+      "clarification_question": null,
+      "expected_clarification": false,
+      "clarification_pass": null,
+      "rationale": "The GenBank pSUP202 record is indexed as a bacterial cloning vector with bla/ampicillin, tet, and cat markers. Requiring all three markers distinguishes it from two-marker cloning backbones.",
+      "source": "Live local Postgres corpus verification on 2026-05-31; GenBank AY428809.1 indexed metadata"
+    },
+    {
+      "query": "Need an E. coli-Pseudomonas broad-host-range shuttle vector with tetracycline resistance and lacZ alpha for blue/white screening.",
+      "acceptable_target_ids": [
+        "genbank:U07168.1"
+      ],
+      "retrieved": [
+        {
+          "plasmid_id": "genbank:U07168.1",
+          "name": "Cloning vector pUCP26, Escherichia-Pseudomonas shuttle vector with tetracycline efflux protein (tet) and LacZ alpha peptide (lacZ alpha) genes, complete sequence",
+          "score": 0.7934275515761966,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers"
+          ]
+        }
+      ],
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "top1_hit": true,
+      "top5_hit": true,
+      "clarification_needed": false,
+      "clarification_question": null,
+      "expected_clarification": false,
+      "clarification_pass": null,
+      "rationale": "The GenBank pUCP26 record is indexed as a general shuttle vector with broad-host-range use, tet selection, lacZ alpha, and an MCS. The query tests shuttle-host intent and a hard tetracycline marker filter.",
+      "source": "Live local Postgres corpus verification on 2026-05-31; GenBank U07168.1 indexed metadata"
+    },
+    {
+      "query": "E. coli SpecR shuttle vector.",
+      "acceptable_target_ids": [
+        "genbank:AF216802.1"
+      ],
+      "retrieved": [],
+      "rank": null,
+      "reciprocal_rank": 0.0,
+      "top1_hit": false,
+      "top5_hit": false,
+      "clarification_needed": false,
+      "clarification_question": null,
+      "expected_clarification": false,
+      "clarification_pass": null,
+      "rationale": "The GenBank pDL278 record is indexed as a general shuttle vector with spectinomycin adenyltransferase. The intentionally terse query tests controlled-marker normalization and shuttle-vector filtering.",
+      "source": "Live local Postgres corpus verification on 2026-05-31; GenBank AF216802.1 indexed metadata"
+    },
+    {
+      "query": "For transient mammalian expression, I need an ampicillin-selected pSI-style plasmid with an SV40 enhancer and early promoter.",
+      "acceptable_target_ids": [
+        "genbank:U47121.2"
+      ],
+      "retrieved": [
+        {
+          "plasmid_id": "genbank:U47121.2",
+          "name": "Cloning vector pSI, mammalian expression vector, complete sequence",
+          "score": 0.6917406688045659,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers",
+            "promoters",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pGL3-Basic",
+          "name": "pGL3-Basic",
+          "score": 0.6714854240417528,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:U47120.2",
+          "name": "Cloning vector pCI-neo, mammalian expression vector, complete sequence",
+          "score": 0.6398123717419891,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers",
+            "promoters",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:U47119.2",
+          "name": "Cloning vector pCI, mammalian expression vector, complete sequence",
+          "score": 0.635093908456152,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers",
+            "application"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:AF058756.1",
+          "name": "Cloning vector pFR-Luc, complete sequence",
+          "score": 0.622026287196501,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers"
+          ]
+        }
+      ],
+      "rank": 1,
+      "reciprocal_rank": 1.0,
+      "top1_hit": true,
+      "top5_hit": true,
+      "clarification_needed": false,
+      "clarification_question": null,
+      "expected_clarification": false,
+      "clarification_pass": null,
+      "rationale": "The GenBank pSI record is indexed as the corpus mammalian-expression profile and carries ampR plus the SV40 enhancer/early promoter. This case exercises mammalian host, profile, and bacterial-selection filters.",
+      "source": "Live local Postgres corpus verification on 2026-05-31; GenBank U47121.2 indexed metadata"
+    },
+    {
+      "query": "Can you pull pFR-Luc? I need an AmpR mammalian firefly-luciferase reporter backbone with an upstream cloning site.",
+      "acceptable_target_ids": [
+        "genbank:AF058756.1"
+      ],
+      "retrieved": [
+        {
+          "plasmid_id": "curated:pGL3-Basic",
+          "name": "pGL3-Basic",
+          "score": 0.7413123316746058,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers",
+            "genes"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pGL4-10-luc2",
+          "name": "pGL4.10[luc2]",
+          "score": 0.7408858162428685,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers",
+            "genes"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:AF058756.1",
+          "name": "Cloning vector pFR-Luc, complete sequence",
+          "score": 0.693131288681367,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers",
+            "genes"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:U47121.2",
+          "name": "Cloning vector pSI, mammalian expression vector, complete sequence",
+          "score": 0.5948275746456535,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:U47120.2",
+          "name": "Cloning vector pCI-neo, mammalian expression vector, complete sequence",
+          "score": 0.5536809132600106,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers"
+          ]
+        }
+      ],
+      "rank": 3,
+      "reciprocal_rank": 0.3333333333333333,
+      "top1_hit": false,
+      "top5_hit": true,
+      "clarification_needed": false,
+      "clarification_question": null,
+      "expected_clarification": false,
+      "clarification_pass": null,
+      "rationale": "The GenBank pFR-Luc record is indexed as a mammalian reporter vector with luciferase, ampicillin selection, an MCS candidate, and SV40 late polyA. This researcher-style lookup broadens reporter coverage beyond curated seeds.",
+      "source": "Live local Postgres corpus verification on 2026-05-31; GenBank AF058756.1 indexed metadata"
+    },
+    {
+      "query": "For a yeast shuttle comparison, retrieve the Zygosaccharomyces rouxii pSB3 plasmid with an ARS region.",
+      "acceptable_target_ids": [
+        "genbank:PV135004.1"
+      ],
+      "retrieved": [
+        {
+          "plasmid_id": "curated:pRS415",
+          "name": "pRS415",
+          "score": 0.8340535064967591,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pRS416",
+          "name": "pRS416",
+          "score": 0.832661022702518,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:PV135004.1",
+          "name": "Zygosaccharomyces rouxii culture ATCC:56076 plasmid pSB3, complete sequence",
+          "score": 0.6005822062145445,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism"
+          ]
+        }
+      ],
+      "rank": 3,
+      "reciprocal_rank": 0.3333333333333333,
+      "top1_hit": false,
+      "top5_hit": true,
+      "clarification_needed": false,
+      "clarification_question": null,
+      "expected_clarification": false,
+      "clarification_pass": null,
+      "rationale": "The GenBank pSB3 record exists as a Zygosaccharomyces rouxii plasmid and is indexed with the yeast-shuttle profile plus an ARS region. It is labeled as a comparison retrieval, not as a fabricated Saccharomyces engineering backbone.",
+      "source": "Live local Postgres corpus verification on 2026-05-31; GenBank PV135004.1 indexed metadata"
+    },
+    {
+      "query": "For a bacterial resistance-plasmid comparison, retrieve the Aeromonas salmonicida pRAS1_2402_89 plasmid carrying tetracycline resistance, sul1, and dfrA16.",
+      "acceptable_target_ids": [
+        "genbank:PZ138287.1"
+      ],
+      "retrieved": [
+        {
+          "plasmid_id": "genbank:U07168.1",
+          "name": "Cloning vector pUCP26, Escherichia-Pseudomonas shuttle vector with tetracycline efflux protein (tet) and LacZ alpha peptide (lacZ alpha) genes, complete sequence",
+          "score": 0.6516541436807559,
+          "matched_fields": [
+            "semantic",
+            "organism",
+            "markers"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pACYC184",
+          "name": "pACYC184",
+          "score": 0.6473148658071421,
+          "matched_fields": [
+            "semantic",
+            "organism",
+            "markers"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:AY428809.1",
+          "name": "Cloning vector pSUP202, complete sequence",
+          "score": 0.6464680625935815,
+          "matched_fields": [
+            "semantic",
+            "organism",
+            "markers"
+          ]
+        },
+        {
+          "plasmid_id": "curated:pBR322",
+          "name": "pBR322",
+          "score": 0.6316052267433774,
+          "matched_fields": [
+            "semantic",
+            "organism",
+            "markers"
+          ]
+        },
+        {
+          "plasmid_id": "genbank:CP190850.1",
+          "name": "Staphylococcus epidermidis strain LaCa_111 plasmid pLaCa_111b, complete sequence",
+          "score": 0.4476273491271543,
+          "matched_fields": [
+            "semantic",
+            "organism",
+            "markers"
+          ]
+        }
+      ],
+      "rank": null,
+      "reciprocal_rank": 0.0,
+      "top1_hit": false,
+      "top5_hit": false,
+      "clarification_needed": false,
+      "clarification_question": null,
+      "expected_clarification": false,
+      "clarification_pass": null,
+      "rationale": "The natural GenBank pRAS1_2402_89 record exists in the broader corpus with tetA, tetR, sul1, and dfrA16 annotations. It remains profile unknown and is intentionally labeled for comparative retrieval rather than as an engineered vector template.",
+      "source": "Live local Postgres corpus verification on 2026-05-31; GenBank PZ138287.1 indexed metadata"
+    },
+    {
+      "query": "I need a viral vector with antibiotic resistance.",
+      "acceptable_target_ids": [],
+      "retrieved": [],
+      "rank": null,
+      "reciprocal_rank": 0.0,
+      "top1_hit": false,
+      "top5_hit": false,
+      "clarification_needed": true,
+      "clarification_question": "Which viral vector type should this use: lentiviral, retroviral, AAV, or another system?",
+      "expected_clarification": true,
+      "clarification_pass": true,
+      "rationale": "The request does not identify the viral system or selectable marker. Retrieval should ask a clarifying question instead of guessing a lentiviral, retroviral, AAV, or marker label; the current corpus has no indexed lentiviral or CRISPR profile records.",
+      "source": "Human-authored ambiguity case informed by live local Postgres profile audit on 2026-05-31"
+    }
+  ]
+}
