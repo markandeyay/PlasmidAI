@@ -234,7 +234,7 @@ def _caveats(item: RetrievedPlasmid, spec: DesignSpec) -> list[str]:
         caveats.append("Annotation is incomplete, so verify component boundaries before adapting this record.")
     if spec.promoter_type and not plasmid.promoters:
         caveats.append("No promoter is recorded in the plasmid metadata; confirm promoter compatibility manually.")
-    if spec.markers and not plasmid.markers:
+    if spec.markers and not plasmid.markers and "markers" not in item.matched_fields:
         caveats.append("No selectable marker is recorded in the plasmid metadata; confirm selection before use.")
     if spec.genes and "genes" not in item.matched_fields:
         caveats.append("The retrieved plasmid may be a backbone/template rather than a record already carrying the requested gene.")

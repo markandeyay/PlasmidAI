@@ -84,6 +84,8 @@ MARKER_TERMS: tuple[ControlledTerm, ...] = (
     ControlledTerm("hygromycin", ("hygromycin", "hygro", "hygr", "hyg r", "hph")),
     ControlledTerm("zeocin", ("zeocin", "zeo", "zeor", "zeo r", "ble")),
     ControlledTerm("blasticidin", ("blasticidin", "bsd", "blastr", "blast r")),
+    ControlledTerm("URA3", ("ura3", "uracil selection")),
+    ControlledTerm("LEU2", ("leu2", "leucine selection")),
 )
 
 

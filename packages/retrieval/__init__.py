@@ -11,9 +11,14 @@ from .embedder import (
     TransformersEmbedder,
 )
 from .intent_parser import FakeIntentParser, IntentParser, LLMIntentParser
-from .pipeline import RetrievalPipeline, design_retrieval
 from .recommender import LLMRecommendationGenerator, RecommendationGenerator, TemplateRecommendationGenerator
 from .retriever import HybridRetriever, Retriever
+
+
+def design_retrieval(free_text: str):
+    from .pipeline import design_retrieval as run_design_retrieval
+
+    return run_design_retrieval(free_text)
 
 __all__ = [
     "ComposedDocument",
@@ -30,7 +35,6 @@ __all__ = [
     "PHASE1_MODEL_REVISION",
     "TransformersEmbedder",
     "RecommendationGenerator",
-    "RetrievalPipeline",
     "Retriever",
     "TemplateRecommendationGenerator",
     "compose_plasmid_document",

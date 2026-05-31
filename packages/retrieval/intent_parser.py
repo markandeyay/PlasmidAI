@@ -260,6 +260,10 @@ def parse_design_spec_heuristic(free_text: str, clarifications: list[str] | None
     application = _extract_application(normalized, vector_type)
     cloning_method = _extract_cloning_method(normalized)
     constraints = _extract_constraints(text)
+    excluded_markers = _extract_excluded_markers(text)
+    if excluded_markers:
+        markers = [marker for marker in markers if marker not in excluded_markers]
+        constraints.extend(f"exclude {marker}" for marker in excluded_markers)
 
     if promoter_type == "doxycycline-inducible" and inducer is None:
         inducer = "doxycycline"
@@ -459,6 +463,15 @@ def _extract_constraints(text: str) -> list[str]:
     if any(term in normalized for term in ("toxin", "pathogen", "select agent", "gene therapy")):
         constraints.append("biosecurity_review_required")
     return dedupe_preserve_order(constraints)
+
+
+def _extract_excluded_markers(text: str) -> list[str]:
+    excluded: list[str] = []
+    for match in re.finditer(r"\b(?:rather than|instead of|not)\s+([A-Za-z0-9/+-]+)\b", text, flags=re.IGNORECASE):
+        marker = normalize_to_controlled(match.group(1), MARKER_TERMS)
+        if marker is not None:
+            excluded.append(marker)
+    return dedupe_preserve_order(excluded)
 
 
 def _clarification_question(

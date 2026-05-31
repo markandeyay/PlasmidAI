@@ -53,6 +53,8 @@ def test_fake_intent_parser_extracts_retrieval_gold_style_queries() -> None:
 
     assert yeast.organism == "Saccharomyces cerevisiae"
     assert yeast.vector_type == "yeast_shuttle_vector"
+    assert yeast.markers == ["URA3"]
+    assert "exclude LEU2" in yeast.constraints
     assert yeast.application == "yeast transformation"
 
 
