@@ -2,16 +2,18 @@
 
 ## AT-A-GLANCE (update every session)
 - **Current Phase:** Phase 1: Retrieval layer
-- **Next Concrete Task:** Expand the retrieval gold set to 20+ queries, then tune the hybrid retrieval ranking/filters against the expanded set before assessing the Phase 1 gate.
-- **Overall completion estimate:** 10%
+- **Next Concrete Task:** Stop at the completed Phase 1 gate and wait for human review before beginning Phase 2 sequence generation. Track lexical exact-name retrieval and source/provenance filtering as Phase 1 follow-up work.
+- **Overall completion estimate:** 15%
 - **Last session date:** 2026-05-31
-- **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 187 passing tests / 1 skipped real-LLM smoke test
+- **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 192 passing tests / 1 skipped real-LLM smoke test
 
 ## RESUME HERE (only if mid-task)
-RESUME HERE: Phase 1 retrieval MVP vertical slice now runs end to end. `make design MODE=offline TEXT="I need a yeast centromere shuttle plasmid specifically selected by URA3 rather than LEU2."` returns `curated:pRS416` as the top match with grounded recommendation text. Hybrid retrieval, intent parsing, recommendation generation, and retrieval eval harness are implemented. Latest baseline: `data/eval/retrieval/2026-05-31-211351-retrieval-baseline.md` / `.json` on 12 starter queries, top-1 `0.750`, top-5 `1.000`, MRR `0.850`. `make test` passes 187 tests with 1 skipped real-LLM smoke test. Next: grow `data/eval/retrieval_gold.jsonl` to 20+ queries and tune ranking/filter behavior before claiming the Phase 1 gate.
+RESUME HERE: Phase 1 retrieval MVP gate is met and awaits human review before Phase 2. Expanded `data/eval/retrieval_gold.jsonl` to 21 total cases: 20 scored retrieval queries plus 1 clarification-only viral-vector request. Final tuned report: `data/eval/retrieval/2026-05-31-221057-retrieval-baseline.{md,json}` with top-1 `0.700`, top-5 `1.000`, MRR `0.825`, clarification pass rate `1.000`. Bounded tuning preserves discriminative query constraints and permits sparse-metadata general-shuttle candidates only when no host conflict exists; pDL278 and pRAS1 moved from misses to rank 1. `make test` passes 192 tests with 1 skipped real-LLM smoke test. Durable findings: `research/findings/phase1_retrieval_gate.md`. Do not start Phase 2 until the human authorizes it.
 
 ## KNOWN ISSUES / BLOCKERS
-- Phase 1 retrieval baseline on the expanded 12-query starter gold set is strong but not a gate result: Phase 1 gate still requires 20 realistic queries and top-5 hit rate >= 80%. Current baseline is `data/eval/retrieval/2026-05-31-211351-retrieval-baseline.md` with top-1 `0.750`, top-5 `1.000`, MRR `0.850`.
+- Phase 1 retrieval gate passed on 2026-05-31: `data/eval/retrieval/2026-05-31-221057-retrieval-baseline.{md,json}` scores 20 retrieval queries plus 1 clarification-only case with top-1 `0.700`, top-5 `1.000`, MRR `0.825`, and clarification pass rate `1.000`.
+- Residual Phase 1 follow-up: exact named-record retrieval needs a lexical/exact-name lane, and provenance-constrained retrieval needs a structured source filter. Do not hide either requirement inside semantic ranking weights.
+- The current 82-record corpus has no classified lentiviral or CRISPR vectors. The expanded gate set records the gap rather than fabricating labels.
 - Baseline retrieval still shows ranking/tie-break opportunities before the gate set: pACYC184 and pBR322 appear at rank 2 behind GenBank pSUP202 for chloramphenicol/tetracycline-style cloning queries, and pBluescript appears at rank 5 for the phagemid query.
 - Phase 1 is authorized and active as of 2026-05-31. Phase 0 remains below its final scale gate while Addgene partner access is pending; current Phase 1 work uses the verified local corpus foundation.
 - The GNU Make directory was added to the user PATH on 2026-05-29, but the current Codex host process has not inherited that PATH refresh. Use `C:\Program Files (x86)\GnuWin32\bin\make.exe` directly in this process if plain `make` is still unresolved; new user shells should pick up the user PATH.
@@ -44,7 +46,7 @@ RESUME HERE: Phase 1 retrieval MVP vertical slice now runs end to end. `make des
 ## PHASE GATE STATUS
 - [x] Phase R gate met (see SYSTEM_DESIGN 3.05) â€” artifacts reviewed and Phase 0 authorized by the human on 2026-05-29
 - [ ] Phase 0 gate met (see SYSTEM_DESIGN 3.1)
-- [ ] Phase 1 gate met
+- [x] Phase 1 gate met
 - [ ] Phase 2 gate met
 - [ ] Phase 3 gate met
 - [ ] Phase 4 gate met
@@ -86,7 +88,7 @@ RESUME HERE: Phase 1 retrieval MVP vertical slice now runs end to end. `make des
 - [x] Retrieval service returns top-K relevant plasmids for a `DesignSpec`, with hybrid (semantic + structured-filter) search
 - [x] Recommendation generator produces a plain-English, ranked explanation of how to adapt each retrieved plasmid
 - [x] Evaluation harness measures retrieval quality against a hand-labeled gold set (Section 6.6)
-- [ ] **GATE:** Given 20 realistic natural-language queries, the system returns relevant plasmids with a top-5 hit rate â‰¥ 80% on the gold set, end-to-end, via a single function call.
+- [x] **GATE:** Given 20 realistic natural-language queries, the system returns relevant plasmids with a top-5 hit rate â‰¥ 80% on the gold set, end-to-end, via a single function call. Verified on 2026-05-31 with 20 scored retrieval queries plus 1 clarification-only case: top-1 `0.700`, top-5 `1.000`, MRR `0.825`, clarification pass rate `1.000`.
 
 ### 3.3 Phase 2 â€” Sequence generation
 
@@ -130,6 +132,11 @@ RESUME HERE: Phase 1 retrieval MVP vertical slice now runs end to end. `make des
 - [ ] **GATE:** A full loop runs automatically â€” a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-05-31 - Met the Phase 1 retrieval MVP gate. Expanded `data/eval/retrieval_gold.jsonl` to 21 total cases: 20 scored retrieval queries plus one clarification-only request. Final tuned report `data/eval/retrieval/2026-05-31-221057-retrieval-baseline.{md,json}` scores top-1 `0.700`, top-5 `1.000`, MRR `0.825`, clarification pass rate `1.000`.
+- 2026-05-31 - Added clarification-aware retrieval evaluation: clarification-only gold cases are measured separately and excluded from top-1/top-5/MRR denominators.
+- 2026-05-31 - Added eight verified non-curated GenBank targets spanning bacterial expression, cloning, general shuttle, mammalian expression, reporter, yeast shuttle, and an unknown-profile natural resistance plasmid. Logged that the current index has no classified lentiviral or CRISPR records rather than fabricating labels.
+- 2026-05-31 - Tuned bounded retrieval behavior after `data/eval/retrieval/2026-05-31-expanded-gate-failure-analysis.md`: preserve conservative identity constraints in deterministic intent parsing and composed queries; permit sparse host-neutral general-shuttle rows only without conflicting host evidence. pDL278 and pRAS1 moved from misses to rank `1`; pBluescript moved from rank `5` to rank `2`.
+- 2026-05-31 - Documented Phase 1 gate findings and residual architecture work in `research/findings/phase1_retrieval_gate.md`: named lookup should add a lexical lane, and provenance-constrained retrieval should add a structured source filter. Final `make test` passes 192 tests with 1 skipped real-LLM smoke test.
 - 2026-05-31 - Completed Phase 1 hybrid retrieval MVP slice. Added controlled vocabularies in `packages/core/vocabularies.py`, `packages/retrieval/intent_parser.py` with deterministic `FakeIntentParser` and LLM-backed parser wrapper, `packages/retrieval/retriever.py` with structured hard filters plus pgvector semantic ranking, `packages/retrieval/recommender.py` with grounded template and LLM recommendation generators, and `packages/retrieval/pipeline.py` with `design_retrieval` / `make design`.
 - 2026-05-31 - Expanded `data/eval/retrieval_gold.jsonl` from 7 to 12 labeled curated-seed queries, adding pBR322, pBluescript, pUC orientation, pEGFP-N1 marker, and pRS416/URA3 cases.
 - 2026-05-31 - Added `packages/retrieval/eval.py` and `make eval-retrieval`. Baseline report saved at `data/eval/retrieval/2026-05-31-211351-retrieval-baseline.{md,json}`: 12 queries, top-1 `0.750`, top-5 `1.000`, MRR `0.850`.
