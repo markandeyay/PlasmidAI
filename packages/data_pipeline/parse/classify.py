@@ -3,9 +3,21 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from packages.core.schemas import AnnotatedSequence
+from packages.data_pipeline.parse.expression_evidence import (
+    bacterial_expression_evidence,
+    mammalian_expression_evidence,
+)
+from packages.data_pipeline.parse.text_signals import matching_signals
+from packages.data_pipeline.parse.viral_signals import evaluate_viral_signals
 
 
 UNKNOWN_PROFILE = "unknown"
+TEXT_SIGNAL_ALIASES = {
+    "ars": ("arsh4",),
+    "cas9": ("spcas9",),
+    "gfp": ("egfp",),
+    "puc": ("puc18", "puc19"),
+}
 
 
 @dataclass(frozen=True)
@@ -26,8 +38,8 @@ def classify(annotated_sequence: AnnotatedSequence) -> ClassificationResult:
         mammalian_reporter_vector,
         mammalian_expression_vector,
         bacterial_expression_vector,
-        bacterial_cloning_vector,
         general_shuttle_vector,
+        bacterial_cloning_vector,
     )
     for check in checks:
         result = check(context)
@@ -61,6 +73,7 @@ def is_annotation_complete(annotated_sequence: AnnotatedSequence, profile: str) 
 
 class FeatureContext:
     def __init__(self, annotated_sequence: AnnotatedSequence) -> None:
+        self.annotated_sequence = annotated_sequence
         self.features = annotated_sequence.features
         self.types = [str(feature.type) for feature in self.features]
         self.text = " ".join(
@@ -80,23 +93,10 @@ class FeatureContext:
         return any(self.has(feature_type) for feature_type in feature_types)
 
     def terms(self, *terms: str) -> list[str]:
-        return [term for term in terms if term.lower() in self.text]
+        return matching_signals(self.text, terms, aliases=TEXT_SIGNAL_ALIASES)
 
     def has_viral_signal(self) -> bool:
-        return bool(
-            self.terms(
-                "ltr",
-                "long terminal repeat",
-                "psi",
-                "packaging signal",
-                "rre",
-                "cppt",
-                "wpre",
-                "mscv",
-                "lentiviral",
-                "retroviral",
-            )
-        )
+        return evaluate_viral_signals(self.text).is_transfer_vector
 
     def has_crispr_signal(self) -> bool:
         return bool(self.terms("crispr", "cas9", "dcas9", "ncas9", "cas12", "cpf1", "sgrna", "guide rna", "grna"))
@@ -166,11 +166,14 @@ def crispr_vector(context: FeatureContext) -> ClassificationResult | None:
 
 
 def lentiviral_or_retroviral_transfer_vector(context: FeatureContext) -> ClassificationResult | None:
-    signals = context.terms("ltr", "long terminal repeat", "psi", "packaging signal", "rre", "cppt", "wpre", "mscv")
-    if not signals:
+    evaluation = evaluate_viral_signals(context.text)
+    if not evaluation.is_transfer_vector:
         return None
-    confidence = 0.92 if len(signals) >= 2 else 0.82
-    return ClassificationResult("lentiviral_or_retroviral_transfer_vector", confidence, tuple(signals))
+    return ClassificationResult(
+        "lentiviral_or_retroviral_transfer_vector",
+        0.92,
+        evaluation.matched_signals,
+    )
 
 
 def yeast_shuttle_vector(context: FeatureContext) -> ClassificationResult | None:
@@ -190,42 +193,17 @@ def mammalian_reporter_vector(context: FeatureContext) -> ClassificationResult |
 
 
 def mammalian_expression_vector(context: FeatureContext) -> ClassificationResult | None:
-    signals = context.terms("cmv", "ef1", "ef-1", "cag", "pgk", "sv40", "tre", "bgh", "polyadenylation")
-    if not signals:
+    evidence = mammalian_expression_evidence(context.annotated_sequence)
+    if not evidence.qualifies:
         return None
-    if not context.has_any("GOI", "MCS"):
-        return None
-    confidence = 0.85 if context.has("terminator") else 0.72
-    return ClassificationResult("mammalian_expression_vector", confidence, tuple(signals))
+    return ClassificationResult("mammalian_expression_vector", evidence.confidence, evidence.signals)
 
 
 def bacterial_expression_vector(context: FeatureContext) -> ClassificationResult | None:
-    signals = context.terms(
-        "t7",
-        "t3",
-        "sp6",
-        "tac",
-        "trc",
-        "pbad",
-        "arabad",
-        "gst",
-        "mbp",
-        "his-tag",
-        "his tag",
-        "rbs",
-        "shine-dalgarno",
-    )
-    if not signals:
+    evidence = bacterial_expression_evidence(context.annotated_sequence)
+    if not evidence.qualifies:
         return None
-    strong_expression_signals = [
-        signal for signal in signals if signal not in {"t7", "t3", "sp6"}
-    ]
-    if not strong_expression_signals and context.has("MCS") and not context.has("GOI"):
-        return None
-    if not context.has_all("ORI", "marker", "promoter"):
-        return None
-    confidence = 0.86 if context.has_any("GOI", "MCS") else 0.72
-    return ClassificationResult("bacterial_expression_vector", confidence, tuple(signals))
+    return ClassificationResult("bacterial_expression_vector", evidence.confidence, evidence.signals)
 
 
 def bacterial_cloning_vector(context: FeatureContext) -> ClassificationResult | None:
@@ -242,8 +220,8 @@ def bacterial_cloning_vector(context: FeatureContext) -> ClassificationResult | 
     )
     if not (context.has("ORI") and context.has("marker")):
         return None
-    if context.has("MCS") or context.count("marker") >= 2 or signals:
-        confidence = 0.84 if context.has("MCS") or context.count("marker") >= 2 else 0.72
+    if context.has("MCS") or context.count("marker") >= 2:
+        confidence = 0.84
         return ClassificationResult("bacterial_cloning_vector", confidence, tuple(signals or ["ORI+marker cloning backbone"]))
     return None
 
