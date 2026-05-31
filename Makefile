@@ -8,6 +8,8 @@ GENBANK_STALE_DAYS ?= 60
 BATCH_SIZE ?= 100
 FAKE ?= 0
 TOP_K ?= 5
+EVAL_GOLD ?= data/eval/retrieval_gold.jsonl
+EVAL_OUT ?= data/eval/retrieval
 
 setup:
 	$(PYTHON) -m pip install -r requirements.txt
@@ -43,7 +45,7 @@ reprocess:
 	$(PYTHON) -m packages.data_pipeline.reprocess --mode $(MODE) $(if $(BEFORE),--before $(BEFORE),) $(if $(SOURCE),--source $(SOURCE),) $(if $(PATTERN),--pattern $(PATTERN),) --batch-size $(BATCH_SIZE)
 
 eval-retrieval:
-	@echo "TODO: run Phase 1 retrieval evaluation"
+	$(PYTHON) -m packages.retrieval.eval --gold-path $(EVAL_GOLD) --output-dir $(EVAL_OUT) --top-k $(TOP_K) $(if $(filter 1 true TRUE yes YES,$(FAKE)),--fake-embedder,) $(if $(filter offline OFFLINE,$(MODE)),--local-files-only,)
 
 embed-corpus:
 	$(PYTHON) -m packages.retrieval.embed_corpus --batch-size $(BATCH_SIZE) $(if $(N),--limit $(N),) $(if $(filter 1 true TRUE yes YES,$(FAKE)),--fake,) $(if $(filter offline OFFLINE,$(MODE)),--local-files-only,)
