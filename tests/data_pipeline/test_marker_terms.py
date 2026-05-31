@@ -14,3 +14,5 @@ def test_marker_terms_do_not_match_short_aliases_inside_unrelated_words() -> Non
     assert not contains_marker_term("replication initiator protein A")
     assert not contains_marker_term("replication initiation factor domain-containing protein")
     assert not contains_marker_term("catalase family protein")
+    assert not contains_marker_term("blastocyst development protein")
+    assert not contains_marker_term("tetrahydrofolate synthase")

@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from packages.data_pipeline.parse.sequence_parser import parse_genbank_text, parse_seqrecord
+from Bio.SeqFeature import FeatureLocation, SeqFeature
+
+from packages.data_pipeline.parse.sequence_parser import normalize_feature_type, parse_genbank_text, parse_seqrecord
 
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "parser"
@@ -56,3 +58,19 @@ def test_motif_heuristic_flags_restriction_site_dense_mcs_candidate() -> None:
     assert len(mcs_features) == 1
     assert 100 <= mcs_features[0].start <= 130
     assert mcs_features[0].confidence == 0.55
+
+
+def test_annotation_normalization_does_not_match_short_aliases_inside_words() -> None:
+    origin_like = SeqFeature(
+        FeatureLocation(0, 10),
+        type="misc_feature",
+        qualifiers={"note": ["xpmb1x maintenance protein"]},
+    )
+    mcs_like = SeqFeature(
+        FeatureLocation(0, 10),
+        type="misc_feature",
+        qualifiers={"note": ["xmcsx binding protein"]},
+    )
+
+    assert normalize_feature_type(origin_like) is None
+    assert normalize_feature_type(mcs_like) is None

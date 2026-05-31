@@ -22,6 +22,7 @@ from psycopg.types.json import Jsonb
 
 from packages.core.schemas import Plasmid
 from packages.data_pipeline.marker_terms import contains_marker_term
+from packages.data_pipeline.parse.text_signals import contains_signal
 
 
 SOURCE = "genbank"
@@ -617,9 +618,9 @@ def extract_promoters(record: SeqRecord) -> list[str]:
         text = qualifier_text(feature).lower()
         if feature.type == "promoter":
             candidates.append(best_feature_name(feature, fallback="promoter"))
-        elif feature.type == "regulatory" and "promoter" in text:
+        elif feature.type == "regulatory" and contains_signal(text, "promoter"):
             candidates.append(best_feature_name(feature, fallback="regulatory promoter"))
-        elif feature.type == "misc_feature" and "promoter" in text:
+        elif feature.type == "misc_feature" and contains_signal(text, "promoter"):
             candidates.append(best_feature_name(feature, fallback="promoter"))
     return dedupe_strings(candidates)
 

@@ -27,11 +27,33 @@ MARKER_TERMS = (
     "zeocin",
 )
 MARKER_TERM_PATTERNS = tuple(re.compile(rf"(?<![a-z0-9]){re.escape(term)}(?![a-z0-9])") for term in MARKER_TERMS)
-MARKER_GENE_FAMILY_PATTERN = re.compile(r"(?<![a-z0-9])(?:bla|tet)[a-z0-9-]*(?![a-z0-9])")
+MARKER_GENE_ALIASES = (
+    "blai",
+    "blar1",
+    "blaz",
+    "teta",
+    "tetb",
+    "tetc",
+    "tetd",
+    "tete",
+    "tetg",
+    "teth",
+    "tetk",
+    "tetl",
+    "tetm",
+    "teto",
+    "tetq",
+    "tetr",
+    "tets",
+    "tetw",
+    "tetx",
+)
+MARKER_GENE_PATTERNS = tuple(
+    re.compile(rf"(?<![a-z0-9]){re.escape(alias)}(?![a-z0-9])")
+    for alias in MARKER_GENE_ALIASES
+)
 
 
 def contains_marker_term(text: str) -> bool:
     normalized = text.lower()
-    return any(pattern.search(normalized) for pattern in MARKER_TERM_PATTERNS) or bool(
-        MARKER_GENE_FAMILY_PATTERN.search(normalized)
-    )
+    return any(pattern.search(normalized) for pattern in (*MARKER_TERM_PATTERNS, *MARKER_GENE_PATTERNS))

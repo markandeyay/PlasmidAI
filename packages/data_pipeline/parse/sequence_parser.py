@@ -13,6 +13,7 @@ from Bio.SeqRecord import SeqRecord
 from packages.core.schemas import AnnotatedFeature, AnnotatedSequence
 from packages.data_pipeline.marker_terms import contains_marker_term
 from packages.data_pipeline.parse.classify import classify, is_annotation_complete
+from packages.data_pipeline.parse.text_signals import contains_signal
 
 
 REFERENCE_PATH = Path(__file__).resolve().parent / "references" / "component_library.json"
@@ -108,17 +109,23 @@ def features_from_annotations(record: SeqRecord, config: ParserConfig) -> list[A
 def normalize_feature_type(feature: SeqFeature) -> str | None:
     text = qualifier_text(feature).lower()
     feature_type = feature.type.lower()
-    if feature_type == "rep_origin" or "origin of replication" in text or "pmb1" in text or "cole1" in text:
+    if feature_type == "rep_origin" or any(
+        contains_signal(text, signal) for signal in ("origin of replication", "pmb1", "cole1")
+    ):
         return "ORI"
     if feature_type == "promoter":
         return "promoter"
-    if feature_type == "regulatory" and "promoter" in text:
+    if feature_type == "regulatory" and contains_signal(text, "promoter"):
         return "promoter"
     if feature_type in {"terminator", "polyA_signal", "polyA_site"}:
         return "terminator"
-    if feature_type in {"regulatory", "misc_feature"} and ("terminator" in text or "polya" in text or "polyadenylation" in text):
+    if feature_type in {"regulatory", "misc_feature"} and any(
+        contains_signal(text, signal) for signal in ("terminator", "polya", "polyadenylation")
+    ):
         return "terminator"
-    if feature_type == "misc_feature" and ("multiple cloning" in text or "polylinker" in text or "mcs" in text):
+    if feature_type == "misc_feature" and any(
+        contains_signal(text, signal) for signal in ("multiple cloning", "polylinker", "mcs")
+    ):
         return "MCS"
     if feature_type in {"cds", "gene", "misc_feature"} and contains_marker_term(text):
         return "marker"
