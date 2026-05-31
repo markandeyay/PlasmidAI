@@ -210,6 +210,30 @@ class RetrievedPlasmid(SchemaModel):
     matched_fields: list[str] = Field(default_factory=list)
 
 
+class PlasmidRecommendation(SchemaModel):
+    plasmid_id: str = Field(min_length=1)
+    rank: int = Field(ge=1)
+    score: float = Field(ge=0.0)
+    why_relevant: str = Field(min_length=1)
+    suggested_adaptations: list[str] = Field(default_factory=list)
+    caveats: list[str] = Field(default_factory=list)
+
+
+class RetrievalResult(SchemaModel):
+    spec: DesignSpec
+    retrieved: list[RetrievedPlasmid] = Field(default_factory=list)
+    recommendations: list[PlasmidRecommendation] = Field(default_factory=list)
+    generated_by: str = Field(min_length=1)
+    clarification_needed: bool = False
+    clarification_question: str | None = None
+
+    @model_validator(mode="after")
+    def clarification_has_question(self) -> RetrievalResult:
+        if self.clarification_needed and not self.clarification_question:
+            raise ValueError("clarification_question is required when clarification_needed is true")
+        return self
+
+
 class GeneratedSequence(SchemaModel):
     annotated_sequence: AnnotatedSequence
     model_version: str = Field(min_length=1)

@@ -12,8 +12,10 @@ from packages.core.schemas import (
     GeneratedSequence,
     Match,
     Plasmid,
+    PlasmidRecommendation,
     Provenance,
     RetrievedPlasmid,
+    RetrievalResult,
     TextSpan,
     ValidationCheck,
     ValidationReport,
@@ -162,6 +164,20 @@ def test_supporting_types_validate_retrieval_generation_and_vectors() -> None:
     annotated = example_annotated_sequence()
 
     retrieved = RetrievedPlasmid(plasmid=plasmid, score=0.91, matched_fields=["promoters", "use_cases"])
+    recommendation = PlasmidRecommendation(
+        plasmid_id=plasmid.id,
+        rank=1,
+        score=0.91,
+        why_relevant="Example CMV GFP is relevant because it has a CMV promoter.",
+        suggested_adaptations=["Swap marker if needed."],
+        caveats=[],
+    )
+    retrieval_result = RetrievalResult(
+        spec=DesignSpec(organism="Homo sapiens"),
+        retrieved=[retrieved],
+        recommendations=[recommendation],
+        generated_by="fake-retrieval-0",
+    )
     generated = GeneratedSequence(
         annotated_sequence=annotated,
         model_version="fake-generator-0",
@@ -171,6 +187,7 @@ def test_supporting_types_validate_retrieval_generation_and_vectors() -> None:
     vector = Vector([0.1, 0.2, 0.3])
 
     assert retrieved.score == pytest.approx(0.91)
+    assert retrieval_result.recommendations[0].plasmid_id == plasmid.id
     assert generated.parent_template_ids == ["addgene:12345"]
     assert match.metadata["source"] == "addgene"
     assert vector.root == [0.1, 0.2, 0.3]
