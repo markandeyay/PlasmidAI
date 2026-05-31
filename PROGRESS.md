@@ -2,13 +2,13 @@
 
 ## AT-A-GLANCE (update every session)
 - **Current Phase:** Phase 0: Foundations and Data Pipeline
-- **Next Concrete Task:** Create and run the Phase 0 data quality report job after publishing the private GitHub backup and project README.
+- **Next Concrete Task:** Add a cache-first reprocessing path for existing GenBank rows so pre-fix marker metadata is idempotently rewritten, then review profile quality on the 20 refined-query engineered vectors before any scale-up.
 - **Overall completion estimate:** 5%
 - **Last session date:** 2026-05-29
-- **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, 7 schema tests, 7 fake-backed Addgene ingestion tests, 8 fake-backed GenBank ingestion tests, 13 vector-classifier tests, and 3 parser tests
+- **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 44 unit tests
 
 ## RESUME HERE (only if mid-task)
-RESUME HERE: pACYC184 will remain incomplete until an exact CAT CDS source is approved; do not import the broad NCBI/NEB chloramphenicol-resistance region. Profile-aware completeness remains verified at `annotation_complete=11/12` on the curated sample. Current session is publishing the private GitHub backup and README, then building the Phase 0 quality report job. Do not bulk-parse yet.
+RESUME HERE: GitHub backup, README, quality-report job, baseline report, token-boundary marker fix, and refined GenBank `N=20` test are complete. Next add a cache-first reprocessing command for existing GenBank rows: stored metadata written before the marker fix still contains false marker values caused by short aliases such as `cat` matching inside unrelated words such as `replication`. Then rerun the quality report and review profile quality on the 20 engineered-vector records from ingestion run `4`. Do not bulk-parse yet.
 
 ## KNOWN ISSUES / BLOCKERS
 - Phase 0 is authorized as of 2026-05-29; do not begin Phase 1 until the Phase 0 gate is met and reviewed.
@@ -18,6 +18,8 @@ RESUME HERE: pACYC184 will remain incomplete until an exact CAT CDS source is ap
 - NCBI GenBank dev-mode ingestion is verified on 10 real records after excluding `CON` division constructed records and adding post-fetch ORIGIN validation.
 - Parser N=50 sample remains structurally sparse for Phase 0 completeness: the current GenBank query returns complete natural plasmids with many CDS/marker annotations but almost no source-labeled or reference-matched synthetic regulatory elements.
 - Profile-aware curated seed sample is substantially improved: 12 NCBI-backed seed records loaded; `annotation_complete=11/12`; profile breakdown `bacterial_cloning_vector:5/6`, `bacterial_expression_vector:1/1`, `mammalian_reporter_vector:3/3`, `yeast_shuttle_vector:2/2`; report saved at `data/eval/parser/2026-05-29-223417-profile-aware-curated-sample.txt`.
+- The initial quality baseline exposed stale marker metadata in pre-fix database rows: short aliases such as `cat` previously matched inside unrelated words such as `replication`. New ingestion and parser passes use token-boundary matching, but existing cached records need an idempotent cache-first reprocessing pass.
+- Refined GenBank query dev verification succeeded on 2026-05-30: ingestion run `4` saw and upserted `20/20` engineered-vector-titled records with `0` errors. Observation note: `data/eval/genbank/2026-05-30-refined-query-dev-observation.md`.
 
 ## QUESTIONS FOR THE HUMAN
 - Which synthesis provider profile should be the default for "synthesis-ready" when no provider is selected: conservative cross-provider, Twist, IDT, GenScript, or user-selected only?
@@ -68,7 +70,7 @@ RESUME HERE: pACYC184 will remain incomplete until an exact CAT CDS source is ap
 - [x] NCBI GenBank ingestion job pulls plasmid-annotated sequences
 - [ ] Literature/context extraction job populates the `experimental_contexts` table (Section 12.2)
 - [ ] Sequence parser normalizes every sequence into canonical annotated form (Section 12.3) with component detection (ORI, promoter, GOI, marker, MCS, terminator)
-- [ ] Data quality report job produces counts, null-rates, and dedup stats
+- [x] Data quality report job produces counts, null-rates, and dedup stats
 - [ ] **GATE:** â‰¥ 50,000 fully-parsed, component-annotated plasmid records exist in the database and pass schema validation; a single CLI command reproduces the whole pipeline from empty DB.
 
 ### 3.2 Phase 1 â€” Retrieval layer (MVP)
@@ -123,6 +125,12 @@ RESUME HERE: pACYC184 will remain incomplete until an exact CAT CDS source is ap
 - [ ] **GATE:** A full loop runs automatically â€” a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-05-30 - Created private GitHub repository `https://github.com/markandeyay/PlasmidAI`, configured `origin`, pushed local history, and verified credentials with a no-op push.
+- 2026-05-30 - Added root `README.md` with project status, repository orientation, setup instructions, pipeline overview, and operating notes.
+- 2026-05-30 - Added `packages/data_pipeline/quality_report.py`, fake-backed tests, and `make quality-report`. The job reports per-source totals, profile-aware completeness, metadata distributions, null-rates, parser errors, and exact-sequence duplicate clusters using prefix-hash buckets before full-sequence comparison.
+- 2026-05-30 - Generated and committed baseline quality reports under `data/eval/quality/2026-05-31-014004-quality-report.{json,md}`: 62 records, 11 complete, 41 unknown, 2 exact-sequence duplicate clusters, and no parser errors.
+- 2026-05-30 - Fixed selectable-marker false positives by matching short aliases such as `cat` on token boundaries in both GenBank metadata extraction and Tier 1 parser annotations; `make test` now passes 44 tests.
+- 2026-05-30 - Ran refined GenBank query verification with `make ingest-genbank MODE=dev N=20`: ingestion run `4` upserted 20/20 records with no errors, and all returned titles were engineered-vector oriented. Added `data/eval/genbank/2026-05-30-refined-query-dev-observation.md`.
 - 2026-05-30 - Human decided pACYC184 must remain incomplete until an exact CAT CDS source is approved. Do not import the broad NCBI/NEB chloramphenicol-resistance region under uncertainty.
 - 2026-05-29 - Replaced universal parser completeness with vector-profile-aware completeness. Added `packages/data_pipeline/parse/vector_profiles.yaml`, `AnnotatedSequence.vector_profile`, a deterministic rule-cascade classifier, classifier tests for the 12 curated seed vectors, and parser wiring that evaluates completeness per profile.
 - 2026-05-29 - Expanded the parser reference library with NCBI-backed profile-specific elements from curated seed records: p15A origin, Tet marker, f1 origin, NeoR/KanR, EGFP, luc+/luc2, SV40 late polyA, pGL3 MCS, tac promoter, GST, and ARSH4; deferred gated or ambiguous viral/CRISPR/U6/PuroR/yeast-expression elements.
