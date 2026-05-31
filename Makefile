@@ -1,10 +1,11 @@
-.PHONY: setup test lint ingest-all eval-retrieval services-down ingest-addgene ingest-genbank ingest-curated parse-sample quality-report
+.PHONY: setup test lint ingest-all eval-retrieval services-down ingest-addgene ingest-genbank ingest-curated parse-sample quality-report reprocess
 
 PYTHON ?= python
 MODE ?= dev
 N ?=
 ADDGENE_STALE_DAYS ?= 1
 GENBANK_STALE_DAYS ?= 60
+BATCH_SIZE ?= 100
 
 setup:
 	$(PYTHON) -m pip install -r requirements.txt
@@ -35,6 +36,9 @@ ingest-curated:
 
 quality-report:
 	$(PYTHON) -m packages.data_pipeline.quality_report
+
+reprocess:
+	$(PYTHON) -m packages.data_pipeline.reprocess --mode $(MODE) $(if $(BEFORE),--before $(BEFORE),) $(if $(SOURCE),--source $(SOURCE),) $(if $(PATTERN),--pattern $(PATTERN),) --batch-size $(BATCH_SIZE)
 
 eval-retrieval:
 	@echo "TODO: run Phase 1 retrieval evaluation"
