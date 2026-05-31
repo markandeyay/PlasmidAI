@@ -2,13 +2,13 @@
 
 ## AT-A-GLANCE (update every session)
 - **Current Phase:** Phase 0: Foundations and Data Pipeline
-- **Next Concrete Task:** Human review of the profile-aware curated parser sample. Decide whether pACYC184 should remain incomplete until a precise second-marker source is added, then continue Phase 0 parser/corpus work without bulk parsing yet.
+- **Next Concrete Task:** Create and run the Phase 0 data quality report job after publishing the private GitHub backup and project README.
 - **Overall completion estimate:** 5%
 - **Last session date:** 2026-05-29
 - **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, 7 schema tests, 7 fake-backed Addgene ingestion tests, 8 fake-backed GenBank ingestion tests, 13 vector-classifier tests, and 3 parser tests
 
 ## RESUME HERE (only if mid-task)
-RESUME HERE: Profile-aware completeness is implemented and ready for human review. Vector profiles live at `packages/data_pipeline/parse/vector_profiles.yaml`; `AnnotatedSequence` now includes `vector_profile`; the parser classifies records before evaluating completeness. The latest curated sample report is `data/eval/parser/2026-05-29-223417-profile-aware-curated-sample.txt`: `annotation_complete=11/12`, with pACYC184 still incomplete because only one marker is detected from trusted/provenance-safe references. Do not bulk-parse yet; next session should either address the pACYC marker-source question or proceed to the next reviewed Phase 0 parser/corpus task.
+RESUME HERE: pACYC184 will remain incomplete until an exact CAT CDS source is approved; do not import the broad NCBI/NEB chloramphenicol-resistance region. Profile-aware completeness remains verified at `annotation_complete=11/12` on the curated sample. Current session is publishing the private GitHub backup and README, then building the Phase 0 quality report job. Do not bulk-parse yet.
 
 ## KNOWN ISSUES / BLOCKERS
 - Phase 0 is authorized as of 2026-05-29; do not begin Phase 1 until the Phase 0 gate is met and reviewed.
@@ -33,7 +33,6 @@ RESUME HERE: Profile-aware completeness is implemented and ready for human revie
 - Should the GenBank corpus strategy shift from broad natural plasmid complete sequences toward named synthetic vectors/backbones, or should Phase 0 depend on Addgene/another vector-specific source for promoter/terminator-rich records?
 - Which exact canonical variants should be approved for ambiguous elements not yet added to the reference library: EF1a, SV40 early, U6, tac, trc, araBAD, SV40 polyA, BGH polyA, rabbit beta-globin polyA, rrnB T1/T2, lambda T0, ZeoR, BSD, HygR, NeoR/G418, f1 origin, and 2-micron origin?
 - Pending legal/provenance approval, may Addgene Vector Database free-to-view sequences be used for a small parser-calibration seed set in a commercial product, or should the seed set remain NCBI/manufacturer-only until explicit partner terms are in place?
-- For pACYC184, should the parser accept a broad NCBI/NEB chloramphenicol-resistance region as the second marker for completeness, or should pACYC184 remain incomplete until an exact CAT CDS coordinate source is approved?
 
 ## PHASE GATE STATUS
 - [x] Phase R gate met (see SYSTEM_DESIGN 3.05) â€” artifacts reviewed and Phase 0 authorized by the human on 2026-05-29
@@ -124,6 +123,7 @@ RESUME HERE: Profile-aware completeness is implemented and ready for human revie
 - [ ] **GATE:** A full loop runs automatically â€” a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-05-30 - Human decided pACYC184 must remain incomplete until an exact CAT CDS source is approved. Do not import the broad NCBI/NEB chloramphenicol-resistance region under uncertainty.
 - 2026-05-29 - Replaced universal parser completeness with vector-profile-aware completeness. Added `packages/data_pipeline/parse/vector_profiles.yaml`, `AnnotatedSequence.vector_profile`, a deterministic rule-cascade classifier, classifier tests for the 12 curated seed vectors, and parser wiring that evaluates completeness per profile.
 - 2026-05-29 - Expanded the parser reference library with NCBI-backed profile-specific elements from curated seed records: p15A origin, Tet marker, f1 origin, NeoR/KanR, EGFP, luc+/luc2, SV40 late polyA, pGL3 MCS, tac promoter, GST, and ARSH4; deferred gated or ambiguous viral/CRISPR/U6/PuroR/yeast-expression elements.
 - 2026-05-29 - Ran `make parse-sample N=12 SOURCE=curated` after profile-aware completeness. Result: `annotation_complete=11/12`; pACYC184 remains incomplete pending a precise second-marker reference; report saved at `data/eval/parser/2026-05-29-223417-profile-aware-curated-sample.txt`.
