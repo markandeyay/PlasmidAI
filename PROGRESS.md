@@ -2,13 +2,13 @@
 
 ## AT-A-GLANCE (update every session)
 - **Current Phase:** Phase 0: Foundations and Data Pipeline
-- **Next Concrete Task:** Add a cache-first reprocessing path for existing GenBank rows so pre-fix marker metadata is idempotently rewritten, then review profile quality on the 20 refined-query engineered vectors before any scale-up.
+- **Next Concrete Task:** Human review of unexpected classifier outcomes from all-record reprocessing before landing the all-pass report: fix viral `ltr` substring matching and decide how cloning shuttle vectors with SP6/T7/T3 promoter annotations should classify.
 - **Overall completion estimate:** 5%
-- **Last session date:** 2026-05-29
-- **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 44 unit tests
+- **Last session date:** 2026-05-30
+- **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 53 unit tests
 
 ## RESUME HERE (only if mid-task)
-RESUME HERE: GitHub backup, README, quality-report job, baseline report, token-boundary marker fix, and refined GenBank `N=20` test are complete. Next add a cache-first reprocessing command for existing GenBank rows: stored metadata written before the marker fix still contains false marker values caused by short aliases such as `cat` matching inside unrelated words such as `replication`. Then rerun the quality report and review profile quality on the 20 engineered-vector records from ingestion run `4`. Do not bulk-parse yet.
+RESUME HERE: Offline reprocessor code and targeted stale repair are committed locally. Targeted run `1` examined 62 rows and updated 51 predictable fields; stale rerun `2` made 0 updates. All-record run `3` examined 82 rows and updated 12 `annotation_complete` values, but its report is intentionally uncommitted pending human review because it exposed classifier issues: `genbank:AF216802.1` / pDL278 matched viral signal `ltr` only as a substring inside `spectinomycin adenyltransferase`; `genbank:U07168.1` / pUCP26 classified as bacterial expression from SP6 plus generic CDS despite a cloning-shuttle source title. Do not commit `data/eval/reprocess/2026-05-31-015308-reprocess-all.json`, run quality-report, or continue scale-up until reviewed.
 
 ## KNOWN ISSUES / BLOCKERS
 - Phase 0 is authorized as of 2026-05-29; do not begin Phase 1 until the Phase 0 gate is met and reviewed.
@@ -20,6 +20,7 @@ RESUME HERE: GitHub backup, README, quality-report job, baseline report, token-b
 - Profile-aware curated seed sample is substantially improved: 12 NCBI-backed seed records loaded; `annotation_complete=11/12`; profile breakdown `bacterial_cloning_vector:5/6`, `bacterial_expression_vector:1/1`, `mammalian_reporter_vector:3/3`, `yeast_shuttle_vector:2/2`; report saved at `data/eval/parser/2026-05-29-223417-profile-aware-curated-sample.txt`.
 - The initial quality baseline exposed stale marker metadata in pre-fix database rows: short aliases such as `cat` previously matched inside unrelated words such as `replication`. New ingestion and parser passes use token-boundary matching, but existing cached records need an idempotent cache-first reprocessing pass.
 - Refined GenBank query dev verification succeeded on 2026-05-30: ingestion run `4` saw and upserted `20/20` engineered-vector-titled records with `0` errors. Observation note: `data/eval/genbank/2026-05-30-refined-query-dev-observation.md`.
+- All-record reprocessing run `3` is blocked from landing pending classifier review. Viral signal matching currently uses raw substring checks, so `ltr` matched inside `spectinomycin adenyltransferase` for pDL278. pUCP26 also needs a taxonomy decision because SP6 plus generic CDS currently classifies the cloning shuttle vector as bacterial expression.
 
 ## QUESTIONS FOR THE HUMAN
 - Which synthesis provider profile should be the default for "synthesis-ready" when no provider is selected: conservative cross-provider, Twist, IDT, GenScript, or user-selected only?
@@ -35,6 +36,7 @@ RESUME HERE: GitHub backup, README, quality-report job, baseline report, token-b
 - Should the GenBank corpus strategy shift from broad natural plasmid complete sequences toward named synthetic vectors/backbones, or should Phase 0 depend on Addgene/another vector-specific source for promoter/terminator-rich records?
 - Which exact canonical variants should be approved for ambiguous elements not yet added to the reference library: EF1a, SV40 early, U6, tac, trc, araBAD, SV40 polyA, BGH polyA, rabbit beta-globin polyA, rrnB T1/T2, lambda T0, ZeoR, BSD, HygR, NeoR/G418, f1 origin, and 2-micron origin?
 - Pending legal/provenance approval, may Addgene Vector Database free-to-view sequences be used for a small parser-calibration seed set in a commercial product, or should the seed set remain NCBI/manufacturer-only until explicit partner terms are in place?
+- For cloning shuttle vectors such as pUCP26 that carry SP6/T7/T3 sequencing/transcription promoters plus generic CDS annotations, should classification remain `bacterial_cloning_vector` unless an explicit expression-purpose metadata signal or stronger expression cassette signal is present?
 
 ## PHASE GATE STATUS
 - [x] Phase R gate met (see SYSTEM_DESIGN 3.05) â€” artifacts reviewed and Phase 0 authorized by the human on 2026-05-29
@@ -125,6 +127,9 @@ RESUME HERE: GitHub backup, README, quality-report job, baseline report, token-b
 - [ ] **GATE:** A full loop runs automatically â€” a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-05-30 - Added `packages/data_pipeline/reprocess.py`, `make reprocess`, `reprocess_runs`, and fake-backed tests for changed-row repair, idempotent no-op, missing-cache preservation, and transactional batch rollback.
+- 2026-05-30 - Ran targeted offline `make reprocess MODE=stale BEFORE=2026-05-31T01:39:48Z`: run `1` examined 62 records, updated 51 predictable metadata/completeness fields, found 0 missing caches, and logged 0 errors. Repeated the identical mode as run `2`; it updated 0 records.
+- 2026-05-30 - Ran offline `make reprocess MODE=all` as run `3`: 82 examined and 12 `annotation_complete` updates. Stopped before committing its report because pDL278 exposed an `ltr` substring classifier bug and pUCP26 exposed a cloning-shuttle versus bacterial-expression classification ambiguity.
 - 2026-05-30 - Created private GitHub repository `https://github.com/markandeyay/PlasmidAI`, configured `origin`, pushed local history, and verified credentials with a no-op push.
 - 2026-05-30 - Added root `README.md` with project status, repository orientation, setup instructions, pipeline overview, and operating notes.
 - 2026-05-30 - Added `packages/data_pipeline/quality_report.py`, fake-backed tests, and `make quality-report`. The job reports per-source totals, profile-aware completeness, metadata distributions, null-rates, parser errors, and exact-sequence duplicate clusters using prefix-hash buckets before full-sequence comparison.
