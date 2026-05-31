@@ -97,6 +97,13 @@ def test_reprocess_updates_changed_metadata_and_second_run_is_noop() -> None:
     assert second.records_updated == 0
     assert second.records_skipped == 1
     assert second.changes == []
+    assert second.classifications == [
+        {
+            "id": "genbank:L09137.2",
+            "vector_profile": "bacterial_cloning_vector",
+            "annotation_complete": True,
+        }
+    ]
 
 
 def test_reprocess_skips_unchanged_record_without_writing() -> None:

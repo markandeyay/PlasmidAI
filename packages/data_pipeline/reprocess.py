@@ -123,6 +123,7 @@ class ReprocessReport:
     records_missing_cache: int = 0
     errors: list[dict[str, Any]] = field(default_factory=list)
     changes: list[dict[str, Any]] = field(default_factory=list)
+    classifications: list[dict[str, Any]] = field(default_factory=list)
     batches: list[dict[str, Any]] = field(default_factory=list)
 
     def as_dict(self, *, finished_at: datetime | None = None) -> dict[str, Any]:
@@ -136,6 +137,7 @@ class ReprocessReport:
             "records_missing_cache": self.records_missing_cache,
             "errors": self.errors,
             "changes": self.changes,
+            "classifications": self.classifications,
             "batches": self.batches,
         }
         if finished_at is not None:
@@ -296,6 +298,13 @@ def run_reprocessing(
             try:
                 raw_text = object_store.get_text(existing.raw_ref)
                 updated, profile = reprocess_plasmid(existing, raw_text)
+                report.classifications.append(
+                    {
+                        "id": existing.id,
+                        "vector_profile": profile,
+                        "annotation_complete": updated.annotation_complete,
+                    }
+                )
                 field_changes = changed_fields(existing, updated)
                 if not field_changes:
                     report.records_skipped += 1
