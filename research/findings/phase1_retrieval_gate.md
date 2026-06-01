@@ -58,3 +58,19 @@ structured source filter rather than ranking tweaks.
 
 The current gate demonstrates the Phase 1 retrieval MVP. It does not close the
 Phase 0 corpus-scale gate or resolve Addgene partner-program access.
+
+## Phase 1 Cleanup Closeout
+
+The retrieval cleanup work is now limited to documentation closure. The lexical
+exact-name lane is implemented with safe names and IDs, and the structured
+filters remain preserved. Provenance source and DOI intent handling is also
+implemented. `depositing_lab` is not available in the current schema or corpus,
+so it cannot be used as a retrieval or filtering field here.
+
+The corpus gap diagnosis in
+`data/eval/corpus/2026-06-01-174026-lentiviral-crispr-gap.md` found no parser
+bug. It leaves lentiviral and CRISPR seed addition blocked until an approved
+exact source and intended-use policy is in place.
+
+Phase 2 readiness is tracked in
+`research/findings/phase2_readiness.md`. No Phase 2 implementation has started.
