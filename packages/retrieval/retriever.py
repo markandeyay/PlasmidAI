@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Any, Mapping, Protocol, Sequence
 
@@ -11,6 +12,7 @@ from packages.core.vocabularies import (
     ORGANISM_TERMS,
     PROMOTER_TYPE_TERMS,
     VECTOR_TYPE_TERMS,
+    contains_term,
     find_controlled_terms,
     normalize_text,
     normalize_to_controlled,
@@ -23,10 +25,29 @@ from packages.retrieval.vector_store import VectorIndex, VectorMatch
 DEFAULT_RETRIEVAL_K = 5
 DEFAULT_CANDIDATE_MULTIPLIER = 10
 MIN_CANDIDATE_LIMIT = 50
+GENERIC_NAME_ALIASES = frozenset(
+    {
+        "synthetic construct",
+        "cloning vector",
+        "expression vector",
+        "reporter vector",
+        "shuttle vector",
+        "plasmid",
+        "vector",
+    }
+)
+NAME_LIKE_TOKEN_PATTERN = re.compile(r"\b(?:p[A-Za-z0-9][A-Za-z0-9_.+-]{1,}|[A-Z]{1,3}\d{4,}(?:\.\d+)?)\b")
+
+
+@dataclass(frozen=True)
+class PlasmidNameRecord:
+    plasmid_id: str
+    name: str
 
 
 class PlasmidRepository(Protocol):
     def get_plasmids(self, plasmid_ids: Sequence[str]) -> list[Plasmid]: ...
+    def list_name_records(self) -> list[PlasmidNameRecord]: ...
 
 
 class Retriever(Protocol):
@@ -48,6 +69,26 @@ class PostgresRetrievalRepository:
         by_id = {row[0]: Plasmid.model_validate(row[1]) for row in rows}
         return [by_id[plasmid_id] for plasmid_id in plasmid_ids if plasmid_id in by_id]
 
+    def list_name_records(self) -> list[PlasmidNameRecord]:
+        with psycopg.connect(self.database_url) as connection:
+            rows = connection.execute("SELECT id, payload->>'name' AS name FROM plasmids").fetchall()
+        return [PlasmidNameRecord(plasmid_id=row[0], name=row[1]) for row in rows if row[1]]
+
+
+@dataclass(frozen=True)
+class _NameAlias:
+    plasmid_id: str
+    alias: str
+    normalized_alias: str
+    priority: int
+
+
+@dataclass(frozen=True)
+class _ExactMatch:
+    plasmid_id: str
+    alias: str
+    priority: int
+
 
 class HybridRetriever:
     def __init__(
@@ -68,6 +109,7 @@ class HybridRetriever:
         self.repository = repository
         self.candidate_multiplier = candidate_multiplier
         self.min_candidate_limit = min_candidate_limit
+        self._name_aliases: list[_NameAlias] | None = None
 
     def retrieve(self, spec: DesignSpec, k: int = DEFAULT_RETRIEVAL_K) -> list[RetrievedPlasmid]:
         if k <= 0:
@@ -75,6 +117,7 @@ class HybridRetriever:
         if spec.clarification_needed:
             return []
         query_document = compose_design_query_document(spec)
+        exact_matches = self._find_exact_name_matches(query_document)
         query_vector = self.embedder.embed([query_document])[0]
         candidate_limit = max(k * self.candidate_multiplier, self.min_candidate_limit)
         matches = self.vector_index.query(
@@ -82,12 +125,33 @@ class HybridRetriever:
             limit=candidate_limit,
             metadata_filter={"document_version": DOCUMENT_VERSION},
         )
-        plasmids = self.repository.get_plasmids([match.plasmid_id for match in matches])
+        lookup_ids = _dedupe_ids([item.plasmid_id for item in exact_matches] + [match.plasmid_id for match in matches])
+        plasmids = self.repository.get_plasmids(lookup_ids)
         plasmids_by_id = {plasmid.id: plasmid for plasmid in plasmids}
         metadata_by_id = {match.plasmid_id: match.metadata for match in matches}
 
         retrieved: list[RetrievedPlasmid] = []
+        seen_ids: set[str] = set()
+        top_semantic_score = max((max(0.0, match.score) for match in matches), default=0.0)
+        lexical_score = max(1.0, top_semantic_score)
+        for exact in exact_matches:
+            plasmid = plasmids_by_id.get(exact.plasmid_id)
+            if plasmid is None or plasmid.id in seen_ids:
+                continue
+            metadata = metadata_by_id.get(exact.plasmid_id, {})
+            retrieved.append(
+                RetrievedPlasmid(
+                    plasmid=plasmid,
+                    score=lexical_score,
+                    matched_fields=_matched_fields_for_exact_name(spec, plasmid, metadata),
+                )
+            )
+            seen_ids.add(plasmid.id)
+            if len(retrieved) >= k:
+                return retrieved
         for match in matches:
+            if match.plasmid_id in seen_ids:
+                continue
             plasmid = plasmids_by_id.get(match.plasmid_id)
             if plasmid is None:
                 continue
@@ -101,9 +165,29 @@ class HybridRetriever:
                     matched_fields=matched_fields(spec, plasmid, metadata),
                 )
             )
+            seen_ids.add(plasmid.id)
             if len(retrieved) >= k:
                 break
         return retrieved
+
+    def _find_exact_name_matches(self, query_text: str) -> list[_ExactMatch]:
+        matches_by_id: dict[str, _ExactMatch] = {}
+        for alias in self._load_name_aliases():
+            if not contains_term(query_text, alias.alias):
+                continue
+            current = matches_by_id.get(alias.plasmid_id)
+            candidate = _ExactMatch(plasmid_id=alias.plasmid_id, alias=alias.alias, priority=alias.priority)
+            if current is None or _exact_match_sort_key(candidate) > _exact_match_sort_key(current):
+                matches_by_id[alias.plasmid_id] = candidate
+        return sorted(matches_by_id.values(), key=_exact_match_sort_key, reverse=True)
+
+    def _load_name_aliases(self) -> list[_NameAlias]:
+        if self._name_aliases is None:
+            aliases: list[_NameAlias] = []
+            for record in self.repository.list_name_records():
+                aliases.extend(_build_name_aliases(record))
+            self._name_aliases = aliases
+        return self._name_aliases
 
 
 def compose_design_query_document(spec: DesignSpec) -> str:
@@ -124,6 +208,10 @@ def compose_design_query_document(spec: DesignSpec) -> str:
         clauses.append(f"Inducer: {spec.inducer}.")
     if spec.markers:
         clauses.append(f"Selectable markers: {_join(spec.markers)}.")
+    if spec.source:
+        clauses.append(f"Requested source provenance: {spec.source}.")
+    if spec.publication_doi:
+        clauses.append(f"Requested publication DOI: {spec.publication_doi}.")
     if spec.application:
         clauses.append(f"Application: {spec.application}.")
     if spec.cloning_method:
@@ -140,6 +228,10 @@ def passes_structured_filters(spec: DesignSpec, plasmid: Plasmid, metadata: Mapp
         return False
     if spec.markers and not _markers_match(spec.markers, plasmid, metadata):
         return False
+    if spec.source and not _source_matches(spec.source, plasmid, metadata):
+        return False
+    if spec.publication_doi and not _publication_doi_matches(spec.publication_doi, plasmid, metadata):
+        return False
     return True
 
 
@@ -151,6 +243,10 @@ def matched_fields(spec: DesignSpec, plasmid: Plasmid, metadata: Mapping[str, An
         fields.append("organism")
     if spec.markers and _markers_match(spec.markers, plasmid, metadata):
         fields.append("markers")
+    if spec.source and _source_matches(spec.source, plasmid, metadata):
+        fields.append("source")
+    if spec.publication_doi and _publication_doi_matches(spec.publication_doi, plasmid, metadata):
+        fields.append("publication_doi")
     if spec.promoter_type and _contains_controlled(_candidate_text(plasmid, metadata, keys=("promoters",)), spec.promoter_type, PROMOTER_TYPE_TERMS):
         fields.append("promoters")
     if spec.genes and _any_text_overlap(spec.genes, _candidate_text(plasmid, metadata, keys=("payloads", "use_cases"))):
@@ -159,6 +255,17 @@ def matched_fields(spec: DesignSpec, plasmid: Plasmid, metadata: Mapping[str, An
         fields.append("tags")
     if spec.application and _any_text_overlap([spec.application], _candidate_text(plasmid, metadata, keys=("use_cases",))):
         fields.append("application")
+    return fields
+
+
+def _matched_fields_for_exact_name(spec: DesignSpec, plasmid: Plasmid, metadata: Mapping[str, Any]) -> list[str]:
+    fields = ["lexical_name"]
+    if spec.vector_type and _vector_matches(spec.vector_type, plasmid, metadata):
+        fields.append("vector_type")
+    if spec.organism and spec.organism != "unknown" and _organism_matches(spec.organism, plasmid, metadata):
+        fields.append("organism")
+    if spec.markers and _markers_match(spec.markers, plasmid, metadata):
+        fields.append("markers")
     return fields
 
 
@@ -231,6 +338,25 @@ def _candidate_vector_families(plasmid: Plasmid, metadata: Mapping[str, Any]) ->
     if explicit is not None:
         families.add(explicit)
     return {family for family in families if family is not None}
+
+
+def _source_matches(requested: str, plasmid: Plasmid, metadata: Mapping[str, Any]) -> bool:
+    requested_value = normalize_text(requested)
+    candidate_values = {
+        normalize_text(str(plasmid.source)),
+        normalize_text(str(metadata.get("source", ""))),
+        normalize_text(str(metadata.get("source_description", ""))),
+    }
+    return requested_value in candidate_values
+
+
+def _publication_doi_matches(requested: str, plasmid: Plasmid, metadata: Mapping[str, Any]) -> bool:
+    requested_value = normalize_text(requested)
+    candidate_values = {
+        normalize_text(plasmid.publication_doi or ""),
+        normalize_text(str(metadata.get("publication_doi", ""))),
+    }
+    return requested_value in candidate_values
 
 
 def _vector_family(value: str) -> str | None:
@@ -336,3 +462,75 @@ def _join(values: Sequence[str]) -> str:
 
 def _humanize(value: str) -> str:
     return value.replace("_", " ")
+
+
+def _dedupe_ids(plasmid_ids: Sequence[str]) -> list[str]:
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for plasmid_id in plasmid_ids:
+        if plasmid_id in seen:
+            continue
+        seen.add(plasmid_id)
+        ordered.append(plasmid_id)
+    return ordered
+
+
+def _build_name_aliases(record: PlasmidNameRecord) -> list[_NameAlias]:
+    candidates: list[tuple[str, int]] = [(record.name.strip(), 3)]
+    identifier = _plasmid_identifier_alias(record.plasmid_id)
+    if identifier:
+        candidates.append((identifier, 2))
+    aliases: list[_NameAlias] = []
+    seen: set[str] = set()
+    for value, priority in candidates:
+        for alias in _extract_safe_aliases(value):
+            normalized_alias = normalize_text(alias)
+            if normalized_alias in seen:
+                continue
+            seen.add(normalized_alias)
+            aliases.append(
+                _NameAlias(
+                    plasmid_id=record.plasmid_id,
+                    alias=alias,
+                    normalized_alias=normalized_alias,
+                    priority=priority,
+                )
+            )
+    return aliases
+
+
+def _extract_safe_aliases(value: str) -> list[str]:
+    normalized = normalize_text(value)
+    aliases: list[str] = []
+    if normalized and normalized not in GENERIC_NAME_ALIASES and _looks_like_named_record(value):
+        aliases.append(value.strip())
+    for match in NAME_LIKE_TOKEN_PATTERN.finditer(value):
+        token = match.group(0).strip("()[]{}.,;:")
+        if token and normalize_text(token) not in GENERIC_NAME_ALIASES:
+            aliases.append(token)
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for alias in aliases:
+        key = normalize_text(alias)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        deduped.append(alias)
+    return deduped
+
+
+def _plasmid_identifier_alias(plasmid_id: str) -> str | None:
+    if ":" in plasmid_id:
+        tail = plasmid_id.rsplit(":", 1)[1].strip()
+        if tail:
+            return tail
+    stripped = plasmid_id.strip()
+    return stripped or None
+
+
+def _looks_like_named_record(value: str) -> bool:
+    return NAME_LIKE_TOKEN_PATTERN.search(value) is not None
+
+
+def _exact_match_sort_key(match: _ExactMatch) -> tuple[int, int, str]:
+    return (match.priority, len(normalize_text(match.alias)), match.plasmid_id)

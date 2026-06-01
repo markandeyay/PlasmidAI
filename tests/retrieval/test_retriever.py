@@ -9,6 +9,7 @@ from packages.core.schemas import DesignSpec, Plasmid
 from packages.retrieval.document_composer import DOCUMENT_VERSION
 from packages.retrieval.retriever import (
     HybridRetriever,
+    PlasmidNameRecord,
     compose_design_query_document,
     matched_fields,
     passes_structured_filters,
@@ -41,6 +42,9 @@ class FakeRepository:
     def get_plasmids(self, plasmid_ids: Sequence[str]) -> list[Plasmid]:
         by_id = {plasmid.id: plasmid for plasmid in self.plasmids}
         return [by_id[plasmid_id] for plasmid_id in plasmid_ids if plasmid_id in by_id]
+
+    def list_name_records(self) -> list[PlasmidNameRecord]:
+        return [PlasmidNameRecord(plasmid_id=plasmid.id, name=plasmid.name) for plasmid in self.plasmids]
 
 
 class RecordingVectorIndex:
@@ -99,9 +103,13 @@ def metadata(
     promoters: list[str] | None = None,
     payloads: list[str] | None = None,
     use_cases: list[str] | None = None,
+    source: str | None = None,
+    publication_doi: str | None = None,
 ) -> dict[str, Any]:
     return {
         "document_version": DOCUMENT_VERSION,
+        "source": source,
+        "publication_doi": publication_doi,
         "vector_profile": vector_profile,
         "candidates": {
             "markers": [{"label": value} for value in markers or []],
@@ -122,6 +130,8 @@ def test_compose_design_query_document_renders_non_empty_spec_fields() -> None:
         promoter_type="doxycycline-inducible",
         inducer="doxycycline",
         markers=["puromycin"],
+        source="addgene",
+        publication_doi="10.1000/example",
         application="live imaging",
         cloning_method="Gibson",
         constraints=["avoid BsmBI"],
@@ -135,6 +145,8 @@ def test_compose_design_query_document_renders_non_empty_spec_fields() -> None:
     assert "BRCA1" in text
     assert "GFP" in text
     assert "puromycin" in text
+    assert "Requested source provenance: addgene." in text
+    assert "Requested publication DOI: 10.1000/example." in text
     assert "avoid BsmBI" in text
     assert "Specific constraints and identity cues" in text
 
@@ -155,6 +167,42 @@ def test_hybrid_retriever_applies_required_marker_hard_constraint() -> None:
 
     assert [result.plasmid.id for result in results] == ["curated:puro"]
     assert "markers" in results[0].matched_fields
+
+
+def test_hybrid_retriever_hard_filters_curated_source_over_genbank_match() -> None:
+    curated = plasmid("curated:pBR322", name="pBR322", markers=["AmpR", "TetR"], use_cases=["bacterial_cloning"])
+    genbank = plasmid("genbank:AY428809.1", name="pSUP202", markers=["AmpR", "TetR", "CmR"], use_cases=["bacterial_cloning"])
+    store = InMemoryVectorStore(model_name="static-test-embedder", dimension=3)
+    store.upsert(
+        [
+            EmbeddingRecord(
+                "genbank:AY428809.1",
+                "psup202",
+                [1.0, 0.0, 0.0],
+                metadata(vector_profile="bacterial_cloning_vector", markers=["AmpR", "TetR", "CmR"], source="genbank"),
+            ),
+            EmbeddingRecord(
+                "curated:pBR322",
+                "pbr322",
+                [0.99, 0.01, 0.0],
+                metadata(vector_profile="bacterial_cloning_vector", markers=["AmpR", "TetR"], source="curated"),
+            ),
+        ]
+    )
+    retriever = HybridRetriever(vector_index=store, embedder=StaticEmbedder(), repository=FakeRepository([curated, genbank]))
+
+    results = retriever.retrieve(
+        DesignSpec(
+            organism="Escherichia coli",
+            vector_type="bacterial_cloning_vector",
+            markers=["ampicillin", "tetracycline"],
+            source="curated",
+        ),
+        k=2,
+    )
+
+    assert [result.plasmid.id for result in results] == ["curated:pBR322"]
+    assert "source" in results[0].matched_fields
 
 
 def test_marker_alias_matching_handles_bla_and_neor_kanr() -> None:
@@ -229,12 +277,15 @@ def test_matched_fields_reports_explainable_matches() -> None:
         promoters=["CMV immediate-early enhancer/promoter"],
         use_cases=["fluorescent reporting"],
     )
+    item.publication_doi = "10.1000/example"
     spec = DesignSpec(
         organism="Homo sapiens",
         vector_type="mammalian_reporter_vector",
         genes=["EGFP"],
         promoter_type="CMV",
         markers=["neomycin/G418"],
+        source="curated",
+        publication_doi="10.1000/example",
         application="fluorescent reporting",
     )
 
@@ -247,10 +298,38 @@ def test_matched_fields_reports_explainable_matches() -> None:
             promoters=["CMV immediate-early enhancer/promoter"],
             payloads=["EGFP"],
             use_cases=["fluorescent reporting"],
+            source="curated",
+            publication_doi="10.1000/example",
         ),
     )
 
-    assert fields == ["semantic", "vector_type", "organism", "markers", "promoters", "genes", "application"]
+    assert fields == [
+        "semantic",
+        "vector_type",
+        "organism",
+        "markers",
+        "source",
+        "publication_doi",
+        "promoters",
+        "genes",
+        "application",
+    ]
+
+
+def test_passes_structured_filters_hard_filters_publication_doi() -> None:
+    item = plasmid("genbank:rich", markers=["AmpR"], use_cases=["bacterial_expression"])
+    item.publication_doi = "10.1000/rich"
+
+    assert passes_structured_filters(
+        DesignSpec(organism="Escherichia coli", publication_doi="10.1000/RICH"),
+        item,
+        metadata(vector_profile="bacterial_expression_vector", publication_doi="10.1000/rich"),
+    )
+    assert not passes_structured_filters(
+        DesignSpec(organism="Escherichia coli", publication_doi="10.1000/other"),
+        item,
+        metadata(vector_profile="bacterial_expression_vector", publication_doi="10.1000/rich"),
+    )
 
 
 def test_hybrid_retriever_overfetches_and_uses_document_version_filter() -> None:
@@ -273,6 +352,113 @@ def test_hybrid_retriever_overfetches_and_uses_document_version_filter() -> None
     assert index.calls[0]["limit"] == 10
     assert index.calls[0]["metadata_filter"] == {"document_version": DOCUMENT_VERSION}
     assert "Escherichia coli" in embedder.texts[0]
+
+
+def test_named_query_puc19_is_promoted_to_rank_one_and_deduped_from_semantic_hits() -> None:
+    puc19 = plasmid("curated:pUC19", name="pUC19", use_cases=["bacterial_cloning"])
+    pbr322 = plasmid("curated:pBR322", name="pBR322", use_cases=["bacterial_cloning"])
+    index = RecordingVectorIndex(
+        [
+            VectorMatch(
+                plasmid_id="curated:pBR322",
+                score=0.96,
+                metadata=metadata(vector_profile="bacterial_cloning_vector"),
+                document_sha256="sha-pbr322",
+            ),
+            VectorMatch(
+                plasmid_id="curated:pUC19",
+                score=0.72,
+                metadata=metadata(vector_profile="bacterial_cloning_vector"),
+                document_sha256="sha-puc19",
+            ),
+        ]
+    )
+    retriever = HybridRetriever(vector_index=index, embedder=StaticEmbedder(), repository=FakeRepository([puc19, pbr322]))
+
+    results = retriever.retrieve(
+        DesignSpec(
+            organism="Escherichia coli",
+            vector_type="bacterial_cloning_vector",
+            constraints=["pUC19"],
+        ),
+        k=2,
+    )
+
+    assert [result.plasmid.id for result in results] == ["curated:pUC19", "curated:pBR322"]
+    assert results[0].matched_fields == ["lexical_name", "vector_type", "organism"]
+
+
+def test_named_query_pfr_luc_matches_normalized_name_alias_rank_one() -> None:
+    reporter = plasmid(
+        "curated:pFR-Luc",
+        name="pFR-Luc",
+        organism="Homo sapiens",
+        use_cases=["fluorescent reporting"],
+    )
+    other = plasmid("curated:other", name="pGL3-basic", organism="Homo sapiens", use_cases=["reporter assay"])
+    index = RecordingVectorIndex(
+        [
+            VectorMatch(
+                plasmid_id="curated:other",
+                score=0.97,
+                metadata=metadata(vector_profile="mammalian_reporter_vector"),
+                document_sha256="sha-other",
+            ),
+            VectorMatch(
+                plasmid_id="curated:pFR-Luc",
+                score=0.61,
+                metadata=metadata(vector_profile="mammalian_reporter_vector"),
+                document_sha256="sha-reporter",
+            ),
+        ]
+    )
+    retriever = HybridRetriever(vector_index=index, embedder=StaticEmbedder(), repository=FakeRepository([reporter, other]))
+
+    results = retriever.retrieve(
+        DesignSpec(
+            organism="Homo sapiens",
+            vector_type="mammalian_reporter_vector",
+            constraints=["pFR Luc"],
+        ),
+        k=2,
+    )
+
+    assert [result.plasmid.id for result in results] == ["curated:pFR-Luc", "curated:other"]
+    assert results[0].matched_fields[0] == "lexical_name"
+
+
+def test_no_lexical_match_preserves_semantic_order() -> None:
+    first = plasmid("curated:first", name="pGL3-basic", organism="Homo sapiens", use_cases=["reporter assay"])
+    second = plasmid("curated:second", name="pRL-TK", organism="Homo sapiens", use_cases=["reporter assay"])
+    index = RecordingVectorIndex(
+        [
+            VectorMatch(
+                plasmid_id="curated:first",
+                score=0.93,
+                metadata=metadata(vector_profile="mammalian_reporter_vector"),
+                document_sha256="sha-first",
+            ),
+            VectorMatch(
+                plasmid_id="curated:second",
+                score=0.85,
+                metadata=metadata(vector_profile="mammalian_reporter_vector"),
+                document_sha256="sha-second",
+            ),
+        ]
+    )
+    retriever = HybridRetriever(vector_index=index, embedder=StaticEmbedder(), repository=FakeRepository([first, second]))
+
+    results = retriever.retrieve(
+        DesignSpec(
+            organism="Homo sapiens",
+            vector_type="mammalian_reporter_vector",
+            constraints=["luciferase"],
+        ),
+        k=2,
+    )
+
+    assert [result.plasmid.id for result in results] == ["curated:first", "curated:second"]
+    assert all(result.matched_fields[0] == "semantic" for result in results)
 
 
 def test_retriever_returns_empty_when_parser_requested_clarification() -> None:
