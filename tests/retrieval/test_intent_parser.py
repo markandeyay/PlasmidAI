@@ -71,6 +71,15 @@ def test_fake_intent_parser_extracts_retrieval_gold_style_queries() -> None:
     assert genbank.markers == ["ampicillin"]
 
 
+def test_fake_intent_parser_does_not_treat_context_words_as_tagged_genes() -> None:
+    spec = FakeIntentParser().parse("Which curated plasmid would you use for GST-tagged bacterial protein expression in E. coli?")
+
+    assert spec.organism == "Escherichia coli"
+    assert spec.vector_type == "bacterial_expression_vector"
+    assert spec.tags == ["GST"]
+    assert spec.genes == []
+
+
 def test_fake_intent_parser_preserves_retrieval_identity_and_feature_constraints() -> None:
     parser = FakeIntentParser()
 

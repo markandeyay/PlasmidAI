@@ -480,7 +480,19 @@ def _normalize_genes(genes: list[str]) -> list[str]:
     cleaned: list[str] = []
     for gene in genes:
         value = gene.strip().strip(".,;:()[]{}")
-        if not value or normalize_text(value) in {"my", "gene", "protein", "vector", "plasmid"}:
+        if not value or normalize_text(value) in {
+            "my",
+            "gene",
+            "protein",
+            "vector",
+            "plasmid",
+            "bacterial",
+            "mammalian",
+            "yeast",
+            "curated",
+            "expression",
+            "cloning",
+        }:
             continue
         if "tagged" in normalize_text(value):
             continue

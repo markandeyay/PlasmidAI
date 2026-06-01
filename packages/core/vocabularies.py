@@ -66,7 +66,7 @@ VECTOR_TYPE_TERMS: tuple[ControlledTerm, ...] = (
     ControlledTerm("lentiviral_or_retroviral_transfer_vector", ("lentiviral", "lenti", "lentivirus", "lentiviral transfer", "retroviral", "retroviral transfer")),
     ControlledTerm("mammalian_reporter_vector", ("mammalian reporter", "reporter plasmid", "reporter vector", "luciferase reporter", "gfp reporter", "fluorescent reporter")),
     ControlledTerm("mammalian_expression_vector", ("mammalian expression", "expression in human cells", "human expression", "cmv expression")),
-    ControlledTerm("bacterial_expression_vector", ("bacterial expression", "e coli expression", "ecoli expression", "protein expression in bacteria", "t7 expression", "gst fusion")),
+    ControlledTerm("bacterial_expression_vector", ("bacterial expression", "bacterial protein expression", "e coli expression", "ecoli expression", "protein expression in bacteria", "protein expression in e coli", "t7 expression", "gst fusion")),
     ControlledTerm("bacterial_cloning_vector", ("bacterial cloning", "cloning vector", "cloning plasmid", "subcloning", "puc backbone", "puc plasmid", "phagemid cloning")),
     ControlledTerm("crispr_vector", ("crispr", "cas9", "sgrna", "grna", "guide rna", "crispri", "crispra")),
     ControlledTerm("yeast_shuttle_vector", ("yeast shuttle", "cen ars", "cen/ars", "2 micron", "2-micron", "yeast centromere", "yeast expression")),
