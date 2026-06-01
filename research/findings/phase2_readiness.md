@@ -1,31 +1,31 @@
 # Phase 2 Readiness Assessment
 
 - Assessed: 2026-06-01
-- Scope: planning only. This document does not authorize or implement Phase 2.
+- Scope: approved bounded offline spike only. This document does not authorize
+  fine-tuning, GPU spend, model promotion, or a Phase 2 gate attempt.
 - Repository ownership for this task: this file only.
 
 ## Decision Summary
 
 Do not authorize full Phase 2 fine-tuning or a Phase 2 gate attempt yet.
 
-The current repository can support a bounded, offline readiness spike if a human
-authorizes it separately. That spike should prove the `SequenceGenerator`
-interface, deterministic retrieval-grounded baselines, open-model loading, and
-provisional evaluation wiring. It should not produce a promoted model, expose
-generated sequences to users, or claim that plasmid generation quality has been
-demonstrated.
+The bounded offline readiness spike is authorized as the Phase 2 entry point.
+That spike should prove the `SequenceGenerator` interface, deterministic
+retrieval-grounded baselines, open-model loading, and provisional evaluation
+wiring. It must not fine-tune a model, produce a promoted model, expose generated
+sequences to users, spend GPU budget, or claim that plasmid generation quality
+has been demonstrated.
 
 More Phase 0 data work should precede any real fine-tuning attempt. The current
 82-record corpus is enough to demonstrate plumbing and template-grounded
 candidate flow. It is not enough to train or evaluate a generalizable plasmid
 generator.
 
-Evo 2 7B remains a credible biological benchmark and an Apache-2.0 open-weight
-candidate. It is no longer the automatic first practical model for this
-repository. The newly released Carbon family adds lower-cost Apache-2.0
-autoregressive checkpoints with standard Hugging Face loading. For a first
-authorized technical spike, use Carbon-500M as a smoke-test target, Carbon-3B as
-the practical lead candidate, and Evo 2 7B as an optional higher-cost benchmark.
+The approved spike matrix is Carbon-500M first for smoke testing, followed by
+Carbon-3B as the practical target. The newly released Carbon family provides
+lower-cost Apache-2.0 autoregressive checkpoints with standard Hugging Face
+loading. Evo 2 7B remains a credible biological benchmark, but it is deferred
+to a later benchmarking session after the plumbing proves out.
 
 Model-card license markings are sufficiently clear to plan an internal
 technical evaluation, but they are not a final commercial legal clearance.
@@ -112,8 +112,8 @@ Established facts:
 Recommendation:
 
 - Keep Evo 2 7B in the comparison matrix as the higher-cost biological
-  benchmark. Do not make it the first integration target before hardware
-  inventory and a cheaper smoke test.
+  benchmark for a later session. It is explicitly deferred from the approved
+  bounded offline spike.
 
 ### Carbon
 
@@ -311,12 +311,12 @@ authorized offline readiness spike:
 
 1. Implement the `SequenceGenerator` interface and deterministic
    retrieval-template baseline described by the design.
-2. Run Carbon-500M loading and inference smoke tests.
-3. Compare Carbon-3B retrieval-grounded candidates with the deterministic
-   baseline on a small, versioned feasibility fixture.
-4. Add Evo 2 7B only if hardware inventory and budget allow.
-5. Re-annotate all candidates and produce a provisional evaluation report.
-6. Prevent model promotion and user-visible sequence delivery.
+2. Prove the deterministic fake-backed vertical slice end to end.
+3. Treat CPU-runnable Carbon-500M loading and inference as a stretch smoke test.
+4. Prepare Carbon-3B as the next practical target without spending GPU budget.
+5. Defer Evo 2 7B benchmarking to a later explicitly authorized session.
+6. Re-annotate all candidates and produce a provisional evaluation report.
+7. Prevent model promotion and user-visible sequence delivery.
 
 This would demonstrate that the architecture can carry generated candidates
 through validation. It would not demonstrate that fine-tuning is ready or that
@@ -336,18 +336,18 @@ generated plasmids are biologically feasible.
 8. A generation gold set does not yet exist.
 9. The Phase 3 constraint-engine dependency is unresolved.
 
-## Human Authorization Required
+## Human Decisions Recorded On 2026-06-01
 
-1. Authorize either no Phase 2 work yet, or only the bounded offline readiness
-   spike described above.
-2. Approve the spike matrix: Carbon-500M, Carbon-3B, and optionally Evo 2 7B.
-3. Approve the initial supported profile scope. Recommendation: bacterial
-   cloning and expression only.
-4. Decide the legal-review policy for GenBank-derived training records and
-   secure the intended Addgene data license before Addgene-derived training use.
-5. Approve managed-GPU provider, hardware ceiling, and budget.
-6. Decide whether to build a minimum deterministic Phase 3 checker before any
-   Phase 2 gate attempt.
-7. Decide whether a narrow research-only dataset milestone may precede the
-   formal Phase 0 gate. If approved, define its size and completeness criteria
-   after acquisition analysis rather than guessing now.
+1. The bounded offline readiness spike is authorized as the only Phase 2 entry
+   point. It is plumbing validation, not credible fine-tuning.
+2. The approved spike matrix is Carbon-500M for smoke testing, then Carbon-3B
+   as the practical target. Evo 2 7B is deferred to a later benchmark session.
+3. No GPU spend is authorized. Any GPU usage requires explicit per-session
+   authorization.
+4. Phase 3 is not a prerequisite for the spike. Use only an unconditional PASS
+   stub during the spike; do not pull Phase 3 implementation forward.
+5. Lentiviral and CRISPR seed expansion is deferred while the Addgene
+   application is pending. Do not admit reviewed GenBank derivatives without
+   explicit human sign-off.
+6. The unresolved training-data rights and formal Phase 0 scale-gate questions
+   remain open before fine-tuning or a Phase 2 gate attempt.
