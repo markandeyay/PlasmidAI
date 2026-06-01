@@ -139,6 +139,8 @@ class HybridRetriever:
             if plasmid is None or plasmid.id in seen_ids:
                 continue
             metadata = metadata_by_id.get(exact.plasmid_id, {})
+            if not passes_structured_filters(spec, plasmid, metadata):
+                continue
             retrieved.append(
                 RetrievedPlasmid(
                     plasmid=plasmid,

@@ -427,6 +427,40 @@ def test_named_query_pfr_luc_matches_normalized_name_alias_rank_one() -> None:
     assert results[0].matched_fields[0] == "lexical_name"
 
 
+def test_named_query_does_not_bypass_structured_source_filter() -> None:
+    genbank = plasmid("genbank:pUC19", name="pUC19", use_cases=["bacterial_cloning"])
+    curated = plasmid("curated:pBR322", name="pBR322", use_cases=["bacterial_cloning"])
+    index = RecordingVectorIndex(
+        [
+            VectorMatch(
+                plasmid_id="genbank:pUC19",
+                score=0.99,
+                metadata=metadata(vector_profile="bacterial_cloning_vector", source="genbank"),
+                document_sha256="sha-genbank",
+            ),
+            VectorMatch(
+                plasmid_id="curated:pBR322",
+                score=0.75,
+                metadata=metadata(vector_profile="bacterial_cloning_vector", source="curated"),
+                document_sha256="sha-curated",
+            ),
+        ]
+    )
+    retriever = HybridRetriever(vector_index=index, embedder=StaticEmbedder(), repository=FakeRepository([genbank, curated]))
+
+    results = retriever.retrieve(
+        DesignSpec(
+            organism="Escherichia coli",
+            vector_type="bacterial_cloning_vector",
+            source="curated",
+            constraints=["pUC19"],
+        ),
+        k=2,
+    )
+
+    assert [result.plasmid.id for result in results] == ["curated:pBR322"]
+
+
 def test_no_lexical_match_preserves_semantic_order() -> None:
     first = plasmid("curated:first", name="pGL3-basic", organism="Homo sapiens", use_cases=["reporter assay"])
     second = plasmid("curated:second", name="pRL-TK", organism="Homo sapiens", use_cases=["reporter assay"])
