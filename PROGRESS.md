@@ -1,19 +1,19 @@
 ﻿# PROGRESS â€” Build State (mutable)
 
 ## AT-A-GLANCE (update every session)
-- **Current Phase:** Phase 1: Retrieval layer
-- **Next Concrete Task:** Stop at the completed Phase 1 gate and wait for human review before beginning Phase 2 sequence generation. Track lexical exact-name retrieval and source/provenance filtering as Phase 1 follow-up work.
+- **Current Phase:** Phase 1: Retrieval layer (gate met; Phase 2 authorization pending)
+- **Next Concrete Task:** Wait for human decisions on the lentiviral/CRISPR seed provenance policy and the bounded Phase 2 readiness spike. Do not begin Phase 2 implementation until explicitly authorized.
 - **Overall completion estimate:** 15%
-- **Last session date:** 2026-05-31
-- **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 192 passing tests / 1 skipped real-LLM smoke test
+- **Last session date:** 2026-06-01
+- **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 198 passing tests / 1 skipped real-LLM smoke test
 
 ## RESUME HERE (only if mid-task)
-RESUME HERE: Phase 1 retrieval MVP gate is met and awaits human review before Phase 2. Expanded `data/eval/retrieval_gold.jsonl` to 21 total cases: 20 scored retrieval queries plus 1 clarification-only viral-vector request. Final tuned report: `data/eval/retrieval/2026-05-31-221057-retrieval-baseline.{md,json}` with top-1 `0.700`, top-5 `1.000`, MRR `0.825`, clarification pass rate `1.000`. Bounded tuning preserves discriminative query constraints and permits sparse-metadata general-shuttle candidates only when no host conflict exists; pDL278 and pRAS1 moved from misses to rank 1. `make test` passes 192 tests with 1 skipped real-LLM smoke test. Durable findings: `research/findings/phase1_retrieval_gate.md`. Do not start Phase 2 until the human authorizes it.
+RESUME HERE: Phase 1 cleanup is complete except for a human provenance/legal decision on lentiviral and CRISPR calibration seeds. Added an exact-name lexical lane, source/DOI provenance intent and filtering, and a structured corpus-gap diagnostic at `data/eval/corpus/2026-06-01-174026-lentiviral-crispr-gap.md`. No classifier defect was found; the current NCBI-only seed policy has no unambiguous canonical lenti/CRISPR accession, and Addgene-derived calibration requires approved intended-use licensing. Verification reports: `data/eval/reprocess/2026-06-01-214550-reprocess-all.json`, `data/eval/reprocess/2026-06-01-214634-reprocess-all.json`, `data/eval/quality/2026-06-01-214652-quality-report.{md,json}`, and `data/eval/retrieval/2026-06-01-214808-retrieval-baseline.{md,json}`. Both reprocess passes are no-ops with 82 examined, 0 updates, and 0 missing caches. Retrieval scores top-1 `0.850`, top-5 `1.000`, MRR `0.917`, clarification pass rate `1.000`; `make test` passes 198 tests with 1 skipped real-LLM smoke test. Phase 2 readiness is documented at `research/findings/phase2_readiness.md`: 82 records support only a separately authorized bounded offline readiness spike, not fine-tuning or a Phase 2 gate attempt. Do not start Phase 2 until the human authorizes it.
 
 ## KNOWN ISSUES / BLOCKERS
 - Phase 1 retrieval gate passed on 2026-05-31: `data/eval/retrieval/2026-05-31-221057-retrieval-baseline.{md,json}` scores 20 retrieval queries plus 1 clarification-only case with top-1 `0.700`, top-5 `1.000`, MRR `0.825`, and clarification pass rate `1.000`.
-- Residual Phase 1 follow-up: exact named-record retrieval needs a lexical/exact-name lane, and provenance-constrained retrieval needs a structured source filter. Do not hide either requirement inside semantic ranking weights.
-- The current 82-record corpus has no classified lentiviral or CRISPR vectors. The expanded gate set records the gap rather than fabricating labels.
+- Phase 1 retrieval cleanup is implemented: exact named-record queries use a lexical lane before semantic ranking, while structured source and DOI provenance filters remain enforced. `depositing_lab` is not available in the current schema or corpus.
+- The current 82-record corpus has no classified lentiviral or CRISPR vectors. `data/eval/corpus/2026-06-01-174026-lentiviral-crispr-gap.md` found no parser defect and no safe canonical NCBI-backed seed. Adding exact Addgene or reviewed GenBank-derivative seeds is blocked pending human provenance/legal policy.
 - Baseline retrieval still shows ranking/tie-break opportunities before the gate set: pACYC184 and pBR322 appear at rank 2 behind GenBank pSUP202 for chloramphenicol/tetracycline-style cloning queries, and pBluescript appears at rank 5 for the phagemid query.
 - Phase 1 is authorized and active as of 2026-05-31. Phase 0 remains below its final scale gate while Addgene partner access is pending; current Phase 1 work uses the verified local corpus foundation.
 - The GNU Make directory was added to the user PATH on 2026-05-29, but the current Codex host process has not inherited that PATH refresh. Use `C:\Program Files (x86)\GnuWin32\bin\make.exe` directly in this process if plain `make` is still unresolved; new user shells should pick up the user PATH.
@@ -42,6 +42,11 @@ RESUME HERE: Phase 1 retrieval MVP gate is met and awaits human review before Ph
 - Should the GenBank corpus strategy shift from broad natural plasmid complete sequences toward named synthetic vectors/backbones, or should Phase 0 depend on Addgene/another vector-specific source for promoter/terminator-rich records?
 - Which exact canonical variants should be approved for ambiguous elements not yet added to the reference library: EF1a, SV40 early, U6, tac, trc, araBAD, SV40 polyA, BGH polyA, rabbit beta-globin polyA, rrnB T1/T2, lambda T0, ZeoR, BSD, HygR, NeoR/G418, f1 origin, and 2-micron origin?
 - Pending legal/provenance approval, may Addgene Vector Database free-to-view sequences be used for a small parser-calibration seed set in a commercial product, or should the seed set remain NCBI/manufacturer-only until explicit partner terms are in place?
+- For lentiviral and CRISPR calibration seeds specifically, should the corpus wait for an Addgene intended-use data license, admit reviewed GenBank derivatives, or remain without those profiles for now?
+- Should the next session authorize only the bounded offline Phase 2 readiness spike in `research/findings/phase2_readiness.md`, with no fine-tuning, model promotion, or user-visible generated sequences?
+- For that bounded spike, approve Carbon-500M as the model-load smoke test, Carbon-3B as the practical lead, optional Evo 2 7B comparison only if hardware and budget permit, and bacterial cloning/expression as the initial profile scope?
+- Before any Phase 2 gate attempt, should the project build a minimum deterministic Phase 3 checker and define a research-only acquisition milestone below the formal 50,000-record Phase 0 gate?
+- Which managed-GPU provider, hardware ceiling, and budget should apply to any authorized Phase 2 benchmark?
 
 ## PHASE GATE STATUS
 - [x] Phase R gate met (see SYSTEM_DESIGN 3.05) â€” artifacts reviewed and Phase 0 authorized by the human on 2026-05-29
@@ -88,7 +93,7 @@ RESUME HERE: Phase 1 retrieval MVP gate is met and awaits human review before Ph
 - [x] Retrieval service returns top-K relevant plasmids for a `DesignSpec`, with hybrid (semantic + structured-filter) search
 - [x] Recommendation generator produces a plain-English, ranked explanation of how to adapt each retrieved plasmid
 - [x] Evaluation harness measures retrieval quality against a hand-labeled gold set (Section 6.6)
-- [x] **GATE:** Given 20 realistic natural-language queries, the system returns relevant plasmids with a top-5 hit rate â‰¥ 80% on the gold set, end-to-end, via a single function call. Verified on 2026-05-31 with 20 scored retrieval queries plus 1 clarification-only case: top-1 `0.700`, top-5 `1.000`, MRR `0.825`, clarification pass rate `1.000`.
+- [x] **GATE:** Given 20 realistic natural-language queries, the system returns relevant plasmids with a top-5 hit rate â‰¥ 80% on the gold set, end-to-end, via a single function call. Verified on 2026-05-31 with 20 scored retrieval queries plus 1 clarification-only case: top-1 `0.700`, top-5 `1.000`, MRR `0.825`, clarification pass rate `1.000`. Post-cleanup verification on 2026-06-01 improved top-1 to `0.850` and MRR to `0.917` while preserving top-5 and clarification pass rate at `1.000`.
 
 ### 3.3 Phase 2 â€” Sequence generation
 
@@ -132,6 +137,13 @@ RESUME HERE: Phase 1 retrieval MVP gate is met and awaits human review before Ph
 - [ ] **GATE:** A full loop runs automatically â€” a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-06-01 - Closed the safe Phase 1 retrieval cleanup slice. Added exact named-record lexical lookup before semantic ranking, retained all structured filters for lexical hits, and added structured source/DOI provenance intent and filtering. Depositing-lab filtering remains unavailable because the current schema and corpus do not carry that field.
+- 2026-06-01 - Diagnosed the lentiviral/CRISPR corpus gap in `data/eval/corpus/2026-06-01-174026-lentiviral-crispr-gap.md`: no classifier defect exists, the NCBI-only seed policy has no unambiguous canonical sequence accession for the representative vectors, and Addgene-derived calibration requires an approved intended-use license. Stopped seed expansion pending human provenance/legal policy.
+- 2026-06-01 - Verified corpus idempotence after retrieval cleanup with `data/eval/reprocess/2026-06-01-214550-reprocess-all.json` and `data/eval/reprocess/2026-06-01-214634-reprocess-all.json`: each examined 82 records with 0 updates, 0 missing caches, and no changes.
+- 2026-06-01 - Generated post-cleanup quality report `data/eval/quality/2026-06-01-214652-quality-report.{md,json}`: 82 records, 24 complete, 55 unknown, 2 duplicate clusters, and 0 parse errors. Corpus distributions are unchanged, as expected from the no-op reprocess runs.
+- 2026-06-01 - Re-ran retrieval evaluation after exact-name and provenance cleanup. `data/eval/retrieval/2026-06-01-214808-retrieval-baseline.{md,json}` scores 20 retrieval queries plus 1 clarification-only case with top-1 `0.850`, top-5 `1.000`, MRR `0.917`, and clarification pass rate `1.000`.
+- 2026-06-01 - Wrote `research/findings/phase2_readiness.md`. The current 82-record corpus supports only a separately authorized bounded offline readiness spike, not fine-tuning or a Phase 2 gate attempt. Recommended spike order: Carbon-500M smoke test, Carbon-3B practical lead, and Evo 2 7B optional higher-cost benchmark after hardware and budget review.
+- 2026-06-01 - Final cleanup verification: `C:\Program Files (x86)\GnuWin32\bin\make.exe test` passes Docker Compose, Postgres with pgvector, MinIO, Redis, and 198 tests with 1 skipped real-LLM smoke test.
 - 2026-05-31 - Met the Phase 1 retrieval MVP gate. Expanded `data/eval/retrieval_gold.jsonl` to 21 total cases: 20 scored retrieval queries plus one clarification-only request. Final tuned report `data/eval/retrieval/2026-05-31-221057-retrieval-baseline.{md,json}` scores top-1 `0.700`, top-5 `1.000`, MRR `0.825`, clarification pass rate `1.000`.
 - 2026-05-31 - Added clarification-aware retrieval evaluation: clarification-only gold cases are measured separately and excluded from top-1/top-5/MRR denominators.
 - 2026-05-31 - Added eight verified non-curated GenBank targets spanning bacterial expression, cloning, general shuttle, mammalian expression, reporter, yeast shuttle, and an unknown-profile natural resistance plasmid. Logged that the current index has no classified lentiviral or CRISPR records rather than fabricating labels.
