@@ -178,6 +178,8 @@ class DesignSpec(SchemaModel):
     promoter_type: str | None = None
     inducer: str | None = None
     markers: list[str] = Field(default_factory=list)
+    source: PlasmidSource | None = None
+    publication_doi: str | None = None
     application: str | None = None
     cloning_method: str | None = None
     constraints: list[str] = Field(default_factory=list)

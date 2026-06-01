@@ -49,6 +49,7 @@ def test_fake_intent_parser_extracts_retrieval_gold_style_queries() -> None:
     pbr = FakeIntentParser().parse(
         "Which curated cloning vector carries both ampicillin and tetracycline resistance with a pMB1-derived replication region?"
     )
+    genbank = FakeIntentParser().parse("Find a GenBank source bacterial expression vector with DOI 10.1000/RICH and ampicillin resistance.")
 
     assert cloning.organism == "Escherichia coli"
     assert cloning.vector_type == "bacterial_cloning_vector"
@@ -63,7 +64,11 @@ def test_fake_intent_parser_extracts_retrieval_gold_style_queries() -> None:
     assert puc.organism == "Escherichia coli"
     assert puc.markers == ["ampicillin"]
     assert pbr.clarification_needed is False
+    assert pbr.source == "curated"
     assert pbr.markers == ["ampicillin", "tetracycline"]
+    assert genbank.source == "genbank"
+    assert genbank.publication_doi == "10.1000/rich"
+    assert genbank.markers == ["ampicillin"]
 
 
 def test_fake_intent_parser_preserves_retrieval_identity_and_feature_constraints() -> None:
@@ -137,6 +142,8 @@ def test_llm_intent_parser_validates_and_post_normalizes_output() -> None:
                 "promoter_type": "dox inducible",
                 "inducer": "dox",
                 "markers": ["puro"],
+                "source": "GenBank",
+                "publication_doi": "10.1000/XYZ",
                 "application": "live imaging",
                 "cloning_method": None,
                 "constraints": [],
@@ -153,6 +160,8 @@ def test_llm_intent_parser_validates_and_post_normalizes_output() -> None:
     assert spec.promoter_type == "doxycycline-inducible"
     assert spec.inducer == "doxycycline"
     assert spec.markers == ["puromycin"]
+    assert spec.source == "genbank"
+    assert spec.publication_doi == "10.1000/xyz"
 
 
 def test_llm_intent_parser_rejects_invalid_json_and_extra_keys() -> None:
@@ -169,6 +178,8 @@ def test_llm_intent_parser_rejects_invalid_json_and_extra_keys() -> None:
             "promoter_type": None,
             "inducer": None,
             "markers": [],
+            "source": None,
+            "publication_doi": None,
             "application": "expression",
             "cloning_method": None,
             "constraints": [],

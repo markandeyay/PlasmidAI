@@ -40,6 +40,8 @@ STRICT_DESIGN_SPEC_SCHEMA: dict[str, Any] = {
         "promoter_type",
         "inducer",
         "markers",
+        "source",
+        "publication_doi",
         "application",
         "cloning_method",
         "constraints",
@@ -55,6 +57,8 @@ STRICT_DESIGN_SPEC_SCHEMA: dict[str, Any] = {
         "promoter_type": {"type": ["string", "null"]},
         "inducer": {"type": ["string", "null"]},
         "markers": {"type": "array", "items": {"type": "string"}},
+        "source": {"type": ["string", "null"]},
+        "publication_doi": {"type": ["string", "null"]},
         "application": {"type": ["string", "null"]},
         "cloning_method": {"type": ["string", "null"]},
         "constraints": {"type": "array", "items": {"type": "string"}},
@@ -100,6 +104,8 @@ FEW_SHOT_MESSAGES: list[dict[str, str]] = [
                 "promoter_type": "doxycycline-inducible",
                 "inducer": "doxycycline",
                 "markers": [],
+                "source": None,
+                "publication_doi": None,
                 "application": "live imaging",
                 "cloning_method": None,
                 "constraints": [],
@@ -124,6 +130,8 @@ FEW_SHOT_MESSAGES: list[dict[str, str]] = [
                 "promoter_type": None,
                 "inducer": None,
                 "markers": [],
+                "source": None,
+                "publication_doi": None,
                 "application": "expression",
                 "cloning_method": None,
                 "constraints": [],
@@ -148,6 +156,8 @@ FEW_SHOT_MESSAGES: list[dict[str, str]] = [
                 "promoter_type": "T7",
                 "inducer": None,
                 "markers": ["kanamycin"],
+                "source": None,
+                "publication_doi": None,
                 "application": "protein expression",
                 "cloning_method": None,
                 "constraints": [],
@@ -172,6 +182,8 @@ FEW_SHOT_MESSAGES: list[dict[str, str]] = [
                 "promoter_type": None,
                 "inducer": None,
                 "markers": ["tetracycline"],
+                "source": "genbank",
+                "publication_doi": None,
                 "application": None,
                 "cloning_method": None,
                 "constraints": ["pRAS1_2402_89", "sul1", "dfrA16"],
@@ -196,6 +208,8 @@ FEW_SHOT_MESSAGES: list[dict[str, str]] = [
                 "promoter_type": "T7",
                 "inducer": None,
                 "markers": [],
+                "source": "curated",
+                "publication_doi": None,
                 "application": "cloning",
                 "cloning_method": None,
                 "constraints": ["phagemid", "f1 origin", "lacZ alpha MCS", "T3"],
@@ -243,6 +257,9 @@ class LLMIntentParser:
             payload = json.loads(raw)
         except json.JSONDecodeError as exc:
             raise ValueError("intent parser LLM returned invalid JSON") from exc
+        if isinstance(payload, dict):
+            payload["source"] = _normalize_source(payload.get("source"))
+            payload["publication_doi"] = _normalize_publication_doi(payload.get("publication_doi"))
         try:
             spec = DesignSpec.model_validate(payload)
         except ValidationError as exc:
@@ -303,6 +320,8 @@ def parse_design_spec_heuristic(free_text: str, clarifications: list[str] | None
     promoter_type = _first(find_controlled_terms(text, PROMOTER_TYPE_TERMS))
     inducer = _first(find_controlled_terms(text, INDUCER_TERMS))
     markers = find_controlled_terms(text, MARKER_TERMS)
+    source = _extract_source(text)
+    publication_doi = _extract_publication_doi(text)
     tags = find_controlled_terms(text, TAG_TERMS)
     genes, tags = _extract_genes_and_tags(text, tags)
     application = _extract_application(normalized, vector_type)
@@ -343,6 +362,8 @@ def parse_design_spec_heuristic(free_text: str, clarifications: list[str] | None
         promoter_type=promoter_type,
         inducer=inducer,
         markers=markers,
+        source=source,
+        publication_doi=publication_doi,
         application=application,
         cloning_method=cloning_method,
         constraints=constraints,
@@ -361,8 +382,10 @@ def normalize_design_spec(spec: DesignSpec, *, source_text: str = "") -> DesignS
     promoter_type = normalize_to_controlled(spec.promoter_type, PROMOTER_TYPE_TERMS)
     inducer = normalize_to_controlled(spec.inducer, INDUCER_TERMS)
     markers = normalize_many_to_controlled(spec.markers, MARKER_TERMS)
+    source = _normalize_source(spec.source)
     tags = normalize_many_to_controlled(spec.tags, TAG_TERMS)
     genes = _normalize_genes(spec.genes)
+    publication_doi = _normalize_publication_doi(spec.publication_doi)
 
     if promoter_type == "doxycycline-inducible" and inducer is None:
         inducer = "doxycycline"
@@ -402,6 +425,8 @@ def normalize_design_spec(spec: DesignSpec, *, source_text: str = "") -> DesignS
         promoter_type=promoter_type,
         inducer=inducer,
         markers=markers,
+        source=source,
+        publication_doi=publication_doi,
         application=spec.application,
         cloning_method=spec.cloning_method,
         constraints=dedupe_preserve_order(spec.constraints),
@@ -544,6 +569,50 @@ def _extract_excluded_markers(text: str) -> list[str]:
         if marker is not None:
             excluded.append(marker)
     return dedupe_preserve_order(excluded)
+
+
+def _extract_source(text: str) -> str | None:
+    normalized = normalize_text(text)
+    source_patterns = (
+        ("curated", ("curated vector", "curated plasmid", "curated source", "which curated", "recommend a curated")),
+        ("genbank", ("genbank vector", "genbank plasmid", "genbank source", "from genbank", "genbank backbone")),
+        ("addgene", ("addgene vector", "addgene plasmid", "from addgene", "addgene source")),
+    )
+    for source, phrases in source_patterns:
+        if any(phrase in normalized for phrase in phrases):
+            return source
+    return None
+
+
+def _extract_publication_doi(text: str) -> str | None:
+    match = re.search(r"\b(10\.\d{4,9}/[-._;()/:A-Za-z0-9]+)\b", text, flags=re.IGNORECASE)
+    if match is None:
+        return None
+    return match.group(1)
+
+
+def _normalize_source(source: str | None) -> str | None:
+    if source is None:
+        return None
+    value = normalize_text(source)
+    if "curated" in value:
+        return "curated"
+    if "genbank" in value or "ncbi" in value:
+        return "genbank"
+    if "addgene" in value:
+        return "addgene"
+    if "literature" in value:
+        return "literature"
+    if "generated" in value:
+        return "generated"
+    return source
+
+
+def _normalize_publication_doi(doi: str | None) -> str | None:
+    if doi is None:
+        return None
+    value = doi.strip()
+    return value.lower() or None
 
 
 def _clarification_question(
