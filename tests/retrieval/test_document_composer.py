@@ -40,7 +40,7 @@ def test_document_composer_renders_deterministic_summary_without_raw_dna() -> No
     composed = compose_plasmid_document(plasmid, annotated)
 
     assert composed.text == (
-        "Mammalian reporter vector pEGFP-N1. "
+        "Curated mammalian reporter vector pEGFP-N1. "
         "Source description: CMV-driven C-terminal EGFP fusion vector with neomycin/G418 mammalian selectable marker and kanamycin bacterial marker. "
         "Organism annotation: Cloning vector pEGFP-N1. "
         "Promoters: CMV immediate-early enhancer/promoter. "

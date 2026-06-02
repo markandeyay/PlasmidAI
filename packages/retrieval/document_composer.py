@@ -168,7 +168,7 @@ def _profile_sentence(plasmid: Plasmid, vector_profile: str, parsed_profile: str
     if template is None:
         template = "Unclassified plasmid {name}."
     sentence = template.format(name=plasmid.name)
-    if parsed_profile == "unknown" and str(plasmid.source).casefold() == "curated" and vector_profile != "unknown":
+    if str(plasmid.source).casefold() == "curated" and vector_profile != "unknown":
         sentence = f"Curated {sentence[0].lower()}{sentence[1:]}"
     return sentence
 
