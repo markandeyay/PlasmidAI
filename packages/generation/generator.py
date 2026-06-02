@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Protocol, Sequence
 
 from packages.core.schemas import AnnotatedSequence, DesignSpec, GeneratedSequence, RetrievedPlasmid
+from packages.core.schemas.models import normalize_dna
 
 
 FAKE_GENERATOR_VERSION = "fake-template-generator-v1"
@@ -22,7 +23,23 @@ class SequenceGenerator(Protocol):
 
 
 @dataclass(frozen=True)
+class MarkerSwap:
+    """Explicit deterministic DNA replacement used only by the fake generator."""
+
+    original_sequence: str
+    replacement_sequence: str
+
+    def apply(self, sequence: str) -> str:
+        original = normalize_dna(self.original_sequence)
+        replacement = normalize_dna(self.replacement_sequence)
+        if sequence.count(original) != 1:
+            raise ValueError("marker swap requires exactly one original-sequence match")
+        return sequence.replace(original, replacement, 1)
+
+
+@dataclass(frozen=True)
 class FakeGenerator:
+    marker_swap: MarkerSwap | None = None
     version: str = FAKE_GENERATOR_VERSION
 
     @property
@@ -41,21 +58,25 @@ class FakeGenerator:
         if not templates:
             return []
         template = templates[0].plasmid
+        sequence = template.sequence
+        if self.marker_swap is not None:
+            sequence = self.marker_swap.apply(sequence)
+
+        # Spike code must re-annotate the generated candidate with the Phase 0
+        # parser. Do not carry trusted-template completeness across generation.
         annotated = AnnotatedSequence(
-            sequence=template.sequence,
+            sequence=sequence,
             topology="circular",
             features=[],
             vector_profile=template.vector_type or "unknown",
-            annotation_complete=template.annotation_complete,
+            annotation_complete=False,
         )
-        return [
-            GeneratedSequence(
-                annotated_sequence=annotated,
-                model_version=self.model_version,
-                parent_template_ids=[template.id],
-            )
-            for _ in range(n)
-        ]
+        generated = GeneratedSequence(
+            annotated_sequence=annotated,
+            model_version=self.model_version,
+            parent_template_ids=[template.id],
+        )
+        return [generated.model_copy(deep=True) for _ in range(n)]
 
 
 def ensure_generated_sequence_count(generated: Sequence[GeneratedSequence], *, minimum: int = 1) -> None:
