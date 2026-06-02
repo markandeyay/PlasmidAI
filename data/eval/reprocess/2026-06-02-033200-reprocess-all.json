@@ -1,0 +1,2281 @@
+{
+  "batches": [
+    {
+      "batch": 1,
+      "errors": 0,
+      "records_examined": 100,
+      "records_missing_cache": 0,
+      "records_updated": 46
+    },
+    {
+      "batch": 2,
+      "errors": 0,
+      "records_examined": 100,
+      "records_missing_cache": 0,
+      "records_updated": 68
+    },
+    {
+      "batch": 3,
+      "errors": 0,
+      "records_examined": 6,
+      "records_missing_cache": 0,
+      "records_updated": 6
+    }
+  ],
+  "changes": [
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF028837.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF031813.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF041802.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF041803.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF041804.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF041805.1",
+      "vector_profile": "yeast_shuttle_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF041806.1",
+      "vector_profile": "yeast_shuttle_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF041807.1",
+      "vector_profile": "yeast_shuttle_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF041808.1",
+      "vector_profile": "yeast_shuttle_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF053733.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF061181.1",
+      "vector_profile": "mammalian_reporter_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF061788.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF074376.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF075573.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF087042.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF092546.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF118920.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF133437.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF134197.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF134198.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF136442.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF151087.1",
+      "vector_profile": "mammalian_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF170483.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF222336.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF264722.1",
+      "vector_profile": "mammalian_reporter_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF264723.1",
+      "vector_profile": "mammalian_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF305698.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF310245.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF361302.1",
+      "vector_profile": "mammalian_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF477200.1",
+      "vector_profile": "mammalian_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF479322.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF525441.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF525442.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF525443.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF525444.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF525445.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF525446.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AF533984.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AY070364.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AY070365.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AY219682.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AY219685.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AY219687.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AY243506.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AY262822.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:AY302760.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:DQ666274.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:L09130.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:M37846.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:M37847.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "markers": {
+          "after": [
+            "aphD"
+          ],
+          "before": []
+        }
+      },
+      "id": "genbank:PZ407647.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U01668.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U03993.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U04893.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U04894.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U04895.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U04896.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "markers": {
+          "after": [
+            "aacC1",
+            "bla"
+          ],
+          "before": [
+            "bla"
+          ]
+        }
+      },
+      "id": "genbank:U07166.1",
+      "vector_profile": "general_shuttle_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        },
+        "markers": {
+          "after": [
+            "aacC1"
+          ],
+          "before": []
+        }
+      },
+      "id": "genbank:U07167.1",
+      "vector_profile": "general_shuttle_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U08460.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U08461.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U12391.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U13847.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U13848.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U13849.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U13850.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U13851.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U13852.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U13853.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U13854.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U13855.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U13856.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U13857.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U13858.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U13865.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U13866.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U13869.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U13870.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U13871.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U13872.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U16281.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U17139.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U17499.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U19585.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U24178.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U25267.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U25268.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U25269.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U25270.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U25272.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U25273.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U36454.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U40578.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U47102.2",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U47103.2",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U47119.2",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U47120.2",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U47121.2",
+      "vector_profile": "mammalian_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U47122.2",
+      "vector_profile": "mammalian_reporter_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U47123.2",
+      "vector_profile": "mammalian_reporter_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U47626.2",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U47627.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U47628.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U51557.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U51558.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U59231.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U72488.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U74374.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U75992.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U78872.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U78873.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U78874.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U80929.2",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U85201.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U85202.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U85203.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U85204.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U85205.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U85206.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "fields": {
+        "annotation_complete": {
+          "after": true,
+          "before": false
+        }
+      },
+      "id": "genbank:U86347.1",
+      "vector_profile": "bacterial_cloning_vector"
+    }
+  ],
+  "classifications": [
+    {
+      "annotation_complete": false,
+      "id": "curated:pACYC184",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": true,
+      "id": "curated:pBluescript-II-SK-minus",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "curated:pBluescript-II-SK-plus",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "curated:pBR322",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "curated:pEGFP-N1",
+      "vector_profile": "mammalian_reporter_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "curated:pGEX-4T-1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "curated:pGL3-Basic",
+      "vector_profile": "mammalian_reporter_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "curated:pGL4-10-luc2",
+      "vector_profile": "mammalian_reporter_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "curated:pRS415",
+      "vector_profile": "yeast_shuttle_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "curated:pRS416",
+      "vector_profile": "yeast_shuttle_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "curated:pUC18",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "curated:pUC19",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:AF013597.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF028837.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF031813.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF041802.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF041803.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF041804.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF041805.1",
+      "vector_profile": "yeast_shuttle_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF041806.1",
+      "vector_profile": "yeast_shuttle_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF041807.1",
+      "vector_profile": "yeast_shuttle_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF041808.1",
+      "vector_profile": "yeast_shuttle_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:AF050464.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF053733.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF058756.1",
+      "vector_profile": "mammalian_reporter_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF061181.1",
+      "vector_profile": "mammalian_reporter_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF061788.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF074376.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF075573.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF087042.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF092546.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:AF097552.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF118920.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF133437.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF134197.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF134198.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF136442.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:AF147463.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:AF147464.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF151087.1",
+      "vector_profile": "mammalian_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF170483.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF216802.1",
+      "vector_profile": "general_shuttle_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF222336.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF264722.1",
+      "vector_profile": "mammalian_reporter_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF264723.1",
+      "vector_profile": "mammalian_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF305698.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF310245.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF361302.1",
+      "vector_profile": "mammalian_expression_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:AF403427.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF477200.1",
+      "vector_profile": "mammalian_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF479322.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:AF519766.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF525441.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF525442.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF525443.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF525444.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF525445.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF525446.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AF533984.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AY070364.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AY070365.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:AY180162.1",
+      "vector_profile": "general_shuttle_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AY219682.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AY219685.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AY219687.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:AY219701.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:AY236524.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:AY236526.1",
+      "vector_profile": "mammalian_reporter_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AY243506.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AY262822.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AY302760.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:AY428809.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP121282.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190835.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190836.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190842.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190845.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190847.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190849.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190850.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190851.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190852.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190854.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190855.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190857.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190859.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190864.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190865.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190867.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190868.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190870.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190872.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190873.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190874.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190875.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190876.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190878.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP190879.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191035.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191036.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191037.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191042.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191051.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191052.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191053.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191054.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191060.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191063.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191068.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191069.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191070.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191071.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191072.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191074.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191075.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191076.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP191078.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:CP196381.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:DQ666274.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:L09130.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:M37846.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:M37847.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:PV135004.1",
+      "vector_profile": "yeast_shuttle_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:PX275371.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:PZ138287.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:PZ407647.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U01668.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U03993.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U04893.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U04894.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U04895.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U04896.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U07164.1",
+      "vector_profile": "general_shuttle_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U07165.1",
+      "vector_profile": "general_shuttle_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U07166.1",
+      "vector_profile": "general_shuttle_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U07167.1",
+      "vector_profile": "general_shuttle_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U07168.1",
+      "vector_profile": "general_shuttle_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U08460.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U08461.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:U09128.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U12391.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U13847.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U13848.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U13849.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U13850.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U13851.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U13852.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U13853.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U13854.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U13855.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U13856.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U13857.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U13858.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U13865.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U13866.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U13869.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U13870.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U13871.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U13872.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U16281.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U17139.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U17499.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U19585.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U24178.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U25267.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U25268.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U25269.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U25270.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U25272.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U25273.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:U26464.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:U36452.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:U36453.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U36454.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:U39574.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U40578.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U47102.2",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U47103.2",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U47119.2",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U47120.2",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U47121.2",
+      "vector_profile": "mammalian_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U47122.2",
+      "vector_profile": "mammalian_reporter_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U47123.2",
+      "vector_profile": "mammalian_reporter_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U47626.2",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U47627.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U47628.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:U47670.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U51557.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U51558.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U59231.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U65076.1",
+      "vector_profile": "general_shuttle_vector"
+    },
+    {
+      "annotation_complete": false,
+      "id": "genbank:U65078.1",
+      "vector_profile": "unknown"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U72488.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U74374.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U75992.1",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U78872.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U78873.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U78874.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U80929.2",
+      "vector_profile": "bacterial_cloning_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U85201.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U85202.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U85203.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U85204.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U85205.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U85206.1",
+      "vector_profile": "bacterial_expression_vector"
+    },
+    {
+      "annotation_complete": true,
+      "id": "genbank:U86347.1",
+      "vector_profile": "bacterial_cloning_vector"
+    }
+  ],
+  "errors": [],
+  "finished_at": "2026-06-02T03:32:00.919018+00:00",
+  "mode": "all",
+  "records_examined": 206,
+  "records_missing_cache": 0,
+  "records_skipped": 86,
+  "records_updated": 120,
+  "run_id": 9,
+  "started_at": "2026-06-02T03:29:08.695457+00:00"
+}
