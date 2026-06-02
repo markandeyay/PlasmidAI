@@ -1,4 +1,4 @@
-.PHONY: setup test lint ingest-all eval-retrieval services-down ingest-addgene ingest-genbank ingest-curated parse-sample quality-report reprocess embed-corpus design spike-generation
+.PHONY: setup test lint ingest-all eval-retrieval services-down ingest-addgene ingest-genbank ingest-curated parse-sample quality-report reprocess embed-corpus design spike-generation serve-api
 
 PYTHON ?= python
 MODE ?= dev
@@ -8,6 +8,8 @@ GENBANK_STALE_DAYS ?= 60
 BATCH_SIZE ?= 100
 FAKE ?= 0
 TOP_K ?= 5
+API_HOST ?= 127.0.0.1
+API_PORT ?= 8000
 EVAL_GOLD ?= data/eval/retrieval_gold.jsonl
 EVAL_OUT ?= data/eval/retrieval
 
@@ -55,6 +57,9 @@ design:
 
 spike-generation:
 	$(PYTHON) -m packages.generation.spike --text "$(TEXT)" $(if $(filter 1 true TRUE yes YES,$(FAKE)),--fake-embedder,) $(if $(filter offline OFFLINE,$(MODE)),--local-files-only,)
+
+serve-api:
+	$(PYTHON) -m uvicorn services.api.app:app --host $(API_HOST) --port $(API_PORT)
 
 services-down:
 	docker compose down
