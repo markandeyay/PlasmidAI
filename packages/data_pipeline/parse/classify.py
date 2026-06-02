@@ -113,7 +113,21 @@ class FeatureContext:
         return evaluate_viral_signals(self.text).is_transfer_vector
 
     def has_crispr_signal(self) -> bool:
-        return bool(self.terms("crispr", "cas9", "dcas9", "ncas9", "cas12", "cpf1", "sgrna", "guide rna", "grna"))
+        return bool(
+            self.terms(
+                "crispr",
+                "cas9",
+                "dcas9",
+                "ncas9",
+                "cas12",
+                "cpf1",
+                "sgrna",
+                "guide rna",
+                "grna",
+                "tracrrna",
+                "crrna",
+            )
+        )
 
     def has_yeast_signal(self) -> bool:
         return bool(self.terms("ura3", "leu2", "his3", "trp1", "ars", "cen", "2-micron", "2 micron", "yeast"))
@@ -172,7 +186,19 @@ class FeatureContext:
 
 
 def crispr_vector(context: FeatureContext) -> ClassificationResult | None:
-    signals = context.terms("crispr", "cas9", "dcas9", "ncas9", "cas12", "cpf1", "sgrna", "guide rna", "grna")
+    signals = context.terms(
+        "crispr",
+        "cas9",
+        "dcas9",
+        "ncas9",
+        "cas12",
+        "cpf1",
+        "sgrna",
+        "guide rna",
+        "grna",
+        "tracrrna",
+        "crrna",
+    )
     if not signals:
         return None
     confidence = 0.95 if len(signals) >= 2 else 0.85
