@@ -12,7 +12,18 @@ _CLASS_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("ampicillin", re.compile(_BOUNDARY_TEMPLATE.format(alias=r"bla|ampr|beta\-lactamase|ampicillin"), flags=re.IGNORECASE)),
     ("tetracycline", re.compile(_BOUNDARY_TEMPLATE.format(alias=r"tet|tetr|tetracycline"), flags=re.IGNORECASE)),
     ("chloramphenicol", re.compile(_BOUNDARY_TEMPLATE.format(alias=r"cat|chloramphenicol"), flags=re.IGNORECASE)),
-    ("aminoglycoside", re.compile(_BOUNDARY_TEMPLATE.format(alias=r"kan|kanr|neomycin|neor|g418"), flags=re.IGNORECASE)),
+    (
+        "aminoglycoside",
+        re.compile(
+            _BOUNDARY_TEMPLATE.format(alias=r"kan|kanr|kanamycin|aph|nptii|neomycin|neor|g418|gentamicin|gentamycin|aacc1|aac\(3\)"),
+            flags=re.IGNORECASE,
+        ),
+    ),
+    ("hygromycin", re.compile(_BOUNDARY_TEMPLATE.format(alias=r"hyg|hygr|hygromycin"), flags=re.IGNORECASE)),
+    ("puromycin", re.compile(_BOUNDARY_TEMPLATE.format(alias=r"puro|puror|puromycin"), flags=re.IGNORECASE)),
+    ("blasticidin", re.compile(_BOUNDARY_TEMPLATE.format(alias=r"bsd|bsdr|blasticidin"), flags=re.IGNORECASE)),
+    ("zeocin", re.compile(_BOUNDARY_TEMPLATE.format(alias=r"zeocin|sh ble|shble"), flags=re.IGNORECASE)),
+    ("nourseothricin", re.compile(_BOUNDARY_TEMPLATE.format(alias=r"nat|natr|nourseothricin"), flags=re.IGNORECASE)),
     ("spectinomycin", re.compile(_BOUNDARY_TEMPLATE.format(alias=r"spectinomycin"), flags=re.IGNORECASE)),
     ("streptomycin", re.compile(_BOUNDARY_TEMPLATE.format(alias=r"streptomycin"), flags=re.IGNORECASE)),
 )

@@ -6,12 +6,15 @@ from typing import Iterable
 
 from packages.core.schemas import Plasmid
 from packages.data_pipeline.ingest.genbank import (
+    EXPANSION_QUERY,
     GenbankMappingError,
     GenbankIngestionConfig,
     IngestionResult,
+    genbank_query_for_mode,
     map_genbank_text_to_plasmid,
     raw_cache_key,
     run_genbank_ingestion,
+    should_fetch_cache,
 )
 
 
@@ -68,7 +71,7 @@ class FakeRepository:
 
     def start_run(self, *, source: str, mode: str, started_at) -> int:  # type: ignore[no-untyped-def]
         assert source == "genbank"
-        assert mode in {"dev", "bulk", "refresh"}
+        assert mode in {"dev", "bulk", "refresh", "expansion"}
         return 1
 
     def finish_run(
@@ -141,6 +144,18 @@ def test_map_con_record_without_origin_raises_structured_error() -> None:
         raise AssertionError("CON record without concrete sequence should not map to Plasmid")
 
 
+def test_map_record_with_ambiguous_bases_raises_structured_error() -> None:
+    raw = load_fixture("minimal.gb").replace("atgcgt", "ntgcgt", 1)
+
+    try:
+        map_genbank_text_to_plasmid(raw, raw_ref="raw/genbank/MIN0001.1.gb")
+    except GenbankMappingError as exc:
+        assert "ambiguous bases" in str(exc)
+        assert exc.details == {"invalid_characters": "N"}
+    else:
+        raise AssertionError("ambiguous GenBank sequence should not reach Plasmid validation")
+
+
 def test_ingestion_uses_fresh_cache_before_network_and_upserts_idempotently() -> None:
     raw = load_fixture("minimal.gb")
     key = raw_cache_key("MIN0001.1")
@@ -176,3 +191,20 @@ def test_ingestion_fetches_stale_or_missing_cache_before_parsing() -> None:
     assert result.records_seen == 1
     assert result.records_upserted == 1
     assert repository.plasmids["genbank:MIN0001.1"].raw_ref == key
+
+
+def test_expansion_mode_uses_component_gated_query() -> None:
+    query = genbank_query_for_mode("expansion", {})
+
+    assert query == EXPANSION_QUERY
+    assert '"expression vector"[Title]' in query
+    assert "srcdb_genbank[PROP]" in query
+    assert "chromosome[Title]" in query
+
+
+def test_expansion_mode_uses_bulk_cache_policy() -> None:
+    key = raw_cache_key("MIN0001.1")
+    config = GenbankIngestionConfig(mode="expansion", limit=1)
+
+    assert should_fetch_cache(config, FakeObjectStore({key: "cached"}, fresh=False), key) is False
+    assert should_fetch_cache(config, FakeObjectStore({}, fresh=True), key) is True

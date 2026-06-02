@@ -32,6 +32,55 @@ RESTRICTION_SITES = {
 }
 DNA_BASES = set("ACGTRYSWKMBDHVN")
 REVERSE_COMPLEMENT_TABLE = str.maketrans("ACGTRYSWKMBDHVN", "TGCAYRSWMKVHDBN")
+HIGH_IMPACT_OTHER_SIGNALS = (
+    "5' LTR",
+    "3' LTR",
+    "5 prime LTR",
+    "3 prime LTR",
+    "long terminal repeat",
+    "LTR",
+    "WPRE",
+    "woodchuck hepatitis virus posttranscriptional regulatory element",
+    "psi packaging signal",
+    "packaging signal",
+    "RRE",
+    "rev response element",
+    "cPPT",
+    "central polypurine tract",
+    "IRES",
+    "internal ribosome entry site",
+    "P2A",
+    "T2A",
+    "E2A",
+    "F2A",
+    "2A peptide",
+    "self-cleaving peptide",
+    "sgRNA",
+    "guide RNA",
+    "gRNA",
+    "tracrRNA",
+    "crRNA",
+    "shRNA",
+    "ribosome binding site",
+    "RBS",
+    "Shine-Dalgarno",
+    "operator",
+    "lacO",
+    "tetO",
+    "enhancer",
+)
+HIGH_IMPACT_OTHER_FEATURE_TYPES = {
+    "enhancer",
+    "misc_feature",
+    "misc_recomb",
+    "misc_rna",
+    "ncrna",
+    "primer_bind",
+    "regulatory",
+    "repeat_region",
+    "rna",
+    "stem_loop",
+}
 
 
 @dataclass(frozen=True)
@@ -121,12 +170,16 @@ def normalize_feature_type(feature: SeqFeature) -> str | None:
         return "promoter"
     if feature_type == "regulatory" and contains_signal(text, "promoter"):
         return "promoter"
-    if feature_type in {"terminator", "polyA_signal", "polyA_site"}:
+    if feature_type in {"terminator", "polya_signal", "polya_site"}:
         return "terminator"
     if feature_type in {"regulatory", "misc_feature"} and any(
         contains_signal(text, signal) for signal in ("terminator", "polya", "polyadenylation")
     ):
         return "terminator"
+    if feature_type in HIGH_IMPACT_OTHER_FEATURE_TYPES and any(
+        contains_signal(text, signal) for signal in HIGH_IMPACT_OTHER_SIGNALS
+    ):
+        return "other"
     if feature_type == "misc_feature" and any(
         contains_signal(text, signal) for signal in ("multiple cloning", "polylinker", "mcs")
     ):
@@ -375,7 +428,7 @@ def feature_bounds(feature: SeqFeature) -> tuple[int, int]:
 
 
 def best_feature_name(feature: SeqFeature, *, fallback: str) -> str:
-    for key in ("label", "gene", "product", "note", "regulatory_class"):
+    for key in ("label", "standard_name", "gene", "product", "note", "regulatory_class", "bound_moiety"):
         values = feature.qualifiers.get(key)
         if values and values[0]:
             return str(values[0])

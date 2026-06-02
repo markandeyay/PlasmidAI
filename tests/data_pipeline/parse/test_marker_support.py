@@ -43,3 +43,24 @@ def test_spectinomycin_and_streptomycin_remain_separate_classes() -> None:
     ]
 
     assert distinct_marker_classes(features) == {"spectinomycin", "streptomycin"}
+
+
+def test_extended_marker_aliases_map_to_distinct_classes() -> None:
+    features = [
+        feature("gentamycin acetyltransferase-3-1 aacC1", 0),
+        feature("kanamycin resistance", 1),
+        feature("HygR hygromycin marker", 2),
+        feature("PuroR puromycin marker", 3),
+        feature("Bsd blasticidin marker", 4),
+        feature("Sh ble Zeocin marker", 5),
+        feature("Nat nourseothricin marker", 6),
+    ]
+
+    assert distinct_marker_classes(features) == {
+        "aminoglycoside",
+        "hygromycin",
+        "puromycin",
+        "blasticidin",
+        "zeocin",
+        "nourseothricin",
+    }

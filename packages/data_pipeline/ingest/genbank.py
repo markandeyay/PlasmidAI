@@ -49,7 +49,19 @@ DEFAULT_QUERY = (
     "AND 1000:50000[SLEN] AND biomol_genomic[PROP] AND genbank[FILTER] "
     "NOT gbdiv_con[PROP] NOT wgs[FILTER] NOT tsa[FILTER]"
 )
+EXPANSION_QUERY = (
+    '("expression vector"[Title] OR "T7 expression"[Title] OR "bacterial expression"[Title] '
+    'OR "cloning vector"[Title]) '
+    "AND (T7[All Fields] OR lac[All Fields] OR tac[All Fields] OR trc[All Fields]) "
+    'AND (bla[All Fields] OR "beta-lactamase"[All Fields] OR kan[All Fields] '
+    "OR kanamycin[All Fields] OR cat[All Fields] OR chloramphenicol[All Fields]) "
+    'AND ("complete sequence"[Title] OR "complete genome"[Title]) '
+    "AND 1000:50000[SLEN] AND biomol_genomic[PROP] AND srcdb_genbank[PROP] "
+    "NOT gbdiv_con[PROP] NOT wgs[FILTER] NOT tsa[FILTER] "
+    "NOT scaffold[Title] NOT contig[Title] NOT chromosome[Title]"
+)
 IUPAC_DNA_ALPHABET = frozenset("ACGTRYSWKMBDHVN")
+CANONICAL_DNA_ALPHABET = frozenset("ACGT")
 PLACEHOLDER_EMAILS = {"", "researcher@example.com", "user@example.com", "your.email@example.com"}
 class GenbankIngestionError(Exception):
     code = "genbank_ingestion_error"
@@ -144,7 +156,7 @@ class GenbankIngestionConfig:
             mode=mode,
             limit=configured_limit,
             stale_after=timedelta(days=stale_days),
-            query=env("NCBI_GENBANK_QUERY", DEFAULT_QUERY, dotenv),
+            query=genbank_query_for_mode(mode, dotenv),
             email=env("NCBI_EMAIL", "", dotenv),
             api_key=api_key,
             tool=env("NCBI_TOOL", "pmr-plasmid-design", dotenv),
@@ -160,7 +172,7 @@ class GenbankIngestionConfig:
         )
 
     def validate_for_real_network(self) -> None:
-        if self.mode not in {"dev", "bulk", "refresh"}:
+        if self.mode not in {"dev", "bulk", "refresh", "expansion"}:
             raise GenbankConfigError(f"unsupported GenBank ingestion mode: {self.mode}")
         if self.email.strip().lower() in PLACEHOLDER_EMAILS:
             raise GenbankConfigError(
@@ -481,9 +493,18 @@ def run_genbank_ingestion(
 
 
 def should_fetch_cache(config: GenbankIngestionConfig, object_store: ObjectStore, key: str) -> bool:
-    if config.mode == "bulk":
+    if config.mode in {"bulk", "expansion"}:
         return not object_store.exists(key)
     return not object_store.is_fresh(key, config.stale_after)
+
+
+def genbank_query_for_mode(mode: str, dotenv: dict[str, str]) -> str:
+    configured = env("NCBI_GENBANK_QUERY", "", dotenv)
+    if configured:
+        return configured
+    if mode == "expansion":
+        return env("NCBI_GENBANK_EXPANSION_QUERY", EXPANSION_QUERY, dotenv)
+    return DEFAULT_QUERY
 
 
 def raw_cache_key(accession: str) -> str:
@@ -508,6 +529,12 @@ def map_genbank_text_to_plasmid(raw_text: str, *, raw_ref: str) -> Plasmid:
         raise GenbankMappingError(
             "GenBank parser sequence does not match raw ORIGIN sequence",
             details={"parsed_length": len(sequence), "origin_length": len(validated_sequence)},
+        )
+    invalid_canonical_bases = sorted(set(sequence) - CANONICAL_DNA_ALPHABET)
+    if invalid_canonical_bases:
+        raise GenbankMappingError(
+            "GenBank record contains ambiguous bases outside the canonical schema alphabet",
+            details={"invalid_characters": "".join(invalid_canonical_bases)},
         )
 
     accession = record.id or record.name
@@ -721,7 +748,7 @@ def env(name: str, default: str, dotenv: dict[str, str]) -> str:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Ingest NCBI GenBank plasmid-complete sequence records.")
-    parser.add_argument("--mode", choices=["dev", "bulk", "refresh"], default=os.environ.get("MODE", "dev"))
+    parser.add_argument("--mode", choices=["dev", "bulk", "refresh", "expansion"], default=os.environ.get("MODE", "dev"))
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--stale-days", type=int, default=DEFAULT_STALE_DAYS)
     return parser
