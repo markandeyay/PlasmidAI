@@ -49,11 +49,12 @@ def test_extended_marker_aliases_map_to_distinct_classes() -> None:
     features = [
         feature("gentamycin acetyltransferase-3-1 aacC1", 0),
         feature("kanamycin resistance", 1),
-        feature("HygR hygromycin marker", 2),
-        feature("PuroR puromycin marker", 3),
-        feature("Bsd blasticidin marker", 4),
-        feature("Sh ble Zeocin marker", 5),
-        feature("Nat nourseothricin marker", 6),
+        feature("aminoglycoside phosphotransferase", 2),
+        feature("HygR hygromycin marker", 3),
+        feature("PuroR puromycin marker", 4),
+        feature("Bsd blasticidin marker", 5),
+        feature("Sh ble Zeocin marker", 6),
+        feature("Nat nourseothricin marker", 7),
     ]
 
     assert distinct_marker_classes(features) == {
