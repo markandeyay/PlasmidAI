@@ -21,6 +21,12 @@ USE_CASE_REWRITES = {
     "reporter_fluorescent": "fluorescent reporting",
     "yeast_shuttle": "yeast shuttle cloning",
 }
+CURATED_USE_CASE_PROFILES = {
+    "bacterial_cloning": "bacterial_cloning_vector",
+    "bacterial_expression": "bacterial_expression_vector",
+    "reporter_fluorescent": "mammalian_reporter_vector",
+    "yeast_shuttle": "yeast_shuttle_vector",
+}
 PROFILE_SENTENCES = {
     "bacterial_cloning_vector": "Bacterial cloning vector {name}.",
     "bacterial_expression_vector": "Bacterial expression vector {name}.",
@@ -44,7 +50,8 @@ def compose_plasmid_document(
     annotated_sequence: AnnotatedSequence | None = None,
 ) -> ComposedDocument:
     features = list(annotated_sequence.features) if annotated_sequence else []
-    vector_profile = annotated_sequence.vector_profile if annotated_sequence else "unknown"
+    parsed_profile = annotated_sequence.vector_profile if annotated_sequence else "unknown"
+    vector_profile = _effective_vector_profile(plasmid, parsed_profile)
     topology = str(annotated_sequence.topology) if annotated_sequence else "circular"
     annotation_complete = (
         annotated_sequence.annotation_complete if annotated_sequence is not None else plasmid.annotation_complete
@@ -53,7 +60,7 @@ def compose_plasmid_document(
     emitted: list[dict[str, str]] = []
     clauses: list[str] = []
 
-    profile_sentence = PROFILE_SENTENCES.get(vector_profile, "Unclassified plasmid {name}.").format(name=plasmid.name)
+    profile_sentence = _profile_sentence(plasmid, vector_profile, parsed_profile)
     clauses.append(profile_sentence)
     emitted.append({"field": "profile", "text": profile_sentence})
 
@@ -144,6 +151,26 @@ def _normalize_scalar(value: str | None) -> str | None:
     if collapsed.casefold() in PLACEHOLDER_VALUES:
         return None
     return collapsed
+
+
+def _effective_vector_profile(plasmid: Plasmid, parsed_profile: str) -> str:
+    if parsed_profile != "unknown" or str(plasmid.source).casefold() != "curated":
+        return parsed_profile
+    for use_case in plasmid.use_cases:
+        profile = CURATED_USE_CASE_PROFILES.get(use_case.casefold())
+        if profile is not None:
+            return profile
+    return parsed_profile
+
+
+def _profile_sentence(plasmid: Plasmid, vector_profile: str, parsed_profile: str) -> str:
+    template = PROFILE_SENTENCES.get(vector_profile)
+    if template is None:
+        template = "Unclassified plasmid {name}."
+    sentence = template.format(name=plasmid.name)
+    if parsed_profile == "unknown" and str(plasmid.source).casefold() == "curated" and vector_profile != "unknown":
+        sentence = f"Curated {sentence[0].lower()}{sentence[1:]}"
+    return sentence
 
 
 def _dedupe(values: list[str]) -> list[str]:
