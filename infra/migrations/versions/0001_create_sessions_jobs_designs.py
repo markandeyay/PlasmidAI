@@ -1,13 +1,13 @@
 """Create sessions, session_turns, jobs, and designs tables.
 
-Revision ID: 0001_create_sessions_jobs_designs
+Revision ID: 0001_app_tables
 Revises: None
 Create Date: 2026-06-02 10:30:00
 """
 from alembic import op
 
 
-revision = "0001_create_sessions_jobs_designs"
+revision = "0001_app_tables"
 down_revision = None
 branch_labels = None
 depends_on = None
