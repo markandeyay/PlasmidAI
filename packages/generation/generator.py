@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Protocol, Sequence
 
 from packages.core.schemas import AnnotatedSequence, DesignSpec, GeneratedSequence, RetrievedPlasmid
 from packages.core.schemas.models import normalize_dna
@@ -24,7 +24,7 @@ class SequenceGenerator(Protocol):
 
 @dataclass(frozen=True)
 class MarkerSwap:
-    """An explicit deterministic DNA replacement used only by the fake."""
+    """Explicit deterministic DNA replacement used only by the fake generator."""
 
     original_sequence: str
     replacement_sequence: str
@@ -57,13 +57,12 @@ class FakeGenerator:
             raise ValueError("n must be positive")
         if not templates:
             return []
-
         template = templates[0].plasmid
         sequence = template.sequence
         if self.marker_swap is not None:
             sequence = self.marker_swap.apply(sequence)
 
-        # Downstream spike code must re-annotate the candidate with the Phase 0
+        # Spike code must re-annotate the generated candidate with the Phase 0
         # parser. Do not carry trusted-template completeness across generation.
         annotated = AnnotatedSequence(
             sequence=sequence,
@@ -78,3 +77,8 @@ class FakeGenerator:
             parent_template_ids=[template.id],
         )
         return [generated.model_copy(deep=True) for _ in range(n)]
+
+
+def ensure_generated_sequence_count(generated: Sequence[GeneratedSequence], *, minimum: int = 1) -> None:
+    if len(generated) < minimum:
+        raise ValueError(f"expected at least {minimum} generated sequence(s), got {len(generated)}")

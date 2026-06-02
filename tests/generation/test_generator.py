@@ -6,55 +6,62 @@ from packages.core.schemas import DesignSpec, GeneratedSequence, Plasmid, Retrie
 from packages.generation import FAKE_GENERATOR_VERSION, FakeGenerator, MarkerSwap
 
 
-def template() -> RetrievedPlasmid:
+def _template() -> RetrievedPlasmid:
     plasmid = Plasmid(
-        id="curated:test-template",
+        id="curated:pUC19",
         source="curated",
-        name="test-template",
+        name="pUC19c",
         sequence="AAAACCCCGGGGTTTT",
         length=16,
-        organism="Escherichia coli",
+        organism="Cloning vector pUC19c",
         vector_type="bacterial_cloning_vector",
-        markers=["ampR"],
+        markers=["AmpR"],
+        promoters=["lac promoter region"],
+        use_cases=["bacterial_cloning"],
         annotation_complete=True,
-        raw_ref="raw/curated/test-template.gb",
+        raw_ref="raw/curated/pUC19.gb",
     )
-    return RetrievedPlasmid(plasmid=plasmid, score=1.0, matched_fields=["lexical_name"])
+    return RetrievedPlasmid(plasmid=plasmid, score=1.0, matched_fields=["semantic", "exact_name"])
 
 
 def test_fake_generator_returns_top_template_as_schema_valid_candidate() -> None:
-    generated = FakeGenerator().generate(DesignSpec(organism="Escherichia coli"), [template()], n=2)
+    generator = FakeGenerator()
+    spec = DesignSpec(organism="Escherichia coli", vector_type="bacterial_cloning_vector")
+
+    generated = generator.generate(spec, [_template()], n=2)
 
     assert len(generated) == 2
     assert all(isinstance(candidate, GeneratedSequence) for candidate in generated)
-    assert all(candidate.annotated_sequence.sequence == "AAAACCCCGGGGTTTT" for candidate in generated)
-    assert all(candidate.annotated_sequence.annotation_complete is False for candidate in generated)
-    assert all(candidate.parent_template_ids == ["curated:test-template"] for candidate in generated)
     assert all(candidate.model_version == FAKE_GENERATOR_VERSION for candidate in generated)
+    assert all(candidate.parent_template_ids == ["curated:pUC19"] for candidate in generated)
+    assert all(candidate.annotated_sequence.sequence == _template().plasmid.sequence for candidate in generated)
+    assert all(candidate.annotated_sequence.topology == "circular" for candidate in generated)
+    assert all(candidate.annotated_sequence.annotation_complete is False for candidate in generated)
 
 
 def test_fake_generator_applies_explicit_marker_swap_deterministically() -> None:
     generator = FakeGenerator(marker_swap=MarkerSwap(original_sequence="CCCC", replacement_sequence="ATAT"))
+    spec = DesignSpec(organism="Escherichia coli", vector_type="bacterial_cloning_vector")
 
-    first = generator.generate(DesignSpec(organism="Escherichia coli"), [template()])
-    second = generator.generate(DesignSpec(organism="Escherichia coli"), [template()])
+    first = generator.generate(spec, [_template()])
+    second = generator.generate(spec, [_template()])
 
     assert first == second
     assert first[0].annotated_sequence.sequence == "AAAAATATGGGGTTTT"
 
 
-def test_fake_generator_returns_no_candidates_without_templates() -> None:
-    assert FakeGenerator().generate(DesignSpec(organism="Escherichia coli"), []) == []
+def test_fake_generator_returns_empty_without_templates_and_rejects_invalid_n() -> None:
+    generator = FakeGenerator()
+    spec = DesignSpec(organism="Escherichia coli")
 
-
-def test_fake_generator_rejects_non_positive_candidate_count() -> None:
+    assert generator.generate(spec, []) == []
     with pytest.raises(ValueError, match="n must be positive"):
-        FakeGenerator().generate(DesignSpec(organism="Escherichia coli"), [template()], n=0)
+        generator.generate(spec, [_template()], n=0)
 
 
 def test_marker_swap_requires_one_exact_original_sequence_match() -> None:
+    generator = FakeGenerator(marker_swap=MarkerSwap(original_sequence="ACAC", replacement_sequence="ATAT"))
+    spec = DesignSpec(organism="Escherichia coli", vector_type="bacterial_cloning_vector")
+
     with pytest.raises(ValueError, match="exactly one"):
-        FakeGenerator(marker_swap=MarkerSwap("ACAC", "ATAT")).generate(
-            DesignSpec(organism="Escherichia coli"),
-            [template()],
-        )
+        generator.generate(spec, [_template()])

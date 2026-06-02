@@ -1,4 +1,4 @@
-.PHONY: setup test lint ingest-all eval-retrieval services-down ingest-addgene ingest-genbank ingest-curated parse-sample quality-report reprocess embed-corpus design
+.PHONY: setup test lint ingest-all eval-retrieval services-down ingest-addgene ingest-genbank ingest-curated parse-sample quality-report reprocess embed-corpus design spike-generation
 
 PYTHON ?= python
 MODE ?= dev
@@ -52,6 +52,9 @@ embed-corpus:
 
 design:
 	$(PYTHON) -m packages.retrieval.pipeline --text "$(TEXT)" --k $(TOP_K) $(if $(filter 1 true TRUE yes YES,$(FAKE)),--fake-embedder,) $(if $(filter offline OFFLINE,$(MODE)),--local-files-only,)
+
+spike-generation:
+	$(PYTHON) -m packages.generation.spike --text "$(TEXT)" $(if $(filter 1 true TRUE yes YES,$(FAKE)),--fake-embedder,) $(if $(filter offline OFFLINE,$(MODE)),--local-files-only,)
 
 services-down:
 	docker compose down

@@ -1,21 +1,21 @@
 ﻿# PROGRESS â€” Build State (mutable)
 
 ## AT-A-GLANCE (update every session)
-- **Current Phase:** Phase 2: Sequence generation (bounded offline spike only)
-- **Next Concrete Task:** On the isolated `phase2-spike` branch, implement only the vertical slice specified in `research/findings/phase2_spike_spec.md`. Do not fine-tune, spend GPU budget, start Phase 3 implementation, or expand lentiviral/CRISPR seeds.
+- **Current Phase:** Phase 2 bounded offline plumbing spike complete on `phase2-spike`; Phase 2 gate not met
+- **Next Concrete Task:** Human review/merge decision for `phase2-spike`; do not push or merge without explicit approval.
 - **Overall completion estimate:** 16%
 - **Last session date:** 2026-06-01
-- **Codebase known-good?** (tests passing) Yes - on `phase2-prep`, `COMPOSE_PROJECT_NAME=pmr C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 203 passing tests / 1 skipped real-LLM smoke test
+- **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 206 passing tests / 1 skipped real-LLM smoke test
 
 ## RESUME HERE (only if mid-task)
-RESUME HERE: Human authorized only the bounded offline Phase 2 plumbing spike. Work is isolated by branch: this preparation checkpoint is on `phase2-prep`; OpenCode should implement the spike on its separate `phase2-spike` branch. Read `research/findings/phase2_spike_spec.md` before implementation. The approved path is one query -> one retrieved template -> one deterministic fake-generated candidate -> Phase 0 parser re-annotation -> unconditional PASS constraint stub -> one assembled schema-valid output. Added `packages/generation/generator.py` with the `SequenceGenerator` protocol, deterministic `FakeGenerator`, and explicit DNA-to-DNA `MarkerSwap`; added five fake-backed tests. Carbon-500M is an optional CPU smoke-test stretch goal, Carbon-3B is the later practical target, Evo 2 7B is deferred, and no GPU spend is authorized. Do not fine-tune, pull Phase 3 forward, start a generation gold set, or expand lentiviral/CRISPR seeds. On `phase2-prep`, `make test` passes 203 tests with 1 skipped real-LLM smoke test.
+RESUME HERE: `phase2-spike` is ready for human review/merge and has not been pushed. The bounded offline Phase 2 generation plumbing spike is complete: parse intent, retrieve one template, fake-generate, re-annotate, PASS stub-validate, render result/report. Successful spike report: `data/eval/generation/2026-06-01-181237-generation-spike-report.md`. This is not a Phase 2 gate attempt: it uses `FakeGenerator`, no GPU/model spend, no fine-tuning, no biological quality claims, and a stub constraint engine. Verification passed with `python -m pytest tests/generation tests/retrieval/test_intent_parser.py` (16 passed, 1 skipped) and `C:\Program Files (x86)\GnuWin32\bin\make.exe test` (206 passed, 1 skipped). Remaining external blocker: lentiviral/CRISPR calibration seeds still require human provenance/legal policy.
 
 ## KNOWN ISSUES / BLOCKERS
+- `phase2-spike` is ready for review but intentionally not merged to `master` and not pushed to GitHub.
+- Phase 2 gate is not met. The spike uses `FakeGenerator` and `StubConstraintEngine`; it proves plumbing only and does not load a base DNA model, fine-tune, or biologically validate generated sequences.
 - Phase 1 retrieval gate passed on 2026-05-31: `data/eval/retrieval/2026-05-31-221057-retrieval-baseline.{md,json}` scores 20 retrieval queries plus 1 clarification-only case with top-1 `0.700`, top-5 `1.000`, MRR `0.825`, and clarification pass rate `1.000`.
 - Phase 1 retrieval cleanup is implemented: exact named-record queries use a lexical lane before semantic ranking, while structured source and DOI provenance filters remain enforced. `depositing_lab` is not available in the current schema or corpus.
 - The current 82-record corpus has no classified lentiviral or CRISPR vectors. `data/eval/corpus/2026-06-01-174026-lentiviral-crispr-gap.md` found no parser defect and no safe canonical NCBI-backed seed. Adding exact Addgene or reviewed GenBank-derivative seeds is blocked pending human provenance/legal policy.
-- Human decision on 2026-06-01: defer lentiviral/CRISPR seed expansion while the Addgene application is pending. Do not admit GenBank derivatives without explicit human sign-off.
-- Human decision on 2026-06-01: Phase 2 entry is limited to the fake-backed offline spike in `research/findings/phase2_spike_spec.md`. No fine-tuning, GPU spend, Phase 3 implementation, generation gold set, or Phase 2 gate attempt is authorized.
 - Baseline retrieval still shows ranking/tie-break opportunities before the gate set: pACYC184 and pBR322 appear at rank 2 behind GenBank pSUP202 for chloramphenicol/tetracycline-style cloning queries, and pBluescript appears at rank 5 for the phagemid query.
 - Phase 1 is authorized and active as of 2026-05-31. Phase 0 remains below its final scale gate while Addgene partner access is pending; current Phase 1 work uses the verified local corpus foundation.
 - The GNU Make directory was added to the user PATH on 2026-05-29, but the current Codex host process has not inherited that PATH refresh. Use `C:\Program Files (x86)\GnuWin32\bin\make.exe` directly in this process if plain `make` is still unresolved; new user shells should pick up the user PATH.
@@ -44,6 +44,10 @@ RESUME HERE: Human authorized only the bounded offline Phase 2 plumbing spike. W
 - Should the GenBank corpus strategy shift from broad natural plasmid complete sequences toward named synthetic vectors/backbones, or should Phase 0 depend on Addgene/another vector-specific source for promoter/terminator-rich records?
 - Which exact canonical variants should be approved for ambiguous elements not yet added to the reference library: EF1a, SV40 early, U6, tac, trc, araBAD, SV40 polyA, BGH polyA, rabbit beta-globin polyA, rrnB T1/T2, lambda T0, ZeoR, BSD, HygR, NeoR/G418, f1 origin, and 2-micron origin?
 - Pending legal/provenance approval, may Addgene Vector Database free-to-view sequences be used for a small parser-calibration seed set in a commercial product, or should the seed set remain NCBI/manufacturer-only until explicit partner terms are in place?
+- For lentiviral and CRISPR calibration seeds specifically, should the corpus wait for an Addgene intended-use data license, admit reviewed GenBank derivatives, or remain without those profiles for now?
+- After human review/merge of `phase2-spike`, should the next approved slice stay offline with a deterministic Phase 3 checker, or separately authorize a budgeted Carbon-500M load smoke test?
+- Before any Phase 2 gate attempt, should the project build a minimum deterministic Phase 3 checker and define a research-only acquisition milestone below the formal 50,000-record Phase 0 gate?
+- Which managed-GPU provider, hardware ceiling, and budget should apply to any authorized Phase 2 benchmark?
 
 ## PHASE GATE STATUS
 - [x] Phase R gate met (see SYSTEM_DESIGN 3.05) â€” artifacts reviewed and Phase 0 authorized by the human on 2026-05-29
@@ -134,6 +138,8 @@ RESUME HERE: Human authorized only the bounded offline Phase 2 plumbing spike. W
 - [ ] **GATE:** A full loop runs automatically â€” a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-06-01 - Completed the bounded offline Phase 2 generation plumbing spike on `phase2-spike`: deterministic intent parsing, top-1 template retrieval, `FakeGenerator` candidate creation, Phase 0 re-annotation, stub PASS validation, component checks, `make spike-generation`, and markdown/JSON result rendering. Successful offline report saved at `data/eval/generation/2026-06-01-181237-generation-spike-report.md` for cloning, GST bacterial expression, and yeast shuttle examples.
+- 2026-06-01 - Reconciled the local generator scaffold with `phase2-prep`: exported `MarkerSwap`, kept `FakeGenerator()` as the default spike generator, marked generated candidates `annotation_complete=False` before re-annotation, and deep-copied repeated candidates. Verification: `python -m pytest tests/generation tests/retrieval/test_intent_parser.py` passed 16 tests with 1 skipped; `C:\Program Files (x86)\GnuWin32\bin\make.exe test` passed 206 tests with 1 skipped.
 - 2026-06-01 - Human authorized only the bounded offline Phase 2 plumbing spike and deferred lentiviral/CRISPR seed expansion while Addgene access is pending. Approved checkpoint order: optional CPU Carbon-500M smoke test, then Carbon-3B as the later practical target; Evo 2 7B and all GPU spend are deferred.
 - 2026-06-01 - Created isolated `phase2-prep` branch for preparation work while OpenCode uses separate `phase2-spike`. Tightened `research/findings/phase2_readiness.md` with the approved scope and added the implementation handoff at `research/findings/phase2_spike_spec.md`.
 - 2026-06-01 - Added `packages/generation/generator.py` with the `SequenceGenerator` protocol, deterministic `FakeGenerator`, and explicit `MarkerSwap` data. Added five schema-validating unit tests. Final `phase2-prep` verification passes 203 tests with 1 skipped real-LLM smoke test.
