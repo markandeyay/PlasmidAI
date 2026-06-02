@@ -144,6 +144,18 @@ def test_map_con_record_without_origin_raises_structured_error() -> None:
         raise AssertionError("CON record without concrete sequence should not map to Plasmid")
 
 
+def test_map_record_with_ambiguous_bases_raises_structured_error() -> None:
+    raw = load_fixture("minimal.gb").replace("atgcgt", "ntgcgt", 1)
+
+    try:
+        map_genbank_text_to_plasmid(raw, raw_ref="raw/genbank/MIN0001.1.gb")
+    except GenbankMappingError as exc:
+        assert "ambiguous bases" in str(exc)
+        assert exc.details == {"invalid_characters": "N"}
+    else:
+        raise AssertionError("ambiguous GenBank sequence should not reach Plasmid validation")
+
+
 def test_ingestion_uses_fresh_cache_before_network_and_upserts_idempotently() -> None:
     raw = load_fixture("minimal.gb")
     key = raw_cache_key("MIN0001.1")

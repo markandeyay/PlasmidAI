@@ -61,6 +61,7 @@ EXPANSION_QUERY = (
     "NOT scaffold[Title] NOT contig[Title] NOT chromosome[Title]"
 )
 IUPAC_DNA_ALPHABET = frozenset("ACGTRYSWKMBDHVN")
+CANONICAL_DNA_ALPHABET = frozenset("ACGT")
 PLACEHOLDER_EMAILS = {"", "researcher@example.com", "user@example.com", "your.email@example.com"}
 class GenbankIngestionError(Exception):
     code = "genbank_ingestion_error"
@@ -528,6 +529,12 @@ def map_genbank_text_to_plasmid(raw_text: str, *, raw_ref: str) -> Plasmid:
         raise GenbankMappingError(
             "GenBank parser sequence does not match raw ORIGIN sequence",
             details={"parsed_length": len(sequence), "origin_length": len(validated_sequence)},
+        )
+    invalid_canonical_bases = sorted(set(sequence) - CANONICAL_DNA_ALPHABET)
+    if invalid_canonical_bases:
+        raise GenbankMappingError(
+            "GenBank record contains ambiguous bases outside the canonical schema alphabet",
+            details={"invalid_characters": "".join(invalid_canonical_bases)},
         )
 
     accession = record.id or record.name
