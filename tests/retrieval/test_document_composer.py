@@ -40,7 +40,7 @@ def test_document_composer_renders_deterministic_summary_without_raw_dna() -> No
     composed = compose_plasmid_document(plasmid, annotated)
 
     assert composed.text == (
-        "Mammalian reporter vector pEGFP-N1. "
+        "Curated mammalian reporter vector pEGFP-N1. "
         "Source description: CMV-driven C-terminal EGFP fusion vector with neomycin/G418 mammalian selectable marker and kanamycin bacterial marker. "
         "Organism annotation: Cloning vector pEGFP-N1. "
         "Promoters: CMV immediate-early enhancer/promoter. "
@@ -80,3 +80,38 @@ def test_document_composer_handles_missing_annotations_and_unknown_profile() -> 
         "Used for: bacterial cloning. "
         "80 bp circular plasmid. Source: addgene."
     )
+
+
+def test_curated_unknown_profile_uses_controlled_seed_profile() -> None:
+    plasmid = Plasmid(
+        id="curated:pACYC184",
+        source="curated",
+        name="pACYC184",
+        sequence="ACGT" * 100,
+        length=400,
+        organism="synthetic construct",
+        vector_type="plasmid",
+        markers=["chloramphenicol resistance gene", "tetracycline resistance gene"],
+        promoters=[],
+        use_cases=[
+            "bacterial_cloning",
+            "Low-copy p15A-origin vector with chloramphenicol and tetracycline resistance.",
+        ],
+        annotation_complete=False,
+        raw_ref="raw/curated/pACYC184.gb",
+    )
+    annotated = AnnotatedSequence(
+        sequence=plasmid.sequence,
+        topology="circular",
+        vector_profile="unknown",
+        annotation_complete=False,
+        features=[
+            AnnotatedFeature(type="ORI", start=1, end=20, strand=1, name="p15A origin", confidence=0.95),
+            AnnotatedFeature(type="marker", start=21, end=40, strand=1, name="chloramphenicol resistance", confidence=0.95),
+        ],
+    )
+
+    composed = compose_plasmid_document(plasmid, annotated)
+
+    assert composed.text.startswith("Curated bacterial cloning vector pACYC184. ")
+    assert composed.metadata["vector_profile"] == "bacterial_cloning_vector"

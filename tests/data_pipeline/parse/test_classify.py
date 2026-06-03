@@ -163,3 +163,61 @@ def test_unknown_profile_is_not_complete() -> None:
 
     assert result.profile == "unknown"
     assert is_annotation_complete(sequence, result.profile) is False
+
+
+def test_curated_pacyc184_metadata_supports_single_marker_cloning_profile() -> None:
+    sequence = annotated(
+        [
+            feature("ORI", "p15A origin", 0),
+            feature("marker", "chloramphenicol resistance", 1),
+        ]
+    )
+
+    result = classify(sequence, metadata_text="Cloning vector pACYC184 synthetic construct")
+
+    assert result.profile == "bacterial_cloning_vector"
+    assert "metadata-backed cloning backbone" in result.signals
+
+
+def test_vector_title_with_marker_and_mcs_supports_existing_cloning_profile() -> None:
+    sequence = annotated(
+        [
+            feature("marker", "chloramphenicol acetyltransferase", 0),
+            feature("MCS", "pUC19 multiple cloning site", 1),
+        ]
+    )
+
+    result = classify(sequence, metadata_text="Cloning vector pMAK705, complete sequence")
+
+    assert result.profile == "bacterial_cloning_vector"
+    assert "metadata-backed cloning vector" in result.signals
+
+
+def test_expression_cloning_metadata_requires_full_bacterial_expression_cassette() -> None:
+    sequence = annotated(
+        [
+            feature("ORI", "pMB1/pUC origin", 0),
+            feature("marker", "bla", 1),
+            feature("promoter", "lac promoter", 2),
+            feature("GOI", "bioB", 3),
+        ]
+    )
+
+    result = classify(sequence, metadata_text="Expression cloning vector pBVI02, complete sequence")
+
+    assert result.profile == "bacterial_expression_vector"
+    assert "metadata-backed expression cassette" in result.signals
+
+
+def test_natural_resistance_plasmid_without_vector_metadata_stays_unknown() -> None:
+    sequence = annotated(
+        [
+            feature("GOI", "RepB family replication initiator", 0),
+            feature("marker", "blaZ", 1),
+            feature("marker", "cadD", 2),
+        ]
+    )
+
+    result = classify(sequence, metadata_text="Staphylococcus aureus strain LaCa plasmid complete sequence")
+
+    assert result.profile == "unknown"

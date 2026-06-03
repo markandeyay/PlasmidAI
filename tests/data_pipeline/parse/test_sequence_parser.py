@@ -167,3 +167,19 @@ def test_aacc1_marker_alias_normalizes_as_marker() -> None:
     )
 
     assert normalize_feature_type(feature) == "marker"
+
+
+def test_kan_and_aminoglycoside_marker_aliases_normalize_as_marker() -> None:
+    kan = SeqFeature(
+        FeatureLocation(0, 10),
+        type="CDS",
+        qualifiers={"gene": ["KAN"]},
+    )
+    aminoglycoside = SeqFeature(
+        FeatureLocation(20, 30),
+        type="CDS",
+        qualifiers={"product": ["aminoglycoside phosphotransferase"]},
+    )
+
+    assert normalize_feature_type(kan) == "marker"
+    assert normalize_feature_type(aminoglycoside) == "marker"

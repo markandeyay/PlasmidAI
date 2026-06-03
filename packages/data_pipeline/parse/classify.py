@@ -109,6 +109,9 @@ class FeatureContext:
     def terms(self, *terms: str) -> list[str]:
         return matching_signals(self.text, terms, aliases=TEXT_SIGNAL_ALIASES)
 
+    def metadata_terms(self, *terms: str) -> list[str]:
+        return matching_signals(self.metadata_text, terms, aliases=TEXT_SIGNAL_ALIASES)
+
     def has_viral_signal(self) -> bool:
         return evaluate_viral_signals(self.text).is_transfer_vector
 
@@ -181,6 +184,7 @@ class FeatureContext:
                 "lacz",
                 "polylinker",
                 "multiple cloning",
+                "mcs",
             )
         )
 
@@ -242,6 +246,22 @@ def mammalian_expression_vector(context: FeatureContext) -> ClassificationResult
 def bacterial_expression_vector(context: FeatureContext) -> ClassificationResult | None:
     evidence = bacterial_expression_evidence(context.annotated_sequence)
     if not evidence.qualifies:
+        metadata_signals = context.metadata_terms(
+            "expression cloning vector",
+            "bacterial expression",
+            "t7 expression vector",
+        )
+        if (
+            metadata_signals
+            and context.has_all("ORI", "marker", "promoter")
+            and context.has_any("GOI", "MCS")
+        ):
+            cassette_signals = context.terms("t7", "tac", "trc", "pbad", "arabad", "lac")
+            return ClassificationResult(
+                "bacterial_expression_vector",
+                0.78,
+                tuple(metadata_signals + cassette_signals + ["metadata-backed expression cassette"]),
+            )
         return None
     return ClassificationResult("bacterial_expression_vector", evidence.confidence, evidence.signals)
 
@@ -257,12 +277,28 @@ def bacterial_cloning_vector(context: FeatureContext) -> ClassificationResult | 
         "lacz",
         "polylinker",
         "multiple cloning",
+        "mcs",
     )
-    if not (context.has("ORI") and context.has("marker")):
+    if not context.has("marker"):
         return None
     if context.has("MCS") or len(context.marker_classes()) >= 2:
-        confidence = 0.84
-        return ClassificationResult("bacterial_cloning_vector", confidence, tuple(signals or ["ORI+marker cloning backbone"]))
+        if context.has("ORI"):
+            confidence = 0.84
+            return ClassificationResult("bacterial_cloning_vector", confidence, tuple(signals or ["ORI+marker cloning backbone"]))
+        metadata_signals = context.metadata_terms("cloning vector", "phagemid cloning vector", "cloning shuttle vector")
+        if metadata_signals and context.has_cloning_backbone_signal():
+            return ClassificationResult(
+                "bacterial_cloning_vector",
+                0.76,
+                tuple(metadata_signals + signals + ["metadata-backed cloning vector"]),
+            )
+    metadata_signals = context.metadata_terms("cloning vector", "phagemid cloning vector", "cloning shuttle vector")
+    if context.has("ORI") and metadata_signals and context.has_cloning_backbone_signal():
+        return ClassificationResult(
+            "bacterial_cloning_vector",
+            0.74,
+            tuple(metadata_signals + signals + ["metadata-backed cloning backbone"]),
+        )
     return None
 
 

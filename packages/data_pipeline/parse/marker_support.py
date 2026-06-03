@@ -15,7 +15,7 @@ _CLASS_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     (
         "aminoglycoside",
         re.compile(
-            _BOUNDARY_TEMPLATE.format(alias=r"kan|kanr|kanamycin|aph|nptii|neomycin|neor|g418|gentamicin|gentamycin|aacc1|aac\(3\)"),
+            _BOUNDARY_TEMPLATE.format(alias=r"kan|kanr|kanamycin|aph|aminoglycoside|aminoglycoside\ phosphotransferase|nptii|neomycin|neor|g418|gentamicin|gentamycin|aacc1|aac\(3\)"),
             flags=re.IGNORECASE,
         ),
     ),
