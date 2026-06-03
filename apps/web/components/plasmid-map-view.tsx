@@ -60,6 +60,7 @@ export function PlasmidMapView({ annotatedSequence }: PlasmidMapViewProps) {
             name={annotatedSequence.vector_profile ?? "Plasmid design"}
             seq={annotatedSequence.sequence}
             annotations={annotations}
+            disableExternalFonts
             primers={[]}
             viewer={annotatedSequence.topology === "circular" ? "both" : "linear"}
           />
