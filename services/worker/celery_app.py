@@ -40,6 +40,9 @@ class CeleryJobQueue:
         )
         return record
 
+    def get_job(self, job_id: str) -> JobRecord | None:
+        return self.store.get(job_id)
+
 
 def create_job_task(*, store: JobStore, handler: JobHandler) -> Callable[..., JobRecord]:
     def run_job(*, job_id: str, session_id: str, action: str, payload: Mapping[str, Any]) -> JobRecord:

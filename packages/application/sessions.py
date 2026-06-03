@@ -2,7 +2,7 @@ from __future__ import annotations
 
 """Session persistence and async job contracts for the application layer."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 from typing import Literal, Protocol
 from uuid import uuid4
@@ -108,6 +108,8 @@ class SessionStore(Protocol):
         turn_id: str | None = None,
     ) -> SessionTurn: ...
 
+    def set_turn_job_id(self, session_id: str, *, turn_id: str, job_id: str) -> None: ...
+
 
 class JobQueue(Protocol):
     """Async execution boundary for design and refinement jobs."""
@@ -172,6 +174,16 @@ class InMemorySessionStore:
         self.sessions[session_id] = updated_session
         return turn
 
+    def set_turn_job_id(self, session_id: str, *, turn_id: str, job_id: str) -> None:
+        session = self.sessions.get(session_id)
+        if session is None:
+            raise KeyError(session_id)
+        updated_turns = [
+            replace(turn, job_id=job_id) if turn.turn_id == turn_id else turn
+            for turn in session.turns
+        ]
+        self.sessions[session_id] = replace(session, updated_at=utc_now(), turns=updated_turns)
+
 
 @dataclass(frozen=True)
 class PostgresSessionStore:
@@ -183,11 +195,10 @@ class PostgresSessionStore:
         now = utc_now()
         resolved_session_id = session_id or f"session_{uuid4().hex}"
         with psycopg.connect(self.database_url) as connection:
-            self._ensure_schema(connection)
             connection.execute(
                 """
-                INSERT INTO design_sessions (session_id, created_at, updated_at)
-                VALUES (%s, %s, %s)
+                INSERT INTO sessions (id, status, created_at, updated_at)
+                VALUES (%s, 'active', %s, %s)
                 """,
                 (resolved_session_id, now, now),
             )
@@ -200,12 +211,11 @@ class PostgresSessionStore:
 
     def get_session(self, session_id: str) -> DesignSession | None:
         with psycopg.connect(self.database_url) as connection:
-            self._ensure_schema(connection)
             session_row = connection.execute(
                 """
-                SELECT session_id, created_at, updated_at
-                FROM design_sessions
-                WHERE session_id = %s
+                SELECT id, created_at, updated_at
+                FROM sessions
+                WHERE id = %s
                 """,
                 (session_id,),
             ).fetchone()
@@ -213,7 +223,14 @@ class PostgresSessionStore:
                 return None
             turn_rows = connection.execute(
                 """
-                SELECT turn_id, session_id, turn_index, turn_type, user_text, design_spec, job_id, created_at
+                SELECT id,
+                       session_id,
+                       turn_index,
+                       payload->>'turn_type',
+                       content,
+                       payload->'design_spec',
+                       payload->>'job_id',
+                       created_at
                 FROM session_turns
                 WHERE session_id = %s
                 ORDER BY turn_index ASC
@@ -253,9 +270,8 @@ class PostgresSessionStore:
         created_at = utc_now()
         resolved_turn_id = turn_id or f"turn_{uuid4().hex}"
         with psycopg.connect(self.database_url) as connection:
-            self._ensure_schema(connection)
             session_exists = connection.execute(
-                "SELECT 1 FROM design_sessions WHERE session_id = %s",
+                "SELECT 1 FROM sessions WHERE id = %s",
                 (session_id,),
             ).fetchone()
             if session_exists is None:
@@ -267,30 +283,33 @@ class PostgresSessionStore:
             connection.execute(
                 """
                 INSERT INTO session_turns (
-                    turn_id,
+                    id,
                     session_id,
                     turn_index,
-                    turn_type,
-                    user_text,
-                    design_spec,
-                    job_id,
+                    role,
+                    content,
+                    payload,
                     created_at
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, 'user', %s, %s, %s)
                 """,
                 (
                     resolved_turn_id,
                     session_id,
                     next_turn_index,
-                    turn_type,
                     user_text,
-                    Jsonb(design_spec.model_dump(mode="json")) if design_spec is not None else None,
-                    job_id,
+                    Jsonb(
+                        {
+                            "turn_type": turn_type,
+                            "design_spec": design_spec.model_dump(mode="json") if design_spec is not None else None,
+                            "job_id": job_id,
+                        }
+                    ),
                     created_at,
                 ),
             )
             connection.execute(
-                "UPDATE design_sessions SET updated_at = %s WHERE session_id = %s",
+                "UPDATE sessions SET updated_at = %s WHERE id = %s",
                 (created_at, session_id),
             )
         return SessionTurn(
@@ -304,44 +323,22 @@ class PostgresSessionStore:
             created_at=created_at,
         )
 
-    @staticmethod
-    def _ensure_schema(connection: psycopg.Connection) -> None:
-        connection.execute(
-            """
-            CREATE TABLE IF NOT EXISTS design_sessions (
-                session_id TEXT PRIMARY KEY,
-                created_at TIMESTAMPTZ NOT NULL,
-                updated_at TIMESTAMPTZ NOT NULL
+    def set_turn_job_id(self, session_id: str, *, turn_id: str, job_id: str) -> None:
+        with psycopg.connect(self.database_url) as connection:
+            updated = connection.execute(
+                """
+                UPDATE session_turns
+                SET payload = payload || %s
+                WHERE id = %s AND session_id = %s
+                """,
+                (Jsonb({"job_id": job_id}), turn_id, session_id),
             )
-            """
-        )
-        connection.execute(
-            """
-            CREATE TABLE IF NOT EXISTS session_turns (
-                turn_id TEXT PRIMARY KEY,
-                session_id TEXT NOT NULL REFERENCES design_sessions(session_id) ON DELETE CASCADE,
-                turn_index INTEGER NOT NULL,
-                turn_type TEXT NOT NULL,
-                user_text TEXT NOT NULL,
-                design_spec JSONB NULL,
-                job_id TEXT NULL,
-                created_at TIMESTAMPTZ NOT NULL
+            if updated.rowcount != 1:
+                raise KeyError(turn_id)
+            connection.execute(
+                "UPDATE sessions SET updated_at = %s WHERE id = %s",
+                (utc_now(), session_id),
             )
-            """
-        )
-        connection.execute(
-            """
-            CREATE UNIQUE INDEX IF NOT EXISTS session_turns_session_turn_index_idx
-            ON session_turns (session_id, turn_index)
-            """
-        )
-        connection.execute(
-            """
-            CREATE INDEX IF NOT EXISTS session_turns_session_created_at_idx
-            ON session_turns (session_id, created_at)
-            """
-        )
-
 
 @dataclass
 class InMemoryJobQueue:

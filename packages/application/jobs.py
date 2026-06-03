@@ -53,6 +53,8 @@ class JobStore(Protocol):
 class JobQueue(Protocol):
     def enqueue(self, *, session_id: str, action: str, payload: Mapping[str, Any]) -> JobRecord: ...
 
+    def get_job(self, job_id: str) -> JobRecord | None: ...
+
 
 class JobHandler(Protocol):
     def __call__(self, *, session_id: str, action: str, payload: Mapping[str, Any]) -> Any: ...
@@ -69,7 +71,7 @@ class PostgresJobStore:
                 CREATE TABLE IF NOT EXISTS jobs (
                     id TEXT PRIMARY KEY,
                     session_id TEXT NOT NULL,
-                    action TEXT NOT NULL,
+                    kind TEXT NOT NULL,
                     status TEXT NOT NULL,
                     payload JSONB NOT NULL,
                     result JSONB,
@@ -94,7 +96,7 @@ class PostgresJobStore:
         with psycopg.connect(self.database_url) as connection:
             connection.execute(
                 """
-                INSERT INTO jobs (id, session_id, action, status, payload, result, error, created_at, updated_at)
+                INSERT INTO jobs (id, session_id, kind, status, payload, result, error, created_at, updated_at)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
@@ -115,7 +117,7 @@ class PostgresJobStore:
         with psycopg.connect(self.database_url) as connection:
             row = connection.execute(
                 """
-                SELECT id, session_id, action, status, payload, result, error, created_at, updated_at
+                SELECT id, session_id, kind AS action, status, payload, result, error, created_at, updated_at
                 FROM jobs
                 WHERE id = %s
                 """,
@@ -220,6 +222,9 @@ class FakeJobQueue:
         except Exception as exc:
             return self.store.mark_failed(record.job_id, error=str(exc))
         return self.store.mark_succeeded(record.job_id, result=result)
+
+    def get_job(self, job_id: str) -> JobRecord | None:
+        return self.store.get(job_id)
 
 
 def new_job_id() -> str:

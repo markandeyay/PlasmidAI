@@ -38,7 +38,7 @@ def upgrade() -> None:
             status text NOT NULL DEFAULT 'queued',
             payload jsonb NOT NULL DEFAULT '{}'::jsonb,
             result jsonb,
-            error jsonb,
+            error text,
             created_at timestamptz NOT NULL DEFAULT now(),
             started_at timestamptz,
             completed_at timestamptz,

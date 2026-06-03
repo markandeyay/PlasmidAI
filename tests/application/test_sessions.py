@@ -13,6 +13,8 @@ from packages.core.schemas import (
     ValidationCheck,
     ValidationReport,
 )
+from packages.application.designs import InMemoryDesignStore
+from packages.application.exports import read_annotated_sequence
 from services.api import create_app
 
 
@@ -131,3 +133,29 @@ def test_missing_session_and_job_return_not_found() -> None:
 
     missing_job_response = client.get("/v1/jobs/missing")
     assert missing_job_response.status_code == 404
+
+
+def test_export_endpoint_returns_round_trip_genbank_design() -> None:
+    designs = InMemoryDesignStore()
+    annotated = example_result().annotated_sequence
+    assert annotated is not None
+    designs.create(
+        session_id="session-export",
+        job_id="job-export",
+        design_id="design-export",
+        annotated_sequence=annotated,
+    )
+    client = TestClient(
+        create_app(
+            session_store=InMemorySessionStore(),
+            job_queue=InMemoryJobQueue(),
+            design_store=designs,
+        )
+    )
+
+    response = client.get("/v1/designs/design-export/export", params={"format": "genbank"})
+
+    assert response.status_code == 200
+    assert response.headers["content-disposition"] == 'attachment; filename="design-export.gb"'
+    round_tripped = read_annotated_sequence(response.text, format="genbank")
+    assert round_tripped == annotated

@@ -97,7 +97,7 @@ def test_postgres_job_store_persists_and_reads_jobs(monkeypatch: pytest.MonkeyPa
 
         def execute(self, query: str, params: tuple[Any, ...] | None = None) -> FakeCursor:
             calls.append((" ".join(query.split()), params))
-            if "SELECT id, session_id, action, status, payload, result, error, created_at, updated_at" in query:
+            if "SELECT id, session_id, kind AS action, status, payload, result, error, created_at, updated_at" in query:
                 return FakeCursor(select_rows.pop(0))
             return FakeCursor(None)
 
