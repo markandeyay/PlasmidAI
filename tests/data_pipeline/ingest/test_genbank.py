@@ -10,6 +10,9 @@ from packages.data_pipeline.ingest.genbank import (
     GenbankMappingError,
     GenbankIngestionConfig,
     IngestionResult,
+    REFSEQ_PLASMID_BROAD_QUERY,
+    build_parser,
+    fetch_rettype_for_mode,
     genbank_query_for_mode,
     map_genbank_text_to_plasmid,
     raw_cache_key,
@@ -71,7 +74,7 @@ class FakeRepository:
 
     def start_run(self, *, source: str, mode: str, started_at) -> int:  # type: ignore[no-untyped-def]
         assert source == "genbank"
-        assert mode in {"dev", "bulk", "refresh", "expansion"}
+        assert mode in {"dev", "bulk", "refresh", "expansion", "refseq_plasmid_broad"}
         return 1
 
     def finish_run(
@@ -208,3 +211,43 @@ def test_expansion_mode_uses_bulk_cache_policy() -> None:
 
     assert should_fetch_cache(config, FakeObjectStore({key: "cached"}, fresh=False), key) is False
     assert should_fetch_cache(config, FakeObjectStore({}, fresh=True), key) is True
+
+
+def test_refseq_plasmid_broad_mode_uses_complete_refseq_plasmid_query() -> None:
+    query = genbank_query_for_mode("refseq_plasmid_broad", {})
+
+    assert query == REFSEQ_PLASMID_BROAD_QUERY
+    assert "plasmid[Title]" in query
+    assert "srcdb_refseq[PROP]" in query
+    assert '"complete sequence"[Title]' in query
+    assert '"complete genome"[Title]' in query
+    assert "1000:50000[SLEN]" in query
+    assert "chromosome[Title]" in query
+    assert "scaffold[Title]" in query
+    assert "contig[Title]" in query
+
+
+def test_refseq_plasmid_broad_mode_uses_bulk_cache_policy() -> None:
+    key = raw_cache_key("MIN0001.1", mode="refseq_plasmid_broad")
+    config = GenbankIngestionConfig(mode="refseq_plasmid_broad", limit=1)
+
+    assert should_fetch_cache(config, FakeObjectStore({key: "cached"}, fresh=False), key) is False
+    assert should_fetch_cache(config, FakeObjectStore({}, fresh=True), key) is True
+    assert key == "raw/genbank/refseq_plasmid_broad/MIN0001.1.gb"
+
+
+def test_refseq_plasmid_broad_mode_fetches_genbank_with_parts() -> None:
+    config = GenbankIngestionConfig.from_env(mode="refseq_plasmid_broad", limit=1, stale_days=60)
+
+    assert fetch_rettype_for_mode("refseq_plasmid_broad") == "gbwithparts"
+    assert fetch_rettype_for_mode("expansion") == "gb"
+    assert config.fetch_rettype == "gbwithparts"
+
+
+def test_refseq_plasmid_broad_mode_is_accepted_by_config_and_cli_parser() -> None:
+    config = GenbankIngestionConfig(mode="refseq_plasmid_broad", email="research@example.org")
+    parsed = build_parser().parse_args(["--mode", "refseq_plasmid_broad", "--limit", "50"])
+
+    config.validate_for_real_network()
+    assert parsed.mode == "refseq_plasmid_broad"
+    assert parsed.limit == 50
