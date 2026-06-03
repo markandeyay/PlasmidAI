@@ -1,17 +1,20 @@
 ﻿# PROGRESS â€” Build State (mutable)
 
 ## AT-A-GLANCE (update every session)
-- **Current Phase:** Consolidated `master`: Phase 0 corpus expansion and bounded Phase 2 plumbing spike merged; Phase 4 foundation awaiting authorization
-- **Next Concrete Task:** Wait for the Phase 4 foundation prompt. Keep the expanded-corpus `pACYC184` retrieval regression documented for later ranking-policy review.
+- **Current Phase:** Phase 4: Application layer foundation on isolated `phase4-foundation`
+- **Next Concrete Task:** Human review of the local `phase4-foundation` branch; do not merge or push until reviewed.
 - **Overall completion estimate:** 17%
 - **Last session date:** 2026-06-02
-- **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 217 passing tests / 1 skipped real-LLM smoke test
+- **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 243 passing tests / 1 skipped real-LLM smoke test on `phase4-foundation`
 
 ## RESUME HERE (only if mid-task)
-RESUME HERE: Consolidated `master` now includes `phase2-prep`, `phase2-spike`, and `phase0-corpus-expansion`. The corpus expansion strategy, lenti/CRISPR accession-path assessment, parser audit, parser hardening, GenBank expansion mode, expanded ingestion/reprocess/quality reports, retrieval evaluation, and bounded fake-backed Phase 2 generation plumbing spike are merged locally. Final corpus quality report: `data/eval/quality/2026-06-02-033530-quality-report.{md,json}` with 206 total records, 194 GenBank records, 12 curated records, 137/206 complete annotations (66.5%), 65 unknown profiles, 3 duplicate clusters, and 0 parse errors. Retrieval rerun: `data/eval/retrieval/2026-06-02-034424-retrieval-baseline.{md,json}` scored top-1 `0.850`, top-5 `0.950`, MRR `0.900`, clarification pass rate `1.000`; top-5 regressed on the chloramphenicol low-copy `pACYC184` query because expanded GenBank chloramphenicol records outrank the curated target and place `curated:pACYC184` at rank `7`. Final consolidated verification passed with `C:\Program Files (x86)\GnuWin32\bin\make.exe test` (217 passed, 1 skipped, 2 warnings). Await the Phase 4 foundation prompt; do not start additional work from this checkpoint.
+RESUME HERE: `phase4-foundation` is a local review branch off consolidated `master`; do not merge or push until human review. The branch adds the Phase 4 application foundation: Alembic migrations for `sessions`, `session_turns`, `jobs`, and `designs`; FastAPI endpoints for `POST /v1/sessions`, `POST /v1/sessions/{session_id}/design`, `POST /v1/sessions/{session_id}/refine`, `GET /v1/jobs/{job_id}`, and `GET /v1/designs/{design_id}/export`; in-memory and Postgres session/design/job stores; a Celery/Redis-backed job queue plus synchronous `FakeJobQueue`; GenBank/FASTA export codecs; API integration tests; `make serve-api`; and `docs/api/openapi.json`. Full verification passed with `C:\Program Files (x86)\GnuWin32\bin\make.exe test` on 2026-06-02: 243 passed, 1 skipped, 2 warnings. Auth, rate limiting, usage metering, frontend map/UI, synthesis handoff, and primer-design output remain out of scope. Coordination note: a tests-only commit from the API integration subagent briefly landed on OpenCode's `phase0-retrieval-robustness` branch and was cherry-picked onto this branch as `0344991`; do not reset OpenCode's branch from this worktree.
 
 ## KNOWN ISSUES / BLOCKERS
 - `phase0-corpus-expansion`, `phase2-prep`, and `phase2-spike` are merged locally into `master`; the consolidated history has not been pushed to GitHub.
+- `phase4-foundation` is local and unpushed. It is ready for review but intentionally not merged into `master`.
+- Phase 4 foundation intentionally omits AuthN/AuthZ, rate limiting, usage metering, streaming job updates, deployed frontend UI, plasmid map rendering, synthesis handoff, and primer-design output.
+- OpenCode coordination: API integration tests were accidentally committed once on `phase0-retrieval-robustness`; the commit was cherry-picked into `phase4-foundation`, but the OpenCode branch should be reconciled by its owner rather than reset here.
 - Expanded-corpus retrieval surfaced one regression for review: top-5 dropped from `1.000` to `0.950` because `curated:pACYC184` moved to rank `7` for the low-copy chloramphenicol query. The lexical lane is not engaged for the descriptive query, structured filters admit multiple chloramphenicol vector records, and semantic ranking now places expanded GenBank candidates ahead of the curated target. No retrieval fix was attempted in this branch.
 - Phase 0 scale gate remains unmet: the expanded corpus has 206 total records, not >=50,000 fully parsed component-annotated plasmids.
 - Phase 2 gate is not met. The prior spike uses `FakeGenerator` and `StubConstraintEngine`; it proves plumbing only and does not load a base DNA model, fine-tune, or biologically validate generated sequences.
@@ -50,6 +53,10 @@ RESUME HERE: Consolidated `master` now includes `phase2-prep`, `phase2-spike`, a
 - After human review/merge of `phase2-spike`, should the next approved slice stay offline with a deterministic Phase 3 checker, or separately authorize a budgeted Carbon-500M load smoke test?
 - Before any Phase 2 gate attempt, should the project build a minimum deterministic Phase 3 checker and define a research-only acquisition milestone below the formal 50,000-record Phase 0 gate?
 - Which managed-GPU provider, hardware ceiling, and budget should apply to any authorized Phase 2 benchmark?
+- What auth/session-ownership model should Phase 4 use once authentication is in scope: user-owned sessions, organization-owned sessions, or project/workspace-owned sessions?
+- What retention policy should apply to sessions, turns, jobs, and generated design artifacts?
+- Should long-running design jobs remain polling-only for MVP, or should Phase 4 add server-sent events or WebSocket streaming?
+- Should persisted job results stay as JSON snapshots, be normalized into design/turn tables, or use both with one authoritative source?
 
 ## PHASE GATE STATUS
 - [x] Phase R gate met (see SYSTEM_DESIGN 3.05) â€” artifacts reviewed and Phase 0 authorized by the human on 2026-05-29
@@ -121,8 +128,8 @@ RESUME HERE: Consolidated `master` now includes `phase2-prep`, `phase2-spike`, a
 
 ### 3.5 Phase 4 â€” Application layer
 
-- [ ] FastAPI backend exposes the API contract in Section 13
-- [ ] Session + conversation persistence (refinement loop) works end-to-end
+- [x] FastAPI backend exposes the API contract in Section 13
+- [x] Session + conversation persistence (refinement loop) works end-to-end
 - [ ] Plasmid map visualizer renders circular + linear maps in the frontend (Section 9.4)
 - [ ] Chat-style iterative design UI (describe â†’ design â†’ refine â†’ validate)
 - [ ] Export to GenBank / FASTA and primer-design output
@@ -140,6 +147,7 @@ RESUME HERE: Consolidated `master` now includes `phase2-prep`, `phase2-spike`, a
 - [ ] **GATE:** A full loop runs automatically â€” a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-06-02 - Built the local `phase4-foundation` application scaffold branch. Added Alembic migrations for sessions, turns, jobs, and designs; FastAPI session/design/refine/job/export endpoints; in-memory/Postgres stores; Celery/Redis and fake job queues; GenBank/FASTA export codecs; API integration tests; `make serve-api`; and `docs/api/openapi.json`. Final verification passed with `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 243 passed, 1 skipped, 2 warnings. Branch is unpushed and ready for human review.
 - 2026-06-02 - Merged `phase0-corpus-expansion` into local `master` after the reviewed Phase 2 consolidation. Final verification passes 217 tests with 1 skipped real-LLM smoke test. Consolidated corpus: 206 records with 137 complete annotations. Expanded retrieval rerun: top-1 `0.850`, top-5 `0.950`, MRR `0.900`; known low-copy chloramphenicol `pACYC184` regression remains documented at rank `7`.
 - 2026-06-02 - Finalized `phase0-corpus-expansion` handoff. Retrieval regression is documented, final verification passed with `C:\Program Files (x86)\GnuWin32\bin\make.exe test` (217 passed, 1 skipped, 2 warnings), and the branch is ready for human review without pushing or merging.
 - 2026-06-02 - Re-ran retrieval evaluation against the expanded corpus and committed `data/eval/retrieval/2026-06-02-034424-retrieval-baseline.{md,json}`. Metrics versus the 2026-05-31 gate baseline: top-1 `0.850` vs `0.700`, top-5 `0.950` vs `1.000`, MRR `0.900` vs `0.825`, clarification pass rate `1.000` unchanged. The single top-5 regression is the low-copy chloramphenicol query: `curated:pACYC184` ranks `7` after expanded GenBank chloramphenicol records.
