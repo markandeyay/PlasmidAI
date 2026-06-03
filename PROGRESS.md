@@ -1,18 +1,21 @@
 ﻿# PROGRESS â€” Build State (mutable)
 
 ## AT-A-GLANCE (update every session)
-- **Current Phase:** Phase 0 retrieval robustness branch complete on `phase0-retrieval-robustness`; ready for human review
-- **Next Concrete Task:** Human review/merge decision for `phase0-retrieval-robustness`; coordinate with Codex's parallel `phase4-foundation` work and do not push or merge without explicit approval.
+- **Current Phase:** Merge consolidation in progress on `master`: retrieval robustness merged; Phase 4 foundation merge completing
+- **Next Concrete Task:** Finish the Phase 4 merge, run full verification, then update `PROGRESS.md` with the final consolidated state.
 - **Overall completion estimate:** 17%
 - **Last session date:** 2026-06-02
-- **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 223 passing tests / 11 skipped tests / 2 warnings
+- **Codebase known-good?** (tests passing) Pending final post-merge verification; retrieval merge alone passed `223 passed, 11 skipped, 2 warnings`
 
 ## RESUME HERE (only if mid-task)
-RESUME HERE: `phase0-retrieval-robustness` is ready for human review and has not been pushed or merged. The pACYC184 retrieval regression is fixed: `data/eval/retrieval/2026-06-02-145539-retrieval-baseline.{md,json}` scores top-1 `0.950`, top-5 `1.000`, MRR `0.975`, clarification pass rate `1.000`, and ranks `curated:pACYC184` at rank `1` for the low-copy chloramphenicol query. Final quality report: `data/eval/quality/2026-06-02-144227-quality-report.{md,json}` with 206 total records, 194 GenBank records, 12 curated records, 140/206 complete annotations (68.0%), 54 unknown profiles, 3 duplicate clusters, and 0 parse errors. Reprocess idempotence: `data/eval/reprocess/2026-06-02-143914-reprocess-all.json` updated 4 rows, immediate repeat `data/eval/reprocess/2026-06-02-144216-reprocess-all.json` updated 0. Final verification passed with `C:\Program Files (x86)\GnuWin32\bin\make.exe test` (223 passed, 11 skipped, 2 warnings). Stay off Codex's `phase4-foundation` API/application work unless explicitly instructed.
+RESUME HERE: Merge consolidation is underway on `master`. `phase0-retrieval-robustness` has been merged and verified: `data/eval/retrieval/2026-06-02-145539-retrieval-baseline.{md,json}` scores top-1 `0.950`, top-5 `1.000`, MRR `0.975`, clarification pass rate `1.000`, and ranks `curated:pACYC184` at rank `1` for the low-copy chloramphenicol query. The Phase 4 merge is being resolved next: it adds Alembic migrations for `sessions`, `session_turns`, `jobs`, and `designs`; FastAPI endpoints for sessions, design/refine jobs, job polling, and design export; in-memory/Postgres stores; Celery/Redis and fake job queues; GenBank/FASTA export codecs; API integration tests; `make serve-api`; and `docs/api/openapi.json`.
 
 ## KNOWN ISSUES / BLOCKERS
-- `phase0-retrieval-robustness` is ready for review but intentionally not merged to `master` and not pushed to GitHub.
-- The expanded-corpus `pACYC184` retrieval regression is fixed on `phase0-retrieval-robustness`; the diagnostic remains at `data/eval/retrieval/2026-06-02-102439-pacyc184-regression-diagnostic.md` for review.
+- `phase0-corpus-expansion`, `phase2-prep`, and `phase2-spike` are merged locally into `master`; the consolidated history has not been pushed to GitHub.
+- The expanded-corpus `pACYC184` retrieval regression is fixed; the diagnostic remains at `data/eval/retrieval/2026-06-02-102439-pacyc184-regression-diagnostic.md` for review.
+- Phase 4 foundation is being merged locally into `master`; the consolidated history will remain unpushed this session.
+- Phase 4 foundation intentionally omits AuthN/AuthZ, rate limiting, usage metering, streaming job updates, deployed frontend UI, plasmid map rendering, synthesis handoff, and primer-design output.
+- OpenCode coordination: API integration tests were accidentally committed once on `phase0-retrieval-robustness`; the content is identical to the `phase4-foundation` cherry-pick and was handled during merge consolidation.
 - Phase 0 scale gate remains unmet: the expanded corpus has 206 total records, not >=50,000 fully parsed component-annotated plasmids.
 - Phase 2 gate is not met. The prior spike uses `FakeGenerator` and `StubConstraintEngine`; it proves plumbing only and does not load a base DNA model, fine-tune, or biologically validate generated sequences.
 - Phase 1 retrieval gate passed on 2026-05-31: `data/eval/retrieval/2026-05-31-221057-retrieval-baseline.{md,json}` scores 20 retrieval queries plus 1 clarification-only case with top-1 `0.700`, top-5 `1.000`, MRR `0.825`, and clarification pass rate `1.000`. Retrieval robustness rerun on 2026-06-02 scores top-1 `0.950`, top-5 `1.000`, MRR `0.975`, clarification pass rate `1.000`.
@@ -50,6 +53,10 @@ RESUME HERE: `phase0-retrieval-robustness` is ready for human review and has not
 - After human review/merge of `phase2-spike`, should the next approved slice stay offline with a deterministic Phase 3 checker, or separately authorize a budgeted Carbon-500M load smoke test?
 - Before any Phase 2 gate attempt, should the project build a minimum deterministic Phase 3 checker and define a research-only acquisition milestone below the formal 50,000-record Phase 0 gate?
 - Which managed-GPU provider, hardware ceiling, and budget should apply to any authorized Phase 2 benchmark?
+- What auth/session-ownership model should Phase 4 use once authentication is in scope: user-owned sessions, organization-owned sessions, or project/workspace-owned sessions?
+- What retention policy should apply to sessions, turns, jobs, and generated design artifacts?
+- Should long-running design jobs remain polling-only for MVP, or should Phase 4 add server-sent events or WebSocket streaming?
+- Should persisted job results stay as JSON snapshots, be normalized into design/turn tables, or use both with one authoritative source?
 
 ## PHASE GATE STATUS
 - [x] Phase R gate met (see SYSTEM_DESIGN 3.05) â€” artifacts reviewed and Phase 0 authorized by the human on 2026-05-29
@@ -121,8 +128,8 @@ RESUME HERE: `phase0-retrieval-robustness` is ready for human review and has not
 
 ### 3.5 Phase 4 â€” Application layer
 
-- [ ] FastAPI backend exposes the API contract in Section 13
-- [ ] Session + conversation persistence (refinement loop) works end-to-end
+- [x] FastAPI backend exposes the API contract in Section 13
+- [x] Session + conversation persistence (refinement loop) works end-to-end
 - [ ] Plasmid map visualizer renders circular + linear maps in the frontend (Section 9.4)
 - [ ] Chat-style iterative design UI (describe â†’ design â†’ refine â†’ validate)
 - [ ] Export to GenBank / FASTA and primer-design output
@@ -140,6 +147,7 @@ RESUME HERE: `phase0-retrieval-robustness` is ready for human review and has not
 - [ ] **GATE:** A full loop runs automatically â€” a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-06-02 - Built the local `phase4-foundation` application scaffold branch. Added Alembic migrations for sessions, turns, jobs, and designs; FastAPI session/design/refine/job/export endpoints; in-memory/Postgres stores; Celery/Redis and fake job queues; GenBank/FASTA export codecs; API integration tests; `make serve-api`; and `docs/api/openapi.json`. Final verification passed with `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 243 passed, 1 skipped, 2 warnings. Branch is unpushed and ready for human review.
 - 2026-06-02 - Finalized `phase0-retrieval-robustness` handoff. The pACYC184 regression is fixed, final verification passed with `C:\Program Files (x86)\GnuWin32\bin\make.exe test` (223 passed, 11 skipped, 2 warnings), and the branch is ready for human review without pushing or merging.
 - 2026-06-02 - Re-ran robustness evaluation after re-embedding changed retrieval documents. `data/eval/retrieval/2026-06-02-145539-retrieval-baseline.{md,json}` scores top-1 `0.950`, top-5 `1.000`, MRR `0.975`, clarification pass rate `1.000`; `curated:pACYC184` now ranks `1` for the low-copy chloramphenicol query. Reprocess idempotence reports: `data/eval/reprocess/2026-06-02-143914-reprocess-all.json` updated 4 rows and `data/eval/reprocess/2026-06-02-144216-reprocess-all.json` updated 0 rows. Quality report `data/eval/quality/2026-06-02-144227-quality-report.{md,json}` shows 206 records, 140 complete, 54 unknown, 3 duplicate clusters, and 0 parse errors.
 - 2026-06-02 - Completed retrieval/classifier robustness work: diagnosed the pACYC184 regression in `data/eval/retrieval/2026-06-02-102439-pacyc184-regression-diagnostic.md`, improved curated retrieval documents, audited 65 unknown records in `data/eval/classifier_unknown_audit_2026-06-02-102348.md`, added narrow existing-profile classifier refinements with guardrail tests, and broadened only descriptive retrieval gold labels in `data/eval/retrieval/2026-06-02-gold-expanded-corpus-review.md`.
