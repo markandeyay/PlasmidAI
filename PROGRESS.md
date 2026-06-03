@@ -1,19 +1,21 @@
 ﻿# PROGRESS â€” Build State (mutable)
 
 ## AT-A-GLANCE (update every session)
-- **Current Phase:** Consolidated `master`: retrieval robustness and Phase 4 application scaffold merged
-- **Next Concrete Task:** Await wave 2 prompt; do not start new work until the consolidated merge state is reviewed.
+- **Current Phase:** Phase 4: Frontend foundation on isolated `phase4-frontend`
+- **Next Concrete Task:** Human review of the local `phase4-frontend` branch; do not merge or push until reviewed.
 - **Overall completion estimate:** 17%
 - **Last session date:** 2026-06-02
-- **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 249 passing tests / 1 skipped real-LLM smoke test / 2 warnings
+- **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` passes 249 tests / 1 skipped / 2 warnings; `npm run build` passes in `apps/web`; `npm run test:e2e` passes 1 Playwright test
 
 ## RESUME HERE (only if mid-task)
-RESUME HERE: Merge consolidation is complete on local `master`; do not push unless explicitly instructed. `phase0-retrieval-robustness` and `phase4-foundation` are merged. Retrieval robustness is the current baseline: `data/eval/retrieval/2026-06-02-145539-retrieval-baseline.{md,json}` scores top-1 `0.950`, top-5 `1.000`, MRR `0.975`, clarification pass rate `1.000`, and ranks `curated:pACYC184` at rank `1` for the low-copy chloramphenicol query. Phase 4 scaffold is also merged: Alembic migrations for `sessions`, `session_turns`, `jobs`, and `designs`; FastAPI endpoints for sessions, design/refine jobs, job polling, and design export; in-memory/Postgres stores; Celery/Redis and fake job queues; GenBank/FASTA export codecs; API integration tests; `make serve-api`; and `docs/api/openapi.json`. Final consolidated verification passed on 2026-06-02 with `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 249 passed, 1 skipped, 2 warnings. Await the next prompt before starting new work.
+RESUME HERE: `phase4-frontend` is a local review branch in worktree `C:\tmp\PMR-phase4-frontend`; do not merge or push until human review. The branch adds the Next.js 14 App Router frontend under `apps/web`, Tailwind styling, `NEXT_PUBLIC_API_URL` config, `make serve-web`, local API CORS for the web dev server, a chat design/refine workflow, job polling, clarification handling, seqviz-backed plasmid map rendering with feature colors and details, GenBank/FASTA browser export buttons, Playwright happy-path integration test with API route mocks, and `apps/web/README.md`. Verification passed sequentially on 2026-06-02: `C:\Program Files (x86)\GnuWin32\bin\make.exe test` = 249 passed / 1 skipped / 2 warnings; `npm run test:e2e` = 1 passed; `npm run build` = passed. Do not run `npm run build` concurrently with Playwright because both touch `.next` and can race on `/_document`.
 
 ## KNOWN ISSUES / BLOCKERS
 - `phase0-corpus-expansion`, `phase2-prep`, `phase2-spike`, `phase0-retrieval-robustness`, and `phase4-foundation` are merged locally into `master`; the consolidated history has not been pushed to GitHub.
 - The expanded-corpus `pACYC184` retrieval regression is fixed; the diagnostic remains at `data/eval/retrieval/2026-06-02-102439-pacyc184-regression-diagnostic.md` for review.
 - Phase 4 foundation intentionally omits AuthN/AuthZ, rate limiting, usage metering, streaming job updates, deployed frontend UI, plasmid map rendering, synthesis handoff, and primer-design output.
+- `phase4-frontend` intentionally still omits AuthN/AuthZ, rate limiting, usage metering, streaming job updates, primer-design output, synthesis handoff, deployed hosting, and a backend-persisted `design_id` guarantee for real export jobs.
+- Frontend verification note: run `npm run build` and `npm run test:e2e` sequentially, not in parallel, because Next's build output and Playwright's dev server both use `.next`.
 - OpenCode coordination: API integration tests were accidentally committed once on `phase0-retrieval-robustness`; the content is identical to the `phase4-foundation` cherry-pick and was handled during merge consolidation.
 - Phase 0 scale gate remains unmet: the expanded corpus has 206 total records, not >=50,000 fully parsed component-annotated plasmids.
 - Phase 2 gate is not met. The prior spike uses `FakeGenerator` and `StubConstraintEngine`; it proves plumbing only and does not load a base DNA model, fine-tune, or biologically validate generated sequences.
@@ -129,8 +131,8 @@ RESUME HERE: Merge consolidation is complete on local `master`; do not push unle
 
 - [x] FastAPI backend exposes the API contract in Section 13
 - [x] Session + conversation persistence (refinement loop) works end-to-end
-- [ ] Plasmid map visualizer renders circular + linear maps in the frontend (Section 9.4)
-- [ ] Chat-style iterative design UI (describe â†’ design â†’ refine â†’ validate)
+- [x] Plasmid map visualizer renders circular + linear maps in the frontend (Section 9.4)
+- [x] Chat-style iterative design UI (describe â†’ design â†’ refine â†’ validate)
 - [ ] Export to GenBank / FASTA and primer-design output
 - [ ] Synthesis-order handoff (file generation + provider redirect/stub) (Section 9.6)
 - [ ] AuthN/AuthZ, rate limiting, usage metering
@@ -146,6 +148,7 @@ RESUME HERE: Merge consolidation is complete on local `master`; do not push unle
 - [ ] **GATE:** A full loop runs automatically â€” a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-06-02 - Built the local `phase4-frontend` branch. Added Next.js 14/Tailwind scaffold under `apps/web`, `make serve-web`, API CORS for local web dev, typed API client, chat design/refine job workflow with clarification handling, seqviz plasmid map rendering with feature colors, GenBank/FASTA browser export buttons, Playwright mocked happy-path integration test, and `apps/web/README.md`. Verification: `C:\Program Files (x86)\GnuWin32\bin\make.exe test` passed 249 tests with 1 skipped and 2 warnings; `npm run test:e2e` passed 1 test; `npm run build` passed when run sequentially after Playwright.
 - 2026-06-02 - Consolidated local `master`: merged `phase0-retrieval-robustness` first, then merged `phase4-foundation`. Verified the duplicate API-test commit content (`3ba4ebf` on retrieval robustness and `0344991` on Phase 4) was identical before the second merge. Final verification passed with `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 249 passed, 1 skipped, 2 warnings. Retrieval baseline is top-1 `0.950`, top-5 `1.000`, MRR `0.975`; Phase 4 scaffold is merged with FastAPI, Celery/fake jobs, migrations, export codecs, integration tests, and OpenAPI docs.
 - 2026-06-02 - Built the local `phase4-foundation` application scaffold branch. Added Alembic migrations for sessions, turns, jobs, and designs; FastAPI session/design/refine/job/export endpoints; in-memory/Postgres stores; Celery/Redis and fake job queues; GenBank/FASTA export codecs; API integration tests; `make serve-api`; and `docs/api/openapi.json`. Final verification passed with `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 243 passed, 1 skipped, 2 warnings. Branch is unpushed and ready for human review.
 - 2026-06-02 - Finalized `phase0-retrieval-robustness` handoff. The pACYC184 regression is fixed, final verification passed with `C:\Program Files (x86)\GnuWin32\bin\make.exe test` (223 passed, 11 skipped, 2 warnings), and the branch is ready for human review without pushing or merging.
