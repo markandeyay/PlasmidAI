@@ -1,19 +1,18 @@
 ﻿# PROGRESS â€” Build State (mutable)
 
 ## AT-A-GLANCE (update every session)
-- **Current Phase:** Merge consolidation in progress on `master`: retrieval robustness merged; Phase 4 foundation merge completing
-- **Next Concrete Task:** Finish the Phase 4 merge, run full verification, then update `PROGRESS.md` with the final consolidated state.
+- **Current Phase:** Consolidated `master`: retrieval robustness and Phase 4 application scaffold merged
+- **Next Concrete Task:** Await wave 2 prompt; do not start new work until the consolidated merge state is reviewed.
 - **Overall completion estimate:** 17%
 - **Last session date:** 2026-06-02
-- **Codebase known-good?** (tests passing) Pending final post-merge verification; retrieval merge alone passed `223 passed, 11 skipped, 2 warnings`
+- **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 249 passing tests / 1 skipped real-LLM smoke test / 2 warnings
 
 ## RESUME HERE (only if mid-task)
-RESUME HERE: Merge consolidation is underway on `master`. `phase0-retrieval-robustness` has been merged and verified: `data/eval/retrieval/2026-06-02-145539-retrieval-baseline.{md,json}` scores top-1 `0.950`, top-5 `1.000`, MRR `0.975`, clarification pass rate `1.000`, and ranks `curated:pACYC184` at rank `1` for the low-copy chloramphenicol query. The Phase 4 merge is being resolved next: it adds Alembic migrations for `sessions`, `session_turns`, `jobs`, and `designs`; FastAPI endpoints for sessions, design/refine jobs, job polling, and design export; in-memory/Postgres stores; Celery/Redis and fake job queues; GenBank/FASTA export codecs; API integration tests; `make serve-api`; and `docs/api/openapi.json`.
+RESUME HERE: Merge consolidation is complete on local `master`; do not push unless explicitly instructed. `phase0-retrieval-robustness` and `phase4-foundation` are merged. Retrieval robustness is the current baseline: `data/eval/retrieval/2026-06-02-145539-retrieval-baseline.{md,json}` scores top-1 `0.950`, top-5 `1.000`, MRR `0.975`, clarification pass rate `1.000`, and ranks `curated:pACYC184` at rank `1` for the low-copy chloramphenicol query. Phase 4 scaffold is also merged: Alembic migrations for `sessions`, `session_turns`, `jobs`, and `designs`; FastAPI endpoints for sessions, design/refine jobs, job polling, and design export; in-memory/Postgres stores; Celery/Redis and fake job queues; GenBank/FASTA export codecs; API integration tests; `make serve-api`; and `docs/api/openapi.json`. Final consolidated verification passed on 2026-06-02 with `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 249 passed, 1 skipped, 2 warnings. Await the next prompt before starting new work.
 
 ## KNOWN ISSUES / BLOCKERS
-- `phase0-corpus-expansion`, `phase2-prep`, and `phase2-spike` are merged locally into `master`; the consolidated history has not been pushed to GitHub.
+- `phase0-corpus-expansion`, `phase2-prep`, `phase2-spike`, `phase0-retrieval-robustness`, and `phase4-foundation` are merged locally into `master`; the consolidated history has not been pushed to GitHub.
 - The expanded-corpus `pACYC184` retrieval regression is fixed; the diagnostic remains at `data/eval/retrieval/2026-06-02-102439-pacyc184-regression-diagnostic.md` for review.
-- Phase 4 foundation is being merged locally into `master`; the consolidated history will remain unpushed this session.
 - Phase 4 foundation intentionally omits AuthN/AuthZ, rate limiting, usage metering, streaming job updates, deployed frontend UI, plasmid map rendering, synthesis handoff, and primer-design output.
 - OpenCode coordination: API integration tests were accidentally committed once on `phase0-retrieval-robustness`; the content is identical to the `phase4-foundation` cherry-pick and was handled during merge consolidation.
 - Phase 0 scale gate remains unmet: the expanded corpus has 206 total records, not >=50,000 fully parsed component-annotated plasmids.
@@ -147,6 +146,7 @@ RESUME HERE: Merge consolidation is underway on `master`. `phase0-retrieval-robu
 - [ ] **GATE:** A full loop runs automatically â€” a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-06-02 - Consolidated local `master`: merged `phase0-retrieval-robustness` first, then merged `phase4-foundation`. Verified the duplicate API-test commit content (`3ba4ebf` on retrieval robustness and `0344991` on Phase 4) was identical before the second merge. Final verification passed with `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 249 passed, 1 skipped, 2 warnings. Retrieval baseline is top-1 `0.950`, top-5 `1.000`, MRR `0.975`; Phase 4 scaffold is merged with FastAPI, Celery/fake jobs, migrations, export codecs, integration tests, and OpenAPI docs.
 - 2026-06-02 - Built the local `phase4-foundation` application scaffold branch. Added Alembic migrations for sessions, turns, jobs, and designs; FastAPI session/design/refine/job/export endpoints; in-memory/Postgres stores; Celery/Redis and fake job queues; GenBank/FASTA export codecs; API integration tests; `make serve-api`; and `docs/api/openapi.json`. Final verification passed with `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 243 passed, 1 skipped, 2 warnings. Branch is unpushed and ready for human review.
 - 2026-06-02 - Finalized `phase0-retrieval-robustness` handoff. The pACYC184 regression is fixed, final verification passed with `C:\Program Files (x86)\GnuWin32\bin\make.exe test` (223 passed, 11 skipped, 2 warnings), and the branch is ready for human review without pushing or merging.
 - 2026-06-02 - Re-ran robustness evaluation after re-embedding changed retrieval documents. `data/eval/retrieval/2026-06-02-145539-retrieval-baseline.{md,json}` scores top-1 `0.950`, top-5 `1.000`, MRR `0.975`, clarification pass rate `1.000`; `curated:pACYC184` now ranks `1` for the low-copy chloramphenicol query. Reprocess idempotence reports: `data/eval/reprocess/2026-06-02-143914-reprocess-all.json` updated 4 rows and `data/eval/reprocess/2026-06-02-144216-reprocess-all.json` updated 0 rows. Quality report `data/eval/quality/2026-06-02-144227-quality-report.{md,json}` shows 206 records, 140 complete, 54 unknown, 3 duplicate clusters, and 0 parse errors.
