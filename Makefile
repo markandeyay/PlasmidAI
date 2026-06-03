@@ -1,4 +1,4 @@
-.PHONY: setup test lint ingest-all eval-retrieval services-down ingest-addgene ingest-genbank ingest-curated parse-sample quality-report reprocess embed-corpus design spike-generation serve-api
+.PHONY: setup test lint ingest-all eval-retrieval services-down ingest-addgene ingest-genbank ingest-curated parse-sample quality-report reprocess embed-corpus design spike-generation serve-api serve-web
 
 PYTHON ?= python
 MODE ?= dev
@@ -60,6 +60,9 @@ spike-generation:
 
 serve-api:
 	$(PYTHON) -m uvicorn services.api.app:app --host $(API_HOST) --port $(API_PORT)
+
+serve-web:
+	cd apps/web && npm run dev
 
 services-down:
 	docker compose down
