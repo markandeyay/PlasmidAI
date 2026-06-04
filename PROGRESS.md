@@ -1,22 +1,22 @@
 ﻿# PROGRESS â€” Build State (mutable)
 
 ## AT-A-GLANCE (update every session)
-- **Current Phase:** Consolidated `master`: retrieval robustness and Phase 4 application scaffold merged
-- **Next Concrete Task:** Await wave 2 prompt; do not start new work until the consolidated merge state is reviewed.
-- **Overall completion estimate:** 17%
-- **Last session date:** 2026-06-02
-- **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 249 passing tests / 1 skipped real-LLM smoke test / 2 warnings
+- **Current Phase:** `phase2-generation-prep` complete; ready for human review, not pushed or merged
+- **Next Concrete Task:** Human review/merge decision for `phase2-generation-prep`; stay off Codex's parallel frontend/API/worker work unless explicitly instructed.
+- **Overall completion estimate:** 18%
+- **Last session date:** 2026-06-04
+- **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 260 passing tests / 1 skipped real-LLM smoke test / 2 warnings
 
 ## RESUME HERE (only if mid-task)
-RESUME HERE: Merge consolidation is complete on local `master`; do not push unless explicitly instructed. `phase0-retrieval-robustness` and `phase4-foundation` are merged. Retrieval robustness is the current baseline: `data/eval/retrieval/2026-06-02-145539-retrieval-baseline.{md,json}` scores top-1 `0.950`, top-5 `1.000`, MRR `0.975`, clarification pass rate `1.000`, and ranks `curated:pACYC184` at rank `1` for the low-copy chloramphenicol query. Phase 4 scaffold is also merged: Alembic migrations for `sessions`, `session_turns`, `jobs`, and `designs`; FastAPI endpoints for sessions, design/refine jobs, job polling, and design export; in-memory/Postgres stores; Celery/Redis and fake job queues; GenBank/FASTA export codecs; API integration tests; `make serve-api`; and `docs/api/openapi.json`. Final consolidated verification passed on 2026-06-02 with `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 249 passed, 1 skipped, 2 warnings. Await the next prompt before starting new work.
+RESUME HERE: `phase2-generation-prep` is complete and ready for human review; do not push or merge unless explicitly instructed. The branch starts from consolidated `master` plus the remote MIT license commit, adds Phase 2 corpus/training/eval prep, and stays out of frontend/API/worker code. Corpus expansion added `refseq_plasmid_broad` GenBank ingestion mode and ingested 50 public NCBI RefSeq plasmid records; latest quality report `data/eval/quality/2026-06-03-034726-quality-report.{md,json}` shows 256 total records, 140 complete annotations, 104 unknown, 3 duplicate clusters, and 0 parse errors. Retrieval held after expansion: `data/eval/retrieval/2026-06-03-035642-retrieval-baseline.{md,json}` scores top-1 `0.950`, top-5 `1.000`, MRR `0.975`, clarification pass rate `1.000`. Training data formatter is implemented with `make build-training-data`; snapshot `data/training/phase2/2026-06-04-010952-phase2-triplets/` contains 140 triplets split 117 train / 15 validation / 8 test. Generation eval harness is implemented with `make eval-generation`; fake baseline `data/eval/generation/2026-06-04-011827-generation-eval.{md,json}` scores syntactic valid `1.000`, sane length `1.000`, component complete `1.000`, stub constraint pass `1.000`, novelty `0.000`, strict success `0.000`, as expected for `FakeGenerator` template copies. Final verification passed with `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 260 passed, 1 skipped, 2 warnings.
 
 ## KNOWN ISSUES / BLOCKERS
 - `phase0-corpus-expansion`, `phase2-prep`, `phase2-spike`, `phase0-retrieval-robustness`, and `phase4-foundation` are merged locally into `master`; the consolidated history has not been pushed to GitHub.
 - The expanded-corpus `pACYC184` retrieval regression is fixed; the diagnostic remains at `data/eval/retrieval/2026-06-02-102439-pacyc184-regression-diagnostic.md` for review.
 - Phase 4 foundation intentionally omits AuthN/AuthZ, rate limiting, usage metering, streaming job updates, deployed frontend UI, plasmid map rendering, synthesis handoff, and primer-design output.
 - OpenCode coordination: API integration tests were accidentally committed once on `phase0-retrieval-robustness`; the content is identical to the `phase4-foundation` cherry-pick and was handled during merge consolidation.
-- Phase 0 scale gate remains unmet: the expanded corpus has 206 total records, not >=50,000 fully parsed component-annotated plasmids.
-- Phase 2 gate is not met. The prior spike uses `FakeGenerator` and `StubConstraintEngine`; it proves plumbing only and does not load a base DNA model, fine-tune, or biologically validate generated sequences.
+- Phase 0 scale gate remains unmet: the expanded corpus has 256 total records and 140 complete annotations, not >=50,000 fully parsed component-annotated plasmids.
+- Phase 2 gate is not met. The current prep branch adds training triplets and a fake-backed eval harness, but still uses `FakeGenerator` and `StubConstraintEngine`; it does not load a base DNA model, fine-tune, or biologically validate generated sequences.
 - Phase 1 retrieval gate passed on 2026-05-31: `data/eval/retrieval/2026-05-31-221057-retrieval-baseline.{md,json}` scores 20 retrieval queries plus 1 clarification-only case with top-1 `0.700`, top-5 `1.000`, MRR `0.825`, and clarification pass rate `1.000`. Retrieval robustness rerun on 2026-06-02 scores top-1 `0.950`, top-5 `1.000`, MRR `0.975`, clarification pass rate `1.000`.
 - Phase 1 retrieval cleanup is implemented: exact named-record queries use a lexical lane before semantic ranking, while structured source and DOI provenance filters remain enforced. `depositing_lab` is not available in the current schema or corpus.
 - The expanded corpus still has no classified lentiviral or CRISPR vectors. `data/eval/corpus/2026-06-01-174026-lentiviral-crispr-gap.md` found no parser defect and no safe canonical NCBI-backed seed. Adding exact Addgene or reviewed GenBank-derivative seeds is blocked pending human provenance/legal policy.
@@ -34,11 +34,13 @@ RESUME HERE: Merge consolidation is complete on local `master`; do not push unle
 - Human approved run `5` metadata-lane shuttle completeness changes on 2026-05-31. Run `6` verified idempotence with 82 examined, 0 updates, 0 missing caches, and 0 errors.
 
 ## QUESTIONS FOR THE HUMAN
+- Should Phase 2 treat public NCBI RefSeq/GenBank plasmid records as trainable by default while preserving submitter-IP caveats, or require a legal-reviewed allowlist before model training?
+- Should broad natural RefSeq plasmids, including AMR-heavy records, be allowed in generation pretraining, restricted to retrieval/evaluation, or filtered out of training artifacts?
+- Should SEVA, iGEM Registry, DNASU, SGD-derived context, or Addgene direct downloads remain excluded until explicit training/commercial-use terms are approved?
 - For the expanded corpus, should the chloramphenicol low-copy retrieval gold case keep only `pACYC184`, admit newly added GenBank chloramphenicol vectors, or add copy-number/origin-aware retrieval before changing the gold set?
 - Which synthesis provider profile should be the default for "synthesis-ready" when no provider is selected: conservative cross-provider, Twist, IDT, GenScript, or user-selected only?
 - Should the first product only score codon usage, or may it automatically rewrite coding sequences after explicit user consent?
 - For commercial use, can Addgene-derived records be used for model training under the eventual approved data access license, or only for retrieval/display?
-- Should GenBank-derived records be treated as commercially trainable by default, or should submitter-IP caveats require legal review before training?
 - Should Evo 2 7B be the first generation candidate, with Carbon-3B as fallback, pending infrastructure and license review?
 - Should the platform operate as a regulated-like biosecurity checkpoint before provider handoff, even where direct legal duties attach primarily to synthesis providers or procurement?
 - What is the current controlling U.S. nucleic-acid screening framework after the May 5, 2025 Executive Order directive to revise or replace the 2024 framework?
@@ -107,11 +109,11 @@ RESUME HERE: Merge consolidation is complete on local `master`; do not push unle
 ### 3.3 Phase 2 â€” Sequence generation
 
 - [ ] Base DNA language model selected and loaded behind the `SequenceGenerator` interface (Section 7.2)
-- [ ] Training data formatter produces (context, template, target) examples from Phase 0 data (Section 7.3)
+- [x] Training data formatter produces (context, template, target) examples from Phase 0 data (Section 7.3). Implemented on `phase2-generation-prep`; snapshot `data/training/phase2/2026-06-04-010952-phase2-triplets/` contains 140 fake-prep triplets split 117/15/8.
 - [ ] Fine-tuning pipeline runs on managed GPUs and checkpoints to object storage
 - [ ] Inference service generates a candidate full-length plasmid sequence from a `DesignSpec` + retrieved templates
-- [ ] Generated sequences are re-annotated by the Phase 0 parser to confirm component structure
-- [ ] Generation evaluation: % of generations that are syntactically valid DNA, contain the requested components, and pass basic feasibility (Section 7.6)
+- [x] Generated sequences are re-annotated by the Phase 0 parser to confirm component structure. Implemented for the fake-backed spike/eval path, not yet a real model inference path.
+- [x] Generation evaluation: % of generations that are syntactically valid DNA, contain the requested components, and pass basic feasibility (Section 7.6). Implemented as `make eval-generation` with `FakeGenerator` and `StubConstraintEngine`; latest baseline is not gate-eligible.
 - [ ] **GATE:** â‰¥ 70% of generations for the gold-set queries are syntactically valid, contain all requested components, and pass the Phase 3 constraint engine.
 
 ### 3.4 Phase 3 â€” Constraint & validation engine
@@ -146,6 +148,11 @@ RESUME HERE: Merge consolidation is complete on local `master`; do not push unle
 - [ ] **GATE:** A full loop runs automatically â€” a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-06-04 - Finalized `phase2-generation-prep` handoff. Final verification passed with `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 260 passed, 1 skipped, 2 warnings. Branch is ready for human review and has not been pushed or merged.
+- 2026-06-04 - Added the Phase 2 generation evaluation harness in `packages/generation/eval.py`, initial gold set `data/eval/generation_gold.jsonl`, and `make eval-generation`. FakeGenerator baseline report `data/eval/generation/2026-06-04-011827-generation-eval.{md,json}` scores syntactic valid `1.000`, sane length `1.000`, component complete `1.000`, stub constraint pass `1.000`, novelty `0.000`, phase2 gate proxy `1.000`, and strict success `0.000`; the run is explicitly not gate-eligible because the generator copies templates and constraints are stubbed.
+- 2026-06-04 - Added the Phase 2 training data formatter in `packages/generation/training_data.py` and `make build-training-data`. Generated snapshot `data/training/phase2/2026-06-04-010952-phase2-triplets/` contains 140 context-template-target triplets from complete annotated records: 117 train, 15 validation, 8 test; 116 incomplete records were skipped.
+- 2026-06-03 - Added NCBI RefSeq plasmid expansion mode `refseq_plasmid_broad`, using public RefSeq plasmid queries and `gbwithparts` fetches for concrete `ORIGIN` sequence materialization. A moderate run ingested 50 records with 50 upserts and 0 errors. Verification reports: reprocess `data/eval/reprocess/2026-06-03-034133-reprocess-all.json` and idempotence `data/eval/reprocess/2026-06-03-034719-reprocess-all.json` each updated 0 records; quality report `data/eval/quality/2026-06-03-034726-quality-report.{md,json}` shows 256 records, 140 complete, 104 unknown, 3 duplicate clusters, 0 parse errors; retrieval report `data/eval/retrieval/2026-06-03-035642-retrieval-baseline.{md,json}` holds top-1 `0.950`, top-5 `1.000`, MRR `0.975`, clarification pass `1.000`.
+- 2026-06-03 - Documented Phase 2 preparation specs: `research/findings/corpus_expansion_phase2.md`, `research/findings/training_data_format.md`, and `research/findings/generation_eval.md`. Non-NCBI sources such as iGEM, DNASU, SEVA, and Addgene direct downloads remain excluded from implementation pending explicit licensing/provenance approval.
 - 2026-06-02 - Consolidated local `master`: merged `phase0-retrieval-robustness` first, then merged `phase4-foundation`. Verified the duplicate API-test commit content (`3ba4ebf` on retrieval robustness and `0344991` on Phase 4) was identical before the second merge. Final verification passed with `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 249 passed, 1 skipped, 2 warnings. Retrieval baseline is top-1 `0.950`, top-5 `1.000`, MRR `0.975`; Phase 4 scaffold is merged with FastAPI, Celery/fake jobs, migrations, export codecs, integration tests, and OpenAPI docs.
 - 2026-06-02 - Built the local `phase4-foundation` application scaffold branch. Added Alembic migrations for sessions, turns, jobs, and designs; FastAPI session/design/refine/job/export endpoints; in-memory/Postgres stores; Celery/Redis and fake job queues; GenBank/FASTA export codecs; API integration tests; `make serve-api`; and `docs/api/openapi.json`. Final verification passed with `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 243 passed, 1 skipped, 2 warnings. Branch is unpushed and ready for human review.
 - 2026-06-02 - Finalized `phase0-retrieval-robustness` handoff. The pACYC184 regression is fixed, final verification passed with `C:\Program Files (x86)\GnuWin32\bin\make.exe test` (223 passed, 11 skipped, 2 warnings), and the branch is ready for human review without pushing or merging.
