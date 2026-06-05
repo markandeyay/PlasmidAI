@@ -182,9 +182,22 @@ class FeatureContext:
                 "p15a",
                 "pbluescript",
                 "lacz",
+                "lac promoter",
+                "lac uv5",
                 "polylinker",
                 "multiple cloning",
                 "mcs",
+            )
+        )
+
+    def has_natural_record_guardrail(self) -> bool:
+        return bool(
+            self.metadata_terms(
+                "strain",
+                "isolate",
+                "unnamed",
+                "unverified",
+                "partial sequence",
             )
         )
 
@@ -231,6 +244,17 @@ def yeast_shuttle_vector(context: FeatureContext) -> ClassificationResult | None
 def mammalian_reporter_vector(context: FeatureContext) -> ClassificationResult | None:
     signals = context.terms("egfp", "gfp", "mcherry", "dsred", "luciferase", "luc+", "luc2", "renilla", "reporter")
     if not signals:
+        metadata_signals = context.metadata_terms("expression vector", "reporter vector", "egfp", "gfp", "luciferase", "reporter")
+        if (
+            not context.has_natural_record_guardrail()
+            and {"expression vector", "gfp"}.issubset(set(metadata_signals))
+            and context.has_all("ORI", "marker", "GOI")
+        ):
+            return ClassificationResult(
+                "mammalian_reporter_vector",
+                0.74,
+                tuple(metadata_signals + ["metadata-backed GFP reporter vector"]),
+            )
         return None
     confidence = 0.90 if context.has("GOI") else 0.75
     return ClassificationResult("mammalian_reporter_vector", confidence, tuple(signals))
@@ -248,6 +272,7 @@ def bacterial_expression_vector(context: FeatureContext) -> ClassificationResult
     if not evidence.qualifies:
         metadata_signals = context.metadata_terms(
             "expression cloning vector",
+            "expression vector",
             "bacterial expression",
             "t7 expression vector",
         )
@@ -261,6 +286,31 @@ def bacterial_expression_vector(context: FeatureContext) -> ClassificationResult
                 "bacterial_expression_vector",
                 0.78,
                 tuple(metadata_signals + cassette_signals + ["metadata-backed expression cassette"]),
+            )
+        if (
+            not context.has_natural_record_guardrail()
+            and metadata_signals
+            and context.has_all("ORI", "marker")
+            and context.has("promoter")
+            and context.terms("ccdb", "laci", "laciq", "lac")
+        ):
+            cassette_signals = context.terms("ccdb", "laci", "laciq", "lac")
+            return ClassificationResult(
+                "bacterial_expression_vector",
+                0.76,
+                tuple(metadata_signals + cassette_signals + ["metadata-backed expression regulator cassette"]),
+            )
+        if (
+            not context.has_natural_record_guardrail()
+            and "t7 expression vector" in metadata_signals
+            and context.has("marker")
+            and context.terms("his6", "his tag", "laci", "terminator")
+        ):
+            cassette_signals = context.terms("his6", "his tag", "laci", "terminator", "t7")
+            return ClassificationResult(
+                "bacterial_expression_vector",
+                0.72,
+                tuple(metadata_signals + cassette_signals + ["metadata-backed T7 expression vector"]),
             )
         return None
     return ClassificationResult("bacterial_expression_vector", evidence.confidence, evidence.signals)
@@ -298,6 +348,18 @@ def bacterial_cloning_vector(context: FeatureContext) -> ClassificationResult | 
             "bacterial_cloning_vector",
             0.74,
             tuple(metadata_signals + signals + ["metadata-backed cloning backbone"]),
+        )
+    p1_signals = context.metadata_terms("p1 cloning vector")
+    if (
+        not context.has_natural_record_guardrail()
+        and p1_signals
+        and context.has("marker")
+        and context.terms("sacb", "kila", "repl")
+    ):
+        return ClassificationResult(
+            "bacterial_cloning_vector",
+            0.72,
+            tuple(p1_signals + context.terms("sacb", "kila", "repl") + ["metadata-backed P1 cloning vector"]),
         )
     return None
 

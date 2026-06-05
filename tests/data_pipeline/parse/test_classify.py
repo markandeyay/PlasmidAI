@@ -221,3 +221,111 @@ def test_natural_resistance_plasmid_without_vector_metadata_stays_unknown() -> N
     result = classify(sequence, metadata_text="Staphylococcus aureus strain LaCa plasmid complete sequence")
 
     assert result.profile == "unknown"
+
+
+def test_pkil_expression_vector_metadata_supports_existing_expression_profile() -> None:
+    sequence = annotated(
+        [
+            feature("ORI", "pMB1 origin", 0),
+            feature("marker", "AmpR/bla", 1),
+            feature("promoter", "lac promoter", 2),
+            feature("GOI", "ccdB selection cassette", 3),
+            feature("other", "lacIq repressor", 4),
+        ]
+    )
+
+    result = classify(sequence, metadata_text="Expression vector pKIL-HIS3, complete sequence")
+
+    assert result.profile == "bacterial_expression_vector"
+    assert "metadata-backed expression cassette" in result.signals
+
+
+def test_gfp_title_expression_vector_supports_reporter_profile_without_natural_guardrail() -> None:
+    sequence = annotated(
+        [
+            feature("ORI", "pUC origin", 0),
+            feature("marker", "AmpR/bla", 1),
+            feature("GOI", "ryanodine receptor payload", 2),
+        ]
+    )
+
+    result = classify(sequence, metadata_text="Expression vector unc-68:GFP(1-8), complete sequence")
+
+    assert result.profile == "mammalian_reporter_vector"
+    assert "metadata-backed GFP reporter vector" in result.signals
+
+
+def test_t7_expression_vector_metadata_supports_pviet_like_profile() -> None:
+    sequence = annotated(
+        [
+            feature("marker", "AmpR/bla", 0),
+            feature("terminator", "T7 terminator", 1),
+            feature("GOI", "His6 tag", 2),
+            feature("other", "lacI repressor", 3),
+        ]
+    )
+
+    result = classify(sequence, metadata_text="T7 expression vector pViet, complete sequence")
+
+    assert result.profile == "bacterial_expression_vector"
+    assert "metadata-backed T7 expression vector" in result.signals
+
+
+def test_plz42_two_marker_lac_metadata_supports_cloning_profile() -> None:
+    sequence = annotated(
+        [
+            feature("marker", "Bla beta-lactamase", 0),
+            feature("marker", "Cat chloramphenicol acetyltransferase", 1),
+            feature("promoter", "lac UV5 promoter", 2),
+        ]
+    )
+
+    result = classify(sequence, metadata_text="Cloning vector pLZ42, complete sequence")
+
+    assert result.profile == "bacterial_cloning_vector"
+    assert "metadata-backed cloning vector" in result.signals
+
+
+def test_p1_repl_metadata_supports_cloning_profile_without_global_repl_promotion() -> None:
+    sequence = annotated(
+        [
+            feature("marker", "kanamycin resistance", 0),
+            feature("GOI", "sacB counterselection", 1),
+            feature("GOI", "kilA", 2),
+            feature("GOI", "repL", 3),
+        ]
+    )
+
+    result = classify(sequence, metadata_text="pSacBII P1 cloning vector with sacB, kilA, repL and kanamycin resistance genes")
+
+    assert result.profile == "bacterial_cloning_vector"
+    assert "metadata-backed P1 cloning vector" in result.signals
+
+
+def test_natural_repl_resistance_plasmid_does_not_use_p1_cloning_fallback() -> None:
+    sequence = annotated(
+        [
+            feature("marker", "kanamycin resistance", 0),
+            feature("GOI", "repL replication protein", 1),
+            feature("GOI", "mobilization protein", 2),
+        ]
+    )
+
+    result = classify(sequence, metadata_text="Pseudoselenomonas ruminantium strain plasmid pSR1 complete sequence")
+
+    assert result.profile == "unknown"
+
+
+def test_vector_like_signals_in_natural_isolate_title_do_not_use_metadata_fallbacks() -> None:
+    sequence = annotated(
+        [
+            feature("ORI", "pMB1/pUC origin-like region", 0),
+            feature("marker", "aph aminoglycoside resistance", 1),
+            feature("other", "T7 terminator", 2),
+            feature("other", "f1 origin-like signal", 3),
+        ]
+    )
+
+    result = classify(sequence, metadata_text="Staphylococcus haemolyticus strain 1b plasmid pSH_1b_2 complete sequence")
+
+    assert result.profile == "unknown"
