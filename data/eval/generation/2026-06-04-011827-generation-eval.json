@@ -1,0 +1,408 @@
+{
+  "eval_version": "phase2-generation-eval-v1",
+  "generated_at": "2026-06-04T01:18:27.115425+00:00",
+  "gold_path": "data\\eval\\generation_gold.jsonl",
+  "generator_version": "fake-template-generator-v1",
+  "constraint_engine_mode": "stub",
+  "constraint_engine_version": "stub-constraint-engine-v0",
+  "gate_eligible": false,
+  "metrics": {
+    "gold_cases": 3,
+    "unsupported_cases": 0,
+    "scored_cases": 3,
+    "candidates": 3,
+    "syntactic_valid_rate": 1.0,
+    "sane_length_rate": 1.0,
+    "component_complete_rate": 1.0,
+    "stub_constraint_pass_rate": 1.0,
+    "novel_rate": 0.0,
+    "phase2_gate_proxy_rate": 1.0,
+    "strict_generation_success_rate": 0.0,
+    "case_phase2_gate_proxy_rate": 1.0,
+    "case_strict_success_rate": 0.0
+  },
+  "cases": [
+    {
+      "id": "gen-bacterial-cloning-puc",
+      "query": "I need a simple high-copy cloning vector for routine plasmid cloning in E. coli.",
+      "unsupported": false,
+      "spec": {
+        "organism": "Escherichia coli",
+        "cell_line": null,
+        "vector_type": "bacterial_cloning_vector",
+        "genes": [],
+        "tags": [],
+        "promoter_type": null,
+        "inducer": null,
+        "markers": [
+          "ampicillin"
+        ],
+        "source": null,
+        "publication_doi": null,
+        "application": "routine plasmid cloning",
+        "cloning_method": null,
+        "constraints": [],
+        "clarification_needed": false,
+        "clarification_question": null
+      },
+      "templates": [
+        {
+          "id": "curated:pUC19",
+          "name": "pUC19c",
+          "score": 0.8121505379676877,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers"
+          ]
+        }
+      ],
+      "acceptable_template_ids": [
+        "curated:pUC19",
+        "curated:pUC18"
+      ],
+      "candidates": [
+        {
+          "candidate_index": 1,
+          "model_version": "fake-template-generator-v1",
+          "parent_template_ids": [
+            "curated:pUC19"
+          ],
+          "template_id": "curated:pUC19",
+          "length_bp": 2686,
+          "syntactic_valid": true,
+          "syntax_error": null,
+          "sane_length": true,
+          "reannotated_profile": "bacterial_cloning_vector",
+          "reannotated_feature_count": 4,
+          "component_checks": [
+            {
+              "kind": "vector_type",
+              "requested": "bacterial_cloning_vector",
+              "matched": true,
+              "evidence": "bacterial_cloning_vector"
+            },
+            {
+              "kind": "marker",
+              "requested": "ampicillin",
+              "matched": true,
+              "evidence": "ampr"
+            },
+            {
+              "kind": "expected_vector_type",
+              "requested": "bacterial_cloning_vector",
+              "matched": true,
+              "evidence": "bacterial_cloning_vector"
+            },
+            {
+              "kind": "expected_marker",
+              "requested": "ampicillin",
+              "matched": true,
+              "evidence": "ampicillin"
+            },
+            {
+              "kind": "expected_feature_type",
+              "requested": "ORI",
+              "matched": true,
+              "evidence": "ORI"
+            },
+            {
+              "kind": "expected_feature_type",
+              "requested": "marker",
+              "matched": true,
+              "evidence": "marker"
+            },
+            {
+              "kind": "expected_feature_type",
+              "requested": "MCS",
+              "matched": true,
+              "evidence": "MCS"
+            }
+          ],
+          "component_complete": true,
+          "validation_report": {
+            "overall": "PASS",
+            "checks": [
+              {
+                "name": "phase2_spike_stub",
+                "status": "PASS",
+                "message": "Phase 2 plumbing spike stub only; no biological validation performed.",
+                "region": null
+              }
+            ],
+            "generated_by_model_version": "stub-constraint-engine-v0"
+          },
+          "constraint_passed": true,
+          "novelty": {
+            "novel": false,
+            "copy_matches": [
+              "curated:pUC19"
+            ],
+            "parent_template_copy": true
+          },
+          "phase2_gate_proxy_passed": true,
+          "strict_generation_success": false
+        }
+      ],
+      "case_passed": true,
+      "strict_case_passed": false,
+      "notes": "Supported parser/corpus case for cloning-vector component recovery."
+    },
+    {
+      "id": "gen-bacterial-expression-gst",
+      "query": "Which plasmid would you use for GST-tagged bacterial protein expression in E. coli?",
+      "unsupported": false,
+      "spec": {
+        "organism": "Escherichia coli",
+        "cell_line": null,
+        "vector_type": "bacterial_expression_vector",
+        "genes": [],
+        "tags": [
+          "GST"
+        ],
+        "promoter_type": "lac/IPTG-inducible",
+        "inducer": "IPTG",
+        "markers": [
+          "ampicillin"
+        ],
+        "source": null,
+        "publication_doi": null,
+        "application": "bacterial protein expression",
+        "cloning_method": null,
+        "constraints": [],
+        "clarification_needed": false,
+        "clarification_question": null
+      },
+      "templates": [
+        {
+          "id": "genbank:U85202.1",
+          "name": "Expression vector pGH/F2.79-242, complete sequence",
+          "score": 0.7758661143739857,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism",
+            "markers",
+            "promoters",
+            "tags"
+          ]
+        }
+      ],
+      "acceptable_template_ids": [
+        "curated:pGEX-4T-1"
+      ],
+      "candidates": [
+        {
+          "candidate_index": 1,
+          "model_version": "fake-template-generator-v1",
+          "parent_template_ids": [
+            "genbank:U85202.1"
+          ],
+          "template_id": "genbank:U85202.1",
+          "length_bp": 5504,
+          "syntactic_valid": true,
+          "syntax_error": null,
+          "sane_length": true,
+          "reannotated_profile": "bacterial_expression_vector",
+          "reannotated_feature_count": 6,
+          "component_checks": [
+            {
+              "kind": "vector_type",
+              "requested": "bacterial_expression_vector",
+              "matched": true,
+              "evidence": "bacterial_expression_vector"
+            },
+            {
+              "kind": "marker",
+              "requested": "ampicillin",
+              "matched": true,
+              "evidence": "beta lactamase"
+            },
+            {
+              "kind": "promoter",
+              "requested": "lac/IPTG-inducible",
+              "matched": true,
+              "evidence": "lac promoter"
+            },
+            {
+              "kind": "tag",
+              "requested": "GST",
+              "matched": true,
+              "evidence": "GST"
+            },
+            {
+              "kind": "expected_vector_type",
+              "requested": "bacterial_expression_vector",
+              "matched": true,
+              "evidence": "bacterial_expression_vector"
+            },
+            {
+              "kind": "expected_marker",
+              "requested": "ampicillin",
+              "matched": true,
+              "evidence": "ampicillin"
+            },
+            {
+              "kind": "expected_tag",
+              "requested": "GST",
+              "matched": true,
+              "evidence": "GST"
+            },
+            {
+              "kind": "expected_feature_type",
+              "requested": "ORI",
+              "matched": true,
+              "evidence": "ORI"
+            },
+            {
+              "kind": "expected_feature_type",
+              "requested": "marker",
+              "matched": true,
+              "evidence": "marker"
+            },
+            {
+              "kind": "expected_feature_type",
+              "requested": "GOI",
+              "matched": true,
+              "evidence": "GOI"
+            }
+          ],
+          "component_complete": true,
+          "validation_report": {
+            "overall": "PASS",
+            "checks": [
+              {
+                "name": "phase2_spike_stub",
+                "status": "PASS",
+                "message": "Phase 2 plumbing spike stub only; no biological validation performed.",
+                "region": null
+              }
+            ],
+            "generated_by_model_version": "stub-constraint-engine-v0"
+          },
+          "constraint_passed": true,
+          "novelty": {
+            "novel": false,
+            "copy_matches": [
+              "genbank:U85202.1"
+            ],
+            "parent_template_copy": true
+          },
+          "phase2_gate_proxy_passed": true,
+          "strict_generation_success": false
+        }
+      ],
+      "case_passed": true,
+      "strict_case_passed": false,
+      "notes": "Supported parser/corpus case for bacterial-expression and GST-tag evidence."
+    },
+    {
+      "id": "gen-yeast-shuttle-prs",
+      "query": "I need a yeast shuttle vector with a selectable marker for yeast transformation and maintenance.",
+      "unsupported": false,
+      "spec": {
+        "organism": "Saccharomyces cerevisiae",
+        "cell_line": null,
+        "vector_type": "yeast_shuttle_vector",
+        "genes": [],
+        "tags": [],
+        "promoter_type": null,
+        "inducer": null,
+        "markers": [],
+        "source": null,
+        "publication_doi": null,
+        "application": "yeast transformation and maintenance",
+        "cloning_method": null,
+        "constraints": [
+          "selectable marker feature required"
+        ],
+        "clarification_needed": false,
+        "clarification_question": null
+      },
+      "templates": [
+        {
+          "id": "curated:pRS416",
+          "name": "pRS416",
+          "score": 0.8304117918014526,
+          "matched_fields": [
+            "semantic",
+            "vector_type",
+            "organism"
+          ]
+        }
+      ],
+      "acceptable_template_ids": [
+        "curated:pRS416"
+      ],
+      "candidates": [
+        {
+          "candidate_index": 1,
+          "model_version": "fake-template-generator-v1",
+          "parent_template_ids": [
+            "curated:pRS416"
+          ],
+          "template_id": "curated:pRS416",
+          "length_bp": 4898,
+          "syntactic_valid": true,
+          "syntax_error": null,
+          "sane_length": true,
+          "reannotated_profile": "yeast_shuttle_vector",
+          "reannotated_feature_count": 7,
+          "component_checks": [
+            {
+              "kind": "vector_type",
+              "requested": "yeast_shuttle_vector",
+              "matched": true,
+              "evidence": "yeast_shuttle_vector"
+            },
+            {
+              "kind": "expected_vector_type",
+              "requested": "yeast_shuttle_vector",
+              "matched": true,
+              "evidence": "yeast_shuttle_vector"
+            },
+            {
+              "kind": "expected_feature_type",
+              "requested": "ORI",
+              "matched": true,
+              "evidence": "ORI"
+            },
+            {
+              "kind": "expected_feature_type",
+              "requested": "marker",
+              "matched": true,
+              "evidence": "marker"
+            }
+          ],
+          "component_complete": true,
+          "validation_report": {
+            "overall": "PASS",
+            "checks": [
+              {
+                "name": "phase2_spike_stub",
+                "status": "PASS",
+                "message": "Phase 2 plumbing spike stub only; no biological validation performed.",
+                "region": null
+              }
+            ],
+            "generated_by_model_version": "stub-constraint-engine-v0"
+          },
+          "constraint_passed": true,
+          "novelty": {
+            "novel": false,
+            "copy_matches": [
+              "curated:pRS416"
+            ],
+            "parent_template_copy": true
+          },
+          "phase2_gate_proxy_passed": true,
+          "strict_generation_success": false
+        }
+      ],
+      "case_passed": true,
+      "strict_case_passed": false,
+      "notes": "Supported parser/corpus case for yeast-shuttle maintenance and generic selection-marker feature evidence."
+    }
+  ]
+}

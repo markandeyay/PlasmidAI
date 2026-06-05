@@ -60,6 +60,11 @@ EXPANSION_QUERY = (
     "NOT gbdiv_con[PROP] NOT wgs[FILTER] NOT tsa[FILTER] "
     "NOT scaffold[Title] NOT contig[Title] NOT chromosome[Title]"
 )
+REFSEQ_PLASMID_BROAD_QUERY = (
+    'plasmid[Title] AND srcdb_refseq[PROP] AND ("complete sequence"[Title] OR "complete genome"[Title]) '
+    "AND 1000:50000[SLEN] NOT chromosome[Title] NOT scaffold[Title] NOT contig[Title]"
+)
+VALID_MODES = ("dev", "bulk", "refresh", "expansion", "refseq_plasmid_broad")
 IUPAC_DNA_ALPHABET = frozenset("ACGTRYSWKMBDHVN")
 CANONICAL_DNA_ALPHABET = frozenset("ACGT")
 PLACEHOLDER_EMAILS = {"", "researcher@example.com", "user@example.com", "your.email@example.com"}
@@ -143,6 +148,7 @@ class GenbankIngestionConfig:
     max_retries: int = 3
     backoff_seconds: float = 2.0
     page_size: int = 100
+    fetch_rettype: str = "gb"
 
     @classmethod
     def from_env(cls, *, mode: str, limit: int | None, stale_days: int) -> GenbankIngestionConfig:
@@ -169,10 +175,11 @@ class GenbankIngestionConfig:
             max_retries=int(env("NCBI_MAX_RETRIES", "3", dotenv)),
             backoff_seconds=float(env("NCBI_BACKOFF_SECONDS", "2.0", dotenv)),
             page_size=int(env("NCBI_PAGE_SIZE", "100", dotenv)),
+            fetch_rettype=fetch_rettype_for_mode(mode),
         )
 
     def validate_for_real_network(self) -> None:
-        if self.mode not in {"dev", "bulk", "refresh", "expansion"}:
+        if self.mode not in VALID_MODES:
             raise GenbankConfigError(f"unsupported GenBank ingestion mode: {self.mode}")
         if self.email.strip().lower() in PLACEHOLDER_EMAILS:
             raise GenbankConfigError(
@@ -222,6 +229,7 @@ class EntrezNcbiClient:
         self.max_retries = config.max_retries
         self.backoff_seconds = config.backoff_seconds
         self.rate_limiter = RateLimiter(config.requests_per_second)
+        self.fetch_rettype = config.fetch_rettype
 
     def iter_accessions(self, *, limit: int | None = None) -> Iterable[str]:
         yielded = 0
@@ -251,7 +259,7 @@ class EntrezNcbiClient:
 
     def fetch_genbank(self, accession: str) -> str:
         return self._entrez_text(
-            lambda: Entrez.efetch(db="nuccore", id=accession, rettype="gb", retmode="text")
+            lambda: Entrez.efetch(db="nuccore", id=accession, rettype=self.fetch_rettype, retmode="text")
         )
 
     def _summaries_to_accessions(self, ids: list[str]) -> Iterable[str]:
@@ -468,7 +476,7 @@ def run_genbank_ingestion(
     try:
         for accession in client.iter_accessions(limit=config.limit):
             result.records_seen += 1
-            key = raw_cache_key(accession)
+            key = raw_cache_key(accession, mode=config.mode)
             try:
                 if should_fetch_cache(config, object_store, key):
                     raw = client.fetch_genbank(accession)
@@ -493,7 +501,7 @@ def run_genbank_ingestion(
 
 
 def should_fetch_cache(config: GenbankIngestionConfig, object_store: ObjectStore, key: str) -> bool:
-    if config.mode in {"bulk", "expansion"}:
+    if config.mode in {"bulk", "expansion", "refseq_plasmid_broad"}:
         return not object_store.exists(key)
     return not object_store.is_fresh(key, config.stale_after)
 
@@ -502,13 +510,25 @@ def genbank_query_for_mode(mode: str, dotenv: dict[str, str]) -> str:
     configured = env("NCBI_GENBANK_QUERY", "", dotenv)
     if configured:
         return configured
+    if mode == "refseq_plasmid_broad":
+        return env("NCBI_GENBANK_REFSEQ_PLASMID_BROAD_QUERY", REFSEQ_PLASMID_BROAD_QUERY, dotenv)
     if mode == "expansion":
         return env("NCBI_GENBANK_EXPANSION_QUERY", EXPANSION_QUERY, dotenv)
     return DEFAULT_QUERY
 
 
-def raw_cache_key(accession: str) -> str:
+def fetch_rettype_for_mode(mode: str) -> str:
+    # RefSeq plasmid hits are often CON records. gbwithparts keeps features and
+    # materializes the concrete ORIGIN sequence without changing other modes.
+    if mode == "refseq_plasmid_broad":
+        return "gbwithparts"
+    return "gb"
+
+
+def raw_cache_key(accession: str, *, mode: str = "dev") -> str:
     safe_accession = accession.replace("/", "_").replace("\\", "_")
+    if mode == "refseq_plasmid_broad":
+        return f"raw/genbank/refseq_plasmid_broad/{safe_accession}.gb"
     return f"raw/genbank/{safe_accession}.gb"
 
 
@@ -748,7 +768,7 @@ def env(name: str, default: str, dotenv: dict[str, str]) -> str:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Ingest NCBI GenBank plasmid-complete sequence records.")
-    parser.add_argument("--mode", choices=["dev", "bulk", "refresh", "expansion"], default=os.environ.get("MODE", "dev"))
+    parser.add_argument("--mode", choices=VALID_MODES, default=os.environ.get("MODE", "dev"))
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--stale-days", type=int, default=DEFAULT_STALE_DAYS)
     return parser

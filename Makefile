@@ -1,4 +1,4 @@
-.PHONY: setup test lint ingest-all eval-retrieval services-down ingest-addgene ingest-genbank ingest-curated parse-sample quality-report reprocess embed-corpus design spike-generation serve-api
+.PHONY: setup test lint ingest-all eval-retrieval services-down ingest-addgene ingest-genbank ingest-curated parse-sample quality-report reprocess embed-corpus design spike-generation build-training-data eval-generation serve-api
 
 PYTHON ?= python
 MODE ?= dev
@@ -12,6 +12,11 @@ API_HOST ?= 127.0.0.1
 API_PORT ?= 8000
 EVAL_GOLD ?= data/eval/retrieval_gold.jsonl
 EVAL_OUT ?= data/eval/retrieval
+TRAINING_OUT ?= data/training/phase2
+TRAINING_SNAPSHOT ?=
+GENERATION_GOLD ?= data/eval/generation_gold.jsonl
+GENERATION_OUT ?= data/eval/generation
+GENERATION_TOP_K ?= 1
 
 setup:
 	$(PYTHON) -m pip install -r requirements.txt
@@ -57,6 +62,12 @@ design:
 
 spike-generation:
 	$(PYTHON) -m packages.generation.spike --text "$(TEXT)" $(if $(filter 1 true TRUE yes YES,$(FAKE)),--fake-embedder,) $(if $(filter offline OFFLINE,$(MODE)),--local-files-only,)
+
+build-training-data:
+	$(PYTHON) -m packages.generation.training_data --output-root $(TRAINING_OUT) $(if $(TRAINING_SNAPSHOT),--snapshot-id $(TRAINING_SNAPSHOT),)
+
+eval-generation:
+	$(PYTHON) -m packages.generation.eval --gold-path $(GENERATION_GOLD) --output-dir $(GENERATION_OUT) --top-k $(GENERATION_TOP_K) $(if $(filter 1 true TRUE yes YES,$(FAKE)),--fake-embedder,) $(if $(filter offline OFFLINE,$(MODE)),--local-files-only,)
 
 serve-api:
 	$(PYTHON) -m uvicorn services.api.app:app --host $(API_HOST) --port $(API_PORT)
