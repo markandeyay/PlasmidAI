@@ -1,4 +1,4 @@
-.PHONY: build-training-data design embed-corpus eval-generation eval-retrieval ingest-addgene ingest-all ingest-curated ingest-genbank lint parse-sample quality-report reprocess serve-api serve-web services-down setup spike-generation test
+.PHONY: build-training-data design embed-corpus eval-generation eval-retrieval ingest-addgene ingest-all ingest-curated ingest-genbank lint parse-sample quality-report reprocess serve-api serve-web services-down setup spike-generation test validate-sample
 
 PYTHON ?= python
 MODE ?= dev
@@ -68,6 +68,9 @@ build-training-data:
 
 eval-generation:
 	$(PYTHON) -m packages.generation.eval --gold-path $(GENERATION_GOLD) --output-dir $(GENERATION_OUT) --top-k $(GENERATION_TOP_K) $(if $(filter 1 true TRUE yes YES,$(FAKE)),--fake-embedder,) $(if $(filter offline OFFLINE,$(MODE)),--local-files-only,)
+
+validate-sample:
+	$(PYTHON) -m packages.validation.engine $(if $(N),--limit $(N),)
 
 serve-api:
 	$(PYTHON) -m uvicorn services.api.app:app --host $(API_HOST) --port $(API_PORT)

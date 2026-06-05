@@ -36,6 +36,7 @@ from packages.generation.generator import FakeGenerator, SequenceGenerator, ensu
 from packages.retrieval.embed_corpus import EmbedCorpusConfig, build_embedder, build_vector_store
 from packages.retrieval.intent_parser import IntentParser, build_intent_parser
 from packages.retrieval.retriever import HybridRetriever, PostgresRetrievalRepository, Retriever
+from packages.validation.engine import ConstraintEngine as DeterministicConstraintEngine
 
 
 SPIKE_PIPELINE_VERSION = "phase2-generation-spike-v1"
@@ -196,7 +197,7 @@ def build_default_spike_pipeline(*, local_files_only: bool = False, fake_embedde
         ),
         generator=FakeGenerator(),
         reannotator=S3TemplateReannotator(S3TextObjectStore.from_env()),
-        constraint_engine=StubConstraintEngine(),
+        constraint_engine=DeterministicConstraintEngine(),
     )
 
 
