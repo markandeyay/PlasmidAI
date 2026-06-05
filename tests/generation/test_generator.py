@@ -3,7 +3,8 @@ from __future__ import annotations
 import pytest
 
 from packages.core.schemas import DesignSpec, GeneratedSequence, Plasmid, RetrievedPlasmid
-from packages.generation import FAKE_GENERATOR_VERSION, FakeGenerator, MarkerSwap
+from packages.generation import CARBON_500M_MODEL, CARBON_GENERATOR_VERSION, FAKE_GENERATOR_VERSION, FakeGenerator, MarkerSwap
+from packages.generation.generator import carbon_dna_prompt, splice_generated_segment
 
 
 def _template() -> RetrievedPlasmid:
@@ -65,3 +66,21 @@ def test_marker_swap_requires_one_exact_original_sequence_match() -> None:
 
     with pytest.raises(ValueError, match="exactly one"):
         generator.generate(spec, [_template()])
+
+
+def test_carbon_prompt_uses_dna_prefix_aligned_to_sixmers() -> None:
+    prompt = carbon_dna_prompt("acgt" * 20, prompt_bases=50)
+
+    assert prompt.startswith("<dna>")
+    dna = prompt.removeprefix("<dna>")
+    assert len(dna) == 48
+    assert set(dna) == {"A", "C", "G", "T"}
+
+
+def test_carbon_splice_replaces_template_suffix_with_generated_segment() -> None:
+    assert splice_generated_segment("AAAACCCCGGGGTTTT", "atat") == "AAAACCCCGGGGATAT"
+
+
+def test_carbon_generator_constants_are_explicit_spike_metadata() -> None:
+    assert CARBON_500M_MODEL == "HuggingFaceBio/Carbon-500M"
+    assert CARBON_GENERATOR_VERSION == "carbon-500m-cpu-spike-v1"
