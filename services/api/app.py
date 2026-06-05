@@ -7,6 +7,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from fastapi import FastAPI, HTTPException, Response, status
+from fastapi.middleware.cors import CORSMiddleware
 
 from packages.application import (
     InMemoryJobQueue,
@@ -76,6 +77,13 @@ def create_app(
     designs = design_store or InMemoryDesignStore()
 
     app = FastAPI(title="PMR API", version="0.1.0")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://127.0.0.1:3000", "http://localhost:3000"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     app.state.session_store = store
     app.state.job_queue = queue
     app.state.design_store = designs
