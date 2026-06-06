@@ -7,6 +7,7 @@ from .generator import (
     MarkerSwap,
     SequenceGenerator,
 )
+from .shadow import InMemoryShadowLogSink, ShadowComparisonGenerator, ShadowComparisonRecord
 
 __all__ = [
     "CARBON_500M_MODEL",
@@ -16,4 +17,7 @@ __all__ = [
     "FakeGenerator",
     "MarkerSwap",
     "SequenceGenerator",
+    "InMemoryShadowLogSink",
+    "ShadowComparisonGenerator",
+    "ShadowComparisonRecord",
 ]
