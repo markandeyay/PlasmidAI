@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from typing import Any
 
 import pytest
@@ -281,6 +282,32 @@ def test_missing_or_malformed_fields_return_422(
     response = client.post(path.format(session_id=session_id), json=payload)
 
     assert response.status_code == 422
+    body = response.json()
+    assert body["error"]["code"] == "validation_error"
+    assert body["error"]["field_errors"]
+
+
+@pytest.mark.parametrize(
+    "path,payload",
+    [
+        ("/v1/sessions/{session_id}/design", {"goal": "   \n\t  "}),
+        ("/v1/sessions/{session_id}/refine", {"instruction": "   \n\t  "}),
+    ],
+)
+def test_blank_text_fields_return_structured_422(
+    api_client: tuple[TestClient, InMemorySessionStore, SynchronousJobQueue],
+    path: str,
+    payload: dict[str, Any],
+) -> None:
+    client, _, _ = api_client
+    session_id = client.post("/v1/sessions").json()["session_id"]
+
+    response = client.post(path.format(session_id=session_id), json=payload)
+
+    assert response.status_code == 422
+    body = response.json()
+    assert body["error"]["code"] == "validation_error"
+    assert body["error"]["message"] == "Please fix the highlighted fields and try again."
 
 
 @pytest.mark.parametrize("path", ["/v1/sessions/does-not-exist/design", "/v1/sessions/does-not-exist/refine"])
@@ -294,6 +321,9 @@ def test_invalid_session_returns_404(
     response = client.post(path, json=payload)
 
     assert response.status_code == 404
+    body = response.json()
+    assert body["error"]["code"] == "session_not_found"
+    assert body["error"]["message"] == "Session not found."
 
 
 def test_missing_job_returns_404(api_client: tuple[TestClient, InMemorySessionStore, SynchronousJobQueue]) -> None:
@@ -302,3 +332,54 @@ def test_missing_job_returns_404(api_client: tuple[TestClient, InMemorySessionSt
     response = client.get("/v1/jobs/does-not-exist")
 
     assert response.status_code == 404
+    body = response.json()
+    assert body["error"]["code"] == "job_not_found"
+
+
+def test_job_polling_response_exposes_retry_hint_and_timestamps() -> None:
+    create_app = _load_create_app()
+    created_at = datetime(2026, 6, 6, 12, 0, tzinfo=UTC)
+
+    class FixedJobQueue:
+        def get_job(self, job_id: str) -> AttrDict:
+            return AttrDict(
+                job_id=job_id,
+                status="running",
+                result=None,
+                error=None,
+                created_at=created_at,
+                updated_at=created_at,
+            )
+
+    client = TestClient(create_app(job_queue=FixedJobQueue()))
+
+    response = client.get("/v1/jobs/job-running")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "running"
+    assert body["retry_after_ms"] == 750
+    assert body["created_at"] == "2026-06-06T12:00:00Z"
+
+
+def test_failed_job_response_includes_structured_error_detail() -> None:
+    create_app = _load_create_app()
+
+    class FixedJobQueue:
+        def get_job(self, job_id: str) -> AttrDict:
+            return AttrDict(
+                job_id=job_id,
+                status="failed",
+                result=None,
+                error="pipeline unavailable",
+            )
+
+    client = TestClient(create_app(job_queue=FixedJobQueue()))
+
+    response = client.get("/v1/jobs/job-failed")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "failed"
+    assert body["error_detail"]["code"] == "job_failed"
+    assert body["error_detail"]["details"]["raw_error"] == "pipeline unavailable"

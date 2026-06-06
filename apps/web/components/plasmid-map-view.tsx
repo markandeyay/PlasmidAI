@@ -16,9 +16,9 @@ type PlasmidMapViewProps = {
 export function PlasmidMapView({ annotatedSequence }: PlasmidMapViewProps) {
   if (!annotatedSequence) {
     return (
-      <section className="border border-line bg-white p-4 shadow-subtle" aria-label="Plasmid map">
+      <section id="plasmid-map" className="border border-line bg-white p-4 shadow-subtle" aria-label="Plasmid map">
         <h2 className="text-sm font-semibold">Plasmid map</h2>
-        <div className="mt-4 flex h-96 items-center justify-center border border-dashed border-line bg-panel text-sm text-slate-500">
+        <div className="mt-4 flex h-64 items-center justify-center border border-dashed border-line bg-panel px-6 text-center text-sm text-slate-500 sm:h-80 lg:h-96">
           Submit a design to render the annotated plasmid.
         </div>
       </section>
@@ -27,15 +27,15 @@ export function PlasmidMapView({ annotatedSequence }: PlasmidMapViewProps) {
 
   const annotations = annotatedSequence.features.map((feature) => ({
     name: feature.name,
-    start: feature.start,
-    end: feature.end,
+    start: clampCoordinate(feature.start, annotatedSequence.sequence.length),
+    end: clampCoordinate(feature.end, annotatedSequence.sequence.length),
     direction: feature.strand === 0 ? 0 : feature.strand,
     type: feature.type,
     color: componentColor(feature.type)
   }));
 
   return (
-    <section className="border border-line bg-white p-4 shadow-subtle" aria-label="Plasmid map">
+    <section id="plasmid-map" className="border border-line bg-white p-4 shadow-subtle" aria-label="Plasmid map">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-sm font-semibold">Plasmid map</h2>
@@ -54,8 +54,8 @@ export function PlasmidMapView({ annotatedSequence }: PlasmidMapViewProps) {
         </span>
       </div>
 
-      <div className="mt-4 overflow-hidden border border-line">
-        <div data-testid="seqviz-map" className="h-[520px] bg-white">
+      <div className="mt-4 overflow-auto border border-line">
+        <div data-testid="seqviz-map" className="h-[360px] min-w-[320px] bg-white sm:h-[440px] lg:h-[520px]">
           <SeqViz
             name={annotatedSequence.vector_profile ?? "Plasmid design"}
             seq={annotatedSequence.sequence}
@@ -107,4 +107,11 @@ function strandLabel(strand: -1 | 0 | 1): string {
     return "reverse";
   }
   return "none";
+}
+
+function clampCoordinate(value: number, sequenceLength: number): number {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+  return Math.max(0, Math.min(value, sequenceLength));
 }

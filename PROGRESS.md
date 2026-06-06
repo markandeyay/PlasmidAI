@@ -10,6 +10,11 @@
 ## RESUME HERE (only if mid-task)
 RESUME HERE: `phase3-hardening` is active from consolidated `master`. Scope is limited to Phase 3 curated validation gold sets and repeat/instability performance optimization; avoid `apps/web`, FastAPI handler layer, retrieval/classifier/corpus-ingestion work, and observability. Initial corpus probe found 256 plasmids with 141 complete annotations (11 curated, 130 GenBank), which is the candidate pool for curated known-good validation examples. Phase 3 formal gate remains open until the curated known-good/known-bad set is evaluated at >=95% accuracy.
 
+## WORKTREE ASSIGNMENTS
+- **Codex main worktree:** `C:\Users\yalam\PMR`
+- **OpenCode auxiliary worktree:** `C:\Users\yalam\PMR-opencode`
+- Future sessions must be given their assigned worktree path explicitly. Codex should work from the main worktree unless instructed otherwise; OpenCode should work from the auxiliary worktree. Agents must not switch branches inside another agent's worktree.
+
 ## KNOWN ISSUES / BLOCKERS
 - `phase0-corpus-expansion`, `phase2-prep`, `phase2-spike`, `phase0-retrieval-robustness`, `phase4-foundation`, `phase2-generation-prep`, `phase4-frontend`, `phase3-validation`, and `phase2-real-generation` are merged locally into `master`; the consolidated history has not been pushed to GitHub.
 - Phase 3 formal gate remains open: the synthetic deterministic 100-case baseline scores 100% accuracy, but the known-good half is not yet 50 corpus/provider-backed constructs. Full-corpus validation also needs repeat-scan performance work; a 300-record scan timed out after 124 seconds.
