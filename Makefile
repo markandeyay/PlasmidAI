@@ -1,4 +1,4 @@
-.PHONY: build-training-data design embed-corpus eval-generation eval-retrieval finetune-smoke generate-validation-gold ingest-addgene ingest-all ingest-curated ingest-genbank lint parse-sample quality-report reprocess serve-api serve-web services-down setup spike-generation test validate-sample
+.PHONY: build-training-data design embed-corpus eval-generation eval-retrieval finetune-smoke generate-validation-gold ingest-addgene ingest-all ingest-curated ingest-genbank lint list-models parse-sample quality-report register-model reprocess serve-api serve-web services-down setup spike-generation test validate-sample
 
 PYTHON ?= python
 MODE ?= dev
@@ -22,6 +22,15 @@ VALIDATION_OUT ?= data/eval/validation
 GENERATION_GENERATOR ?= fake
 CARBON_MAX_NEW_TOKENS ?= 4
 FINETUNE_OUTPUT ?= packages/generation/models/finetune-smoke
+MODEL_REGISTRY ?= data/models/registry.jsonl
+MODEL_BASE_MODEL ?= HuggingFaceBio/Carbon-3B
+MODEL_TRAINING_SNAPSHOT ?= $(TRAINING_SNAPSHOT)
+MODEL_HYPERPARAMETERS_JSON ?= {}
+MODEL_EVAL_SCORES_JSON ?= {}
+MODEL_LICENSE_STATUS ?= unknown
+MODEL_ROLLOUT_STATE ?= registered
+MODEL_ARTIFACT_URI ?=
+MODEL_TRAINING_COST ?=
 
 setup:
 	$(PYTHON) -m pip install -r requirements.txt
@@ -76,6 +85,12 @@ eval-generation:
 
 finetune-smoke:
 	$(PYTHON) -m packages.generation.finetune --smoke --output-dir $(FINETUNE_OUTPUT) --max-train-examples 5 --max-eval-examples 2 --max-steps 1 --max-length 96
+
+register-model:
+	$(PYTHON) -m packages.generation.registry register --registry-path $(MODEL_REGISTRY) --version "$(VERSION)" --base-model "$(MODEL_BASE_MODEL)" --training-data-snapshot-id "$(MODEL_TRAINING_SNAPSHOT)" --hyperparameters-json "$(MODEL_HYPERPARAMETERS_JSON)" --eval-scores-json "$(MODEL_EVAL_SCORES_JSON)" --license-status "$(MODEL_LICENSE_STATUS)" --rollout-state "$(MODEL_ROLLOUT_STATE)" $(if $(MODEL_ARTIFACT_URI),--artifact-uri "$(MODEL_ARTIFACT_URI)",) $(if $(MODEL_TRAINING_COST),--training-cost $(MODEL_TRAINING_COST),)
+
+list-models:
+	$(PYTHON) -m packages.generation.registry list --registry-path $(MODEL_REGISTRY)
 
 validate-sample:
 	$(if $(filter gold GOLD,$(MODE)),$(PYTHON) -m packages.validation.eval --gold-path $(VALIDATION_GOLD) --output-dir $(VALIDATION_OUT),$(PYTHON) -m packages.validation.engine $(if $(N),--limit $(N),))

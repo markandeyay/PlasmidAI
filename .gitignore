@@ -24,6 +24,8 @@ build/
 data/*
 !data/eval/
 !data/eval/**
+!data/models/
+!data/models/registry.jsonl
 *.sqlite
 *.db
 *.log
