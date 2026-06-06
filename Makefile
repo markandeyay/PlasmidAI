@@ -1,4 +1,4 @@
-.PHONY: build-training-data design embed-corpus eval-generation eval-retrieval ingest-addgene ingest-all ingest-curated ingest-genbank lint parse-sample quality-report reprocess serve-api serve-web services-down setup spike-generation test
+.PHONY: build-training-data design embed-corpus eval-generation eval-retrieval generate-validation-gold ingest-addgene ingest-all ingest-curated ingest-genbank lint parse-sample quality-report reprocess serve-api serve-web services-down setup spike-generation test validate-sample
 
 PYTHON ?= python
 MODE ?= dev
@@ -17,6 +17,8 @@ TRAINING_SNAPSHOT ?=
 GENERATION_GOLD ?= data/eval/generation_gold.jsonl
 GENERATION_OUT ?= data/eval/generation
 GENERATION_TOP_K ?= 1
+VALIDATION_GOLD ?= data/eval/validation/validation_gold.jsonl
+VALIDATION_OUT ?= data/eval/validation
 
 setup:
 	$(PYTHON) -m pip install -r requirements.txt
@@ -68,6 +70,12 @@ build-training-data:
 
 eval-generation:
 	$(PYTHON) -m packages.generation.eval --gold-path $(GENERATION_GOLD) --output-dir $(GENERATION_OUT) --top-k $(GENERATION_TOP_K) $(if $(filter 1 true TRUE yes YES,$(FAKE)),--fake-embedder,) $(if $(filter offline OFFLINE,$(MODE)),--local-files-only,)
+
+validate-sample:
+	$(if $(filter gold GOLD,$(MODE)),$(PYTHON) -m packages.validation.eval --gold-path $(VALIDATION_GOLD) --output-dir $(VALIDATION_OUT),$(PYTHON) -m packages.validation.engine $(if $(N),--limit $(N),))
+
+generate-validation-gold:
+	$(PYTHON) -m packages.validation.gold --gold-path $(VALIDATION_GOLD) --doc-path $(VALIDATION_OUT)/gold_set_construction.md
 
 serve-api:
 	$(PYTHON) -m uvicorn services.api.app:app --host $(API_HOST) --port $(API_PORT)

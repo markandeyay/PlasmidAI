@@ -1,23 +1,25 @@
 ﻿# PROGRESS â€” Build State (mutable)
 
 ## AT-A-GLANCE (update every session)
-- **Current Phase:** Consolidated `master`: Phase 2 generation prep and Phase 4 frontend merged
-- **Next Concrete Task:** Await wave 2 prompt; do not start new work until the consolidated merge state is reviewed.
+- **Current Phase:** Phase 3: Validation engine on local `phase3-validation`
+- **Next Concrete Task:** Human review of `phase3-validation`; decide whether to accept the deterministic synthetic validation gold set as a gate proxy or require corpus/provider-backed known-good expansion before marking Phase 3 gate met.
 - **Overall completion estimate:** 18%
-- **Last session date:** 2026-06-04
-- **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 260 passing tests / 1 skipped real-LLM smoke test / 2 warnings
+- **Last session date:** 2026-06-05
+- **Codebase known-good?** (tests passing) Yes - `C:\Program Files (x86)\GnuWin32\bin\make.exe test` verifies Docker Compose, Postgres with pgvector, MinIO, Redis, and 276 passing tests / 1 skipped real-LLM smoke test / 2 warnings
 
 ## RESUME HERE (only if mid-task)
-RESUME HERE: Merge consolidation is complete on local `master`; do not push unless explicitly instructed. `phase2-generation-prep` and `phase4-frontend` are merged. Corpus expansion added `refseq_plasmid_broad` GenBank ingestion mode and 50 public NCBI RefSeq plasmid records; latest quality report `data/eval/quality/2026-06-03-034726-quality-report.{md,json}` shows 256 total records, 140 complete annotations, 104 unknown, 3 duplicate clusters, and 0 parse errors. Retrieval held after expansion: `data/eval/retrieval/2026-06-03-035642-retrieval-baseline.{md,json}` scores top-1 `0.950`, top-5 `1.000`, MRR `0.975`, clarification pass rate `1.000`. Training data formatter is implemented with `make build-training-data`; snapshot `data/training/phase2/2026-06-04-010952-phase2-triplets/` contains 140 triplets split 117 train / 15 validation / 8 test. Generation eval harness is implemented with `make eval-generation`; fake baseline `data/eval/generation/2026-06-04-011827-generation-eval.{md,json}` scores syntactic valid `1.000`, sane length `1.000`, component complete `1.000`, stub constraint pass `1.000`, novelty `0.000`, strict success `0.000`. Phase 4 frontend is merged: Next.js 14/Tailwind app under `apps/web`, `make serve-web`, local API CORS, chat design/refine workflow, job polling, clarification handling, seqviz plasmid map rendering, GenBank/FASTA browser exports, Playwright mocked happy-path test, and `apps/web/README.md`. Final consolidated verification passed on 2026-06-04 with `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 260 passed, 1 skipped, 2 warnings.
+RESUME HERE: `phase3-validation` is ready for human review and has not been pushed or merged. Implemented deterministic Phase 3 checks for restriction-site conflicts, repeat/instability patterns, codon-usage scoring, and regulatory compatibility under `packages/validation/`, plus `ConstraintEngine`, `make validate-sample`, `make generate-validation-gold`, and `make validate-sample MODE=gold`. The default Phase 2 spike pipeline now uses the deterministic `ConstraintEngine`; explicit `StubConstraintEngine` remains available for fake-baseline tests. Specs are in `research/findings/validation_{restriction,repeats,codon,regulatory}.md`. Synthetic deterministic gold set `data/eval/validation/validation_gold.jsonl` has 100 cases and baseline `data/eval/validation/2026-06-05-041016-validation-baseline.{json,md}` scores accuracy `1.000`, but the formal Phase 3 gate is not marked because the known-good half is synthetic rather than 50 corpus/provider-backed constructs. Corpus sample report `data/eval/validation/2026-06-05-041133-validate-sample.json` examined 10 records: 2 PASS, 3 WARN, 5 FAIL. Attempting a 300-record corpus scan timed out after 124 seconds, so the repeat scan needs performance work before full-corpus validation. Final verification passed on 2026-06-05 with `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 276 passed, 1 skipped, 2 warnings. Coordination note: OpenCode/parallel branch files remain unstaged and untouched (`data/eval/generation_gold.jsonl`, `data/eval/generation/2026-06-04-generation-gold-rationale.md`, `research/findings/cpu_generation_feasibility.md`).
 
 ## KNOWN ISSUES / BLOCKERS
 - `phase0-corpus-expansion`, `phase2-prep`, `phase2-spike`, `phase0-retrieval-robustness`, `phase4-foundation`, `phase2-generation-prep`, and `phase4-frontend` are merged locally into `master`; the consolidated history has not been pushed to GitHub.
+- `phase3-validation` is local and unpushed. It is ready for review but intentionally not merged into `master`.
+- Phase 3 formal gate remains open: the synthetic deterministic 100-case baseline scores 100% accuracy, but the known-good half is not yet 50 corpus/provider-backed known-good constructs. Full-corpus validation also needs repeat-scan performance work; a 300-record scan timed out after 124 seconds.
 - The expanded-corpus `pACYC184` retrieval regression is fixed; the diagnostic remains at `data/eval/retrieval/2026-06-02-102439-pacyc184-regression-diagnostic.md` for review.
 - Phase 4 still intentionally omits AuthN/AuthZ, rate limiting, usage metering, streaming job updates, primer-design output, synthesis handoff, deployed hosting, and a backend-persisted `design_id` guarantee for real export jobs.
 - Frontend verification note: run `npm run build` and `npm run test:e2e` sequentially, not in parallel, because Next's build output and Playwright's dev server both use `.next`.
 - OpenCode coordination: API integration tests were accidentally committed once on `phase0-retrieval-robustness`; the content is identical to the `phase4-foundation` cherry-pick and was handled during merge consolidation.
 - Phase 0 scale gate remains unmet: the expanded corpus has 256 total records and 140 complete annotations, not >=50,000 fully parsed component-annotated plasmids.
-- Phase 2 gate is not met. The current prep branch adds training triplets and a fake-backed eval harness, but still uses `FakeGenerator` and `StubConstraintEngine`; it does not load a base DNA model, fine-tune, or biologically validate generated sequences.
+- Phase 2 gate is not met. The current prep branch adds training triplets and a fake-backed eval harness; the default spike path now uses the deterministic Phase 3 `ConstraintEngine`, but it still does not load a base DNA model, fine-tune, or biologically validate model-generated sequences.
 - Phase 1 retrieval gate passed on 2026-05-31: `data/eval/retrieval/2026-05-31-221057-retrieval-baseline.{md,json}` scores 20 retrieval queries plus 1 clarification-only case with top-1 `0.700`, top-5 `1.000`, MRR `0.825`, and clarification pass rate `1.000`. Retrieval robustness rerun on 2026-06-02 scores top-1 `0.950`, top-5 `1.000`, MRR `0.975`, clarification pass rate `1.000`.
 - Phase 1 retrieval cleanup is implemented: exact named-record queries use a lexical lane before semantic ranking, while structured source and DOI provenance filters remain enforced. `depositing_lab` is not available in the current schema or corpus.
 - The expanded corpus still has no classified lentiviral or CRISPR vectors. `data/eval/corpus/2026-06-01-174026-lentiviral-crispr-gap.md` found no parser defect and no safe canonical NCBI-backed seed. Adding exact Addgene or reviewed GenBank-derivative seeds is blocked pending human provenance/legal policy.
@@ -55,6 +57,8 @@ RESUME HERE: Merge consolidation is complete on local `master`; do not push unle
 - After human review/merge of `phase2-spike`, should the next approved slice stay offline with a deterministic Phase 3 checker, or separately authorize a budgeted Carbon-500M load smoke test?
 - Before any Phase 2 gate attempt, should the project build a minimum deterministic Phase 3 checker and define a research-only acquisition milestone below the formal 50,000-record Phase 0 gate?
 - Which managed-GPU provider, hardware ceiling, and budget should apply to any authorized Phase 2 benchmark?
+- Should the deterministic synthetic 100-case validation gold set be accepted as a temporary Phase 3 gate proxy, or should Phase 3 remain open until 50 corpus/provider-backed known-good constructs are added?
+- Should repeat/instability validation ignore or downgrade biologically expected repeats in natural plasmids, or should synthesis readiness treat those as blocking even when the source plasmid is naturally stable?
 - What auth/session-ownership model should Phase 4 use once authentication is in scope: user-owned sessions, organization-owned sessions, or project/workspace-owned sessions?
 - What retention policy should apply to sessions, turns, jobs, and generated design artifacts?
 - Should long-running design jobs remain polling-only for MVP, or should Phase 4 add server-sent events or WebSocket streaming?
@@ -119,13 +123,13 @@ RESUME HERE: Merge consolidation is complete on local `master`; do not push unle
 
 ### 3.4 Phase 3 â€” Constraint & validation engine
 
-- [ ] Restriction-site conflict checker
-- [ ] Repeat / instability checker
-- [ ] Codon optimization scorer for the target organism
-- [ ] Regulatory-element compatibility checker (promoter/host, marker presence, ORI/host)
+- [x] Restriction-site conflict checker
+- [x] Repeat / instability checker
+- [x] Codon optimization scorer for the target organism
+- [x] Regulatory-element compatibility checker (promoter/host, marker presence, ORI/host)
 - [ ] Optional therapeutic-compliance checks (flagged, not blocking, for gene-therapy contexts)
-- [ ] Validation report object (Section 12.5) with PASS / WARN / FAIL per check and actionable messages
-- [ ] Engine runs deterministically and is unit-tested against known-good and known-bad constructs
+- [x] Validation report object (Section 12.5) with PASS / WARN / FAIL per check and actionable messages
+- [x] Engine runs deterministically and is unit-tested against known-good and known-bad constructs
 - [ ] **GATE:** Engine correctly classifies a curated set of â‰¥ 50 known-good and â‰¥ 50 known-bad constructs with â‰¥ 95% accuracy.
 
 ### 3.5 Phase 4 â€” Application layer
@@ -149,6 +153,7 @@ RESUME HERE: Merge consolidation is complete on local `master`; do not push unle
 - [ ] **GATE:** A full loop runs automatically â€” a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-06-05 - Built `phase3-validation` deterministic validation engine. Added cited specs for restriction, repeat/instability, codon-usage, and regulatory checks; implemented `packages/validation/` checks and aggregate `ConstraintEngine`; wired the default Phase 2 spike path to the deterministic engine; added `make validate-sample`, `make generate-validation-gold`, and `make validate-sample MODE=gold`. Synthetic 100-case baseline `data/eval/validation/2026-06-05-041016-validation-baseline.{json,md}` scores accuracy `1.000`; formal Phase 3 gate remains open pending corpus/provider-backed known-good expansion. Final verification: 276 passed, 1 skipped, 2 warnings.
 - 2026-06-04 - Consolidated local `master`: merged `phase2-generation-prep` first, then merged `phase4-frontend`. Resolved the Makefile conflict as a benign union of `.PHONY` targets. Final verification passed with `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 260 passed, 1 skipped, 2 warnings. Consolidated state: 256 corpus records, 140 complete annotations for the Phase 2 training set, retrieval top-1 `0.950`, top-5 `1.000`, MRR `0.975`, training triplets available, generation eval harness available, and the Phase 4 Next.js/seqviz frontend merged.
 - 2026-06-04 - Finalized `phase2-generation-prep` handoff. Final verification passed with `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 260 passed, 1 skipped, 2 warnings. Branch is ready for human review and has not been pushed or merged.
 - 2026-06-04 - Added the Phase 2 generation evaluation harness in `packages/generation/eval.py`, initial gold set `data/eval/generation_gold.jsonl`, and `make eval-generation`. FakeGenerator baseline report `data/eval/generation/2026-06-04-011827-generation-eval.{md,json}` scores syntactic valid `1.000`, sane length `1.000`, component complete `1.000`, stub constraint pass `1.000`, novelty `0.000`, phase2 gate proxy `1.000`, and strict success `0.000`; the run is explicitly not gate-eligible because the generator copies templates and constraints are stubbed.

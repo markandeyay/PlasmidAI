@@ -1,0 +1,341 @@
+{
+  "count": 10,
+  "summary": {
+    "PASS": 2,
+    "WARN": 3,
+    "FAIL": 5
+  },
+  "results": [
+    {
+      "plasmid_id": "curated:pACYC184",
+      "name": "pACYC184",
+      "overall": "FAIL",
+      "checks": [
+        {
+          "name": "restriction_site_conflicts",
+          "status": "PASS",
+          "message": "No restriction-enzyme cloning context was specified.",
+          "region": null
+        },
+        {
+          "name": "repeat_and_instability",
+          "status": "FAIL",
+          "message": "direct repeat of at least 40 bp may promote recombination or synthesis instability.",
+          "region": {
+            "start": 3274,
+            "end": 3314
+          }
+        },
+        {
+          "name": "codon_usage",
+          "status": "PASS",
+          "message": "No GOI coding region was annotated; codon-usage scoring skipped.",
+          "region": null
+        },
+        {
+          "name": "regulatory_compatibility",
+          "status": "PASS",
+          "message": "Regulatory elements are compatible with the requested host context.",
+          "region": null
+        }
+      ]
+    },
+    {
+      "plasmid_id": "curated:pBluescript-II-SK-minus",
+      "name": "pBluescript II SK(-)",
+      "overall": "PASS",
+      "checks": [
+        {
+          "name": "restriction_site_conflicts",
+          "status": "PASS",
+          "message": "No restriction-enzyme cloning context was specified.",
+          "region": null
+        },
+        {
+          "name": "repeat_and_instability",
+          "status": "PASS",
+          "message": "No blocking repeat, homopolymer, or GC-instability pattern detected.",
+          "region": null
+        },
+        {
+          "name": "codon_usage",
+          "status": "PASS",
+          "message": "No GOI coding region was annotated; codon-usage scoring skipped.",
+          "region": null
+        },
+        {
+          "name": "regulatory_compatibility",
+          "status": "PASS",
+          "message": "Regulatory elements are compatible with the requested host context.",
+          "region": null
+        }
+      ]
+    },
+    {
+      "plasmid_id": "curated:pBluescript-II-SK-plus",
+      "name": "pBluescript II SK(+)",
+      "overall": "PASS",
+      "checks": [
+        {
+          "name": "restriction_site_conflicts",
+          "status": "PASS",
+          "message": "No restriction-enzyme cloning context was specified.",
+          "region": null
+        },
+        {
+          "name": "repeat_and_instability",
+          "status": "PASS",
+          "message": "No blocking repeat, homopolymer, or GC-instability pattern detected.",
+          "region": null
+        },
+        {
+          "name": "codon_usage",
+          "status": "PASS",
+          "message": "No GOI coding region was annotated; codon-usage scoring skipped.",
+          "region": null
+        },
+        {
+          "name": "regulatory_compatibility",
+          "status": "PASS",
+          "message": "Regulatory elements are compatible with the requested host context.",
+          "region": null
+        }
+      ]
+    },
+    {
+      "plasmid_id": "curated:pBR322",
+      "name": "pBR322",
+      "overall": "WARN",
+      "checks": [
+        {
+          "name": "restriction_site_conflicts",
+          "status": "PASS",
+          "message": "No restriction-enzyme cloning context was specified.",
+          "region": null
+        },
+        {
+          "name": "repeat_and_instability",
+          "status": "PASS",
+          "message": "No blocking repeat, homopolymer, or GC-instability pattern detected.",
+          "region": null
+        },
+        {
+          "name": "codon_usage",
+          "status": "WARN",
+          "message": "No codon-usage table is configured for host 'Cloning vector pBR322'.",
+          "region": null
+        },
+        {
+          "name": "regulatory_compatibility",
+          "status": "WARN",
+          "message": "GOI lacks an annotated downstream terminator; expression cassette may be incomplete.",
+          "region": {
+            "start": 1914,
+            "end": 2106
+          }
+        }
+      ]
+    },
+    {
+      "plasmid_id": "curated:pEGFP-N1",
+      "name": "pEGFP-N1",
+      "overall": "FAIL",
+      "checks": [
+        {
+          "name": "restriction_site_conflicts",
+          "status": "PASS",
+          "message": "No restriction-enzyme cloning context was specified.",
+          "region": null
+        },
+        {
+          "name": "repeat_and_instability",
+          "status": "FAIL",
+          "message": "direct repeat of at least 40 bp may promote recombination or synthesis instability.",
+          "region": {
+            "start": 2349,
+            "end": 2389
+          }
+        },
+        {
+          "name": "codon_usage",
+          "status": "WARN",
+          "message": "No codon-usage table is configured for host 'Cloning vector pEGFP-N1'.",
+          "region": null
+        },
+        {
+          "name": "regulatory_compatibility",
+          "status": "PASS",
+          "message": "Regulatory elements are compatible with the requested host context.",
+          "region": null
+        }
+      ]
+    },
+    {
+      "plasmid_id": "curated:pGEX-4T-1",
+      "name": "pGEX-4T-1",
+      "overall": "FAIL",
+      "checks": [
+        {
+          "name": "restriction_site_conflicts",
+          "status": "PASS",
+          "message": "No restriction-enzyme cloning context was specified.",
+          "region": null
+        },
+        {
+          "name": "repeat_and_instability",
+          "status": "FAIL",
+          "message": "direct repeat of at least 40 bp may promote recombination or synthesis instability.",
+          "region": {
+            "start": 4477,
+            "end": 4517
+          }
+        },
+        {
+          "name": "codon_usage",
+          "status": "WARN",
+          "message": "No codon-usage table is configured for host 'unidentified cloning vector'.",
+          "region": null
+        },
+        {
+          "name": "regulatory_compatibility",
+          "status": "WARN",
+          "message": "GOI lacks an annotated downstream terminator; expression cassette may be incomplete.",
+          "region": {
+            "start": 257,
+            "end": 977
+          }
+        }
+      ]
+    },
+    {
+      "plasmid_id": "curated:pGL3-Basic",
+      "name": "pGL3-Basic",
+      "overall": "WARN",
+      "checks": [
+        {
+          "name": "restriction_site_conflicts",
+          "status": "PASS",
+          "message": "No restriction-enzyme cloning context was specified.",
+          "region": null
+        },
+        {
+          "name": "repeat_and_instability",
+          "status": "PASS",
+          "message": "No blocking repeat, homopolymer, or GC-instability pattern detected.",
+          "region": null
+        },
+        {
+          "name": "codon_usage",
+          "status": "WARN",
+          "message": "No codon-usage table is configured for host 'Cloning vector pGL3-Basic'.",
+          "region": null
+        },
+        {
+          "name": "regulatory_compatibility",
+          "status": "PASS",
+          "message": "Regulatory elements are compatible with the requested host context.",
+          "region": null
+        }
+      ]
+    },
+    {
+      "plasmid_id": "curated:pGL4-10-luc2",
+      "name": "pGL4.10[luc2]",
+      "overall": "WARN",
+      "checks": [
+        {
+          "name": "restriction_site_conflicts",
+          "status": "PASS",
+          "message": "No restriction-enzyme cloning context was specified.",
+          "region": null
+        },
+        {
+          "name": "repeat_and_instability",
+          "status": "PASS",
+          "message": "No blocking repeat, homopolymer, or GC-instability pattern detected.",
+          "region": null
+        },
+        {
+          "name": "codon_usage",
+          "status": "WARN",
+          "message": "No codon-usage table is configured for host 'Firefly luciferase reporter vector pGL4.10[luc2]'.",
+          "region": null
+        },
+        {
+          "name": "regulatory_compatibility",
+          "status": "PASS",
+          "message": "Regulatory elements are compatible with the requested host context.",
+          "region": null
+        }
+      ]
+    },
+    {
+      "plasmid_id": "curated:pRS415",
+      "name": "pRS415",
+      "overall": "FAIL",
+      "checks": [
+        {
+          "name": "restriction_site_conflicts",
+          "status": "PASS",
+          "message": "No restriction-enzyme cloning context was specified.",
+          "region": null
+        },
+        {
+          "name": "repeat_and_instability",
+          "status": "FAIL",
+          "message": "Homopolymer run of 12 or more bases may fail synthesis or sequencing.",
+          "region": {
+            "start": 323,
+            "end": 336
+          }
+        },
+        {
+          "name": "codon_usage",
+          "status": "PASS",
+          "message": "No GOI coding region was annotated; codon-usage scoring skipped.",
+          "region": null
+        },
+        {
+          "name": "regulatory_compatibility",
+          "status": "PASS",
+          "message": "Regulatory elements are compatible with the requested host context.",
+          "region": null
+        }
+      ]
+    },
+    {
+      "plasmid_id": "curated:pRS416",
+      "name": "pRS416",
+      "overall": "FAIL",
+      "checks": [
+        {
+          "name": "restriction_site_conflicts",
+          "status": "PASS",
+          "message": "No restriction-enzyme cloning context was specified.",
+          "region": null
+        },
+        {
+          "name": "repeat_and_instability",
+          "status": "FAIL",
+          "message": "100 bp window has extreme GC content (11%); redesign this region for synthesis.",
+          "region": {
+            "start": 4320,
+            "end": 4420
+          }
+        },
+        {
+          "name": "codon_usage",
+          "status": "PASS",
+          "message": "No GOI coding region was annotated; codon-usage scoring skipped.",
+          "region": null
+        },
+        {
+          "name": "regulatory_compatibility",
+          "status": "PASS",
+          "message": "Regulatory elements are compatible with the requested host context.",
+          "region": null
+        }
+      ]
+    }
+  ]
+}
