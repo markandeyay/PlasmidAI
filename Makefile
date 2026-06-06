@@ -1,4 +1,4 @@
-.PHONY: build-training-data design embed-corpus eval-generation eval-retrieval generate-validation-gold ingest-addgene ingest-all ingest-curated ingest-genbank lint parse-sample quality-report reprocess serve-api serve-web services-down setup spike-generation test validate-sample
+.PHONY: build-training-data design embed-corpus eval-generation eval-retrieval finetune-smoke generate-validation-gold ingest-addgene ingest-all ingest-curated ingest-genbank lint parse-sample quality-report reprocess serve-api serve-web services-down setup spike-generation test validate-sample
 
 PYTHON ?= python
 MODE ?= dev
@@ -21,6 +21,7 @@ VALIDATION_GOLD ?= data/eval/validation/validation_gold.jsonl
 VALIDATION_OUT ?= data/eval/validation
 GENERATION_GENERATOR ?= fake
 CARBON_MAX_NEW_TOKENS ?= 4
+FINETUNE_OUTPUT ?= packages/generation/models/finetune-smoke
 
 setup:
 	$(PYTHON) -m pip install -r requirements.txt
@@ -72,6 +73,9 @@ build-training-data:
 
 eval-generation:
 	$(PYTHON) -m packages.generation.eval --gold-path $(GENERATION_GOLD) --output-dir $(GENERATION_OUT) --top-k $(GENERATION_TOP_K) --generator $(GENERATION_GENERATOR) --carbon-max-new-tokens $(CARBON_MAX_NEW_TOKENS) $(if $(filter 1 true TRUE yes YES,$(FAKE)),--fake-embedder,) $(if $(filter offline OFFLINE,$(MODE)),--local-files-only,)
+
+finetune-smoke:
+	$(PYTHON) -m packages.generation.finetune --smoke --output-dir $(FINETUNE_OUTPUT) --max-train-examples 5 --max-eval-examples 2 --max-steps 1 --max-length 96
 
 validate-sample:
 	$(if $(filter gold GOLD,$(MODE)),$(PYTHON) -m packages.validation.eval --gold-path $(VALIDATION_GOLD) --output-dir $(VALIDATION_OUT),$(PYTHON) -m packages.validation.engine $(if $(N),--limit $(N),))
