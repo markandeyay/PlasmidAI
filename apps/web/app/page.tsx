@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ApiError, createSession, exportDesign, pollJob, submitDesign, submitRefinement } from "@/lib/api";
-import { ExportActions } from "@/components/export-actions";
+import { ExportActions, type ExportFormat, type ExportStatus } from "@/components/export-actions";
 import { PlasmidMapView } from "@/components/plasmid-map-view";
-import type { AnnotatedSequence, JobResultPayload } from "@/lib/types";
+import type { AnnotatedSequence, JobResultPayload, JobStatusResponse, ValidationCheck, ValidationReport } from "@/lib/types";
 
 type UiState = "idle" | "submitting" | "polling" | "ready" | "awaiting_clarification" | "error";
 
@@ -19,6 +19,12 @@ type ChatMessage = {
 const DEFAULT_PROMPT =
   "a bacterial expression vector for E. coli with ampicillin selection and GFP reporter readout";
 
+const EXAMPLE_PROMPTS = [
+  DEFAULT_PROMPT,
+  "a mammalian GFP reporter plasmid for expression analysis in cultured cells",
+  "a yeast shuttle vector with URA3 selection and centromere maintenance"
+];
+
 export default function Page() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -29,9 +35,13 @@ export default function Page() {
       text: "Describe the construct you want. I will retrieve a grounding vector, run the design pipeline, and render the annotated plasmid when the job completes."
     }
   ]);
-  const [input, setInput] = useState(DEFAULT_PROMPT);
+  const [input, setInput] = useState("");
   const [state, setState] = useState<UiState>("idle");
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
+  const [jobStartedAt, setJobStartedAt] = useState<number | null>(null);
+  const [now, setNow] = useState(Date.now());
+  const [exportStatus, setExportStatus] = useState<Record<ExportFormat, ExportStatus>>({ genbank: "idle", fasta: "idle" });
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const latestResult = useMemo(
     () => [...messages].reverse().find((message) => message.result?.annotated_sequence)?.result,
@@ -39,15 +49,29 @@ export default function Page() {
   );
   const annotatedSequence = latestResult?.annotated_sequence ?? null;
   const designId = latestResult?.design_id ?? latestResult?.design?.design_id ?? null;
+  const isBusy = state === "submitting" || state === "polling";
+  const activeClarification = useMemo(
+    () => [...messages].reverse().find((message) => message.kind === "clarification")?.text ?? null,
+    [messages]
+  );
+
+  useEffect(() => {
+    if (!isBusy || jobStartedAt === null) {
+      return;
+    }
+    const interval = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(interval);
+  }, [isBusy, jobStartedAt]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = input.trim();
-    if (!text || state === "submitting" || state === "polling") {
+    if (!text || isBusy) {
       return;
     }
 
     setInput("");
+    setExportError(null);
     setMessages((current) => [
       ...current,
       { id: crypto.randomUUID(), role: "user", kind: "prompt", text }
@@ -55,22 +79,21 @@ export default function Page() {
 
     try {
       setState("submitting");
+      setJobStartedAt(Date.now());
       const currentSessionId = sessionId ?? (await createSession()).session_id;
+      const hasExistingSession = Boolean(sessionId);
       setSessionId(currentSessionId);
-      const response =
-        sessionId && state !== "awaiting_clarification"
-          ? await submitRefinement(currentSessionId, text)
-          : sessionId && state === "awaiting_clarification"
-            ? await submitRefinement(currentSessionId, text)
-            : await submitDesign(currentSessionId, text);
+      const response = hasExistingSession
+        ? await submitRefinement(currentSessionId, text)
+        : await submitDesign(currentSessionId, text);
 
       setActiveJobId(response.job_id);
       setState("polling");
-      const job = await pollJob(response.job_id);
+      const job = await pollJob(response.job_id, { onUpdate: () => setNow(Date.now()) });
       const result = normalizeJobResult(job.result);
       const clarification = clarificationQuestion(result);
       if (job.error || job.status.toLowerCase() === "failed") {
-        throw new ApiError(job.error ?? "Design job failed");
+        throw jobError(job);
       }
       if (clarification) {
         setMessages((current) => [
@@ -86,7 +109,7 @@ export default function Page() {
         setState("ready");
       }
     } catch (error) {
-      const text = error instanceof Error ? error.message : "The design request failed.";
+      const text = friendlyErrorMessage(error);
       setMessages((current) => [
         ...current,
         { id: crypto.randomUUID(), role: "system", kind: "error", text }
@@ -94,35 +117,44 @@ export default function Page() {
       setState("error");
     } finally {
       setActiveJobId(null);
+      setJobStartedAt(null);
     }
   }
 
-  async function handleExport(format: "genbank" | "fasta") {
+  async function handleExport(format: ExportFormat) {
     if (!designId) {
       return;
     }
-    const blob = await exportDesign(designId, format);
-    const suffix = format === "genbank" ? "gb" : "fasta";
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `${designId}.${suffix}`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(url);
+    setExportError(null);
+    setExportStatus((current) => ({ ...current, [format]: "loading" }));
+    try {
+      const blob = await exportDesign(designId, format);
+      const suffix = format === "genbank" ? "gb" : "fasta";
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${designId}.${suffix}`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      setExportStatus((current) => ({ ...current, [format]: "success" }));
+    } catch (error) {
+      setExportStatus((current) => ({ ...current, [format]: "error" }));
+      setExportError(friendlyErrorMessage(error));
+    }
   }
 
   return (
     <main className="min-h-screen bg-panel text-ink">
       <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[minmax(0,1fr)_520px]">
-        <section className="flex min-h-screen flex-col border-r border-line bg-white">
-          <header className="border-b border-line px-6 py-5">
+        <section className="flex min-h-[70vh] flex-col border-r border-line bg-white lg:min-h-screen">
+          <header className="border-b border-line px-4 py-5 sm:px-6">
             <p className="text-sm font-semibold uppercase text-action">PlasmidAI</p>
             <h1 className="mt-1 text-2xl font-semibold">Design workspace</h1>
           </header>
 
-          <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5" aria-live="polite">
+          <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-6" aria-live="polite">
             {messages.map((message) => (
               <article
                 key={message.id}
@@ -140,6 +172,9 @@ export default function Page() {
                   {message.role === "user" ? "Researcher" : message.kind === "clarification" ? "Clarification" : "Design agent"}
                 </div>
                 <p className="whitespace-pre-wrap text-sm leading-6 text-slate-800">{message.text}</p>
+                {message.result?.validation_report ? (
+                  <ValidationReportPanel report={message.result.validation_report} />
+                ) : null}
                 {message.result?.retrieved_templates?.length ? (
                   <ul className="mt-3 space-y-1 text-xs text-slate-600">
                     {message.result.retrieved_templates.slice(0, 3).map((template, index) => (
@@ -150,11 +185,39 @@ export default function Page() {
                     ))}
                   </ul>
                 ) : null}
+                {message.result?.annotated_sequence ? (
+                  <a href="#plasmid-map" className="mt-3 inline-flex text-xs font-semibold text-action">
+                    View plasmid map
+                  </a>
+                ) : null}
               </article>
             ))}
+            {isBusy ? (
+              <JobProgressCard jobId={activeJobId} state={state} elapsedMs={jobStartedAt ? now - jobStartedAt : 0} />
+            ) : null}
           </div>
 
-          <form onSubmit={handleSubmit} className="border-t border-line bg-panel px-6 py-4">
+          <form onSubmit={handleSubmit} className="border-t border-line bg-panel px-4 py-4 sm:px-6">
+            {state === "awaiting_clarification" && activeClarification ? (
+              <div className="mb-3 border border-warning/40 bg-amber-50 p-3 text-sm text-slate-800">
+                <span className="font-semibold text-warning">Clarification needed: </span>
+                {activeClarification}
+              </div>
+            ) : null}
+            {!sessionId && state === "idle" ? (
+              <div className="mb-3 flex flex-wrap gap-2">
+                {EXAMPLE_PROMPTS.map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    onClick={() => setInput(prompt)}
+                    className="border border-line bg-white px-3 py-2 text-left text-xs text-slate-700 hover:border-action hover:text-action"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             <label htmlFor="goal" className="sr-only">
               Experimental goal
             </label>
@@ -163,36 +226,159 @@ export default function Page() {
                 id="goal"
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
-                disabled={state === "submitting" || state === "polling"}
+                disabled={isBusy}
                 rows={3}
                 className="min-h-24 flex-1 resize-none border border-line bg-white px-4 py-3 text-sm shadow-subtle outline-none focus:border-action"
                 placeholder={
                   state === "awaiting_clarification"
                     ? "Answer the clarification question..."
-                    : "Describe the plasmid you want..."
+                    : "Describe the host, marker, payload, promoter, and any constraints..."
                 }
               />
               <button
                 type="submit"
-                disabled={!input.trim() || state === "submitting" || state === "polling"}
+                disabled={!input.trim() || isBusy}
                 className="h-12 border border-action bg-action px-5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-300"
               >
-                {state === "polling" ? "Working" : state === "awaiting_clarification" ? "Answer" : sessionId ? "Refine" : "Design"}
+                {state === "submitting" ? "Starting" : state === "polling" ? "Designing" : state === "awaiting_clarification" ? "Answer" : sessionId ? "Refine" : "Design"}
               </button>
             </div>
-            {activeJobId ? <p className="mt-2 text-xs text-slate-500">Polling job {activeJobId}</p> : null}
+            {activeJobId ? (
+              <p className="mt-2 text-xs text-slate-500">Job {activeJobId} is running. You can keep this page open while results are prepared.</p>
+            ) : null}
           </form>
         </section>
 
-        <aside className="min-h-screen bg-panel px-5 py-5">
-          <div className="sticky top-5 space-y-4">
+        <aside className="min-h-0 bg-panel px-4 py-4 sm:px-5 sm:py-5 lg:min-h-screen">
+          <div className="space-y-4 lg:sticky lg:top-5">
             <PlasmidMapView annotatedSequence={annotatedSequence as AnnotatedSequence | null} />
-            <ExportActions designId={designId} onExport={handleExport} />
+            <ExportActions designId={designId} status={exportStatus} error={exportError} onExport={handleExport} />
           </div>
         </aside>
       </div>
     </main>
   );
+}
+
+function JobProgressCard({ jobId, state, elapsedMs }: { jobId: string | null; state: UiState; elapsedMs: number }) {
+  const elapsedSeconds = Math.max(0, Math.round(elapsedMs / 1000));
+  const label = state === "submitting" ? "Starting design job" : "Designing and validating plasmid";
+  return (
+    <article className="max-w-3xl border border-action/30 bg-action/5 p-4 shadow-subtle">
+      <div className="mb-2 flex items-center justify-between gap-4 text-xs font-semibold uppercase text-action">
+        <span>{label}</span>
+        <span>{elapsedSeconds}s</span>
+      </div>
+      <div className="space-y-2" aria-hidden>
+        <div className="h-2 w-full overflow-hidden bg-white">
+          <div className="h-full w-2/3 animate-pulse bg-action/40" />
+        </div>
+        <div className="grid grid-cols-3 gap-2 text-xs text-slate-600">
+          <span>Retrieving templates</span>
+          <span>Generating candidate</span>
+          <span>Running checks</span>
+        </div>
+      </div>
+      {jobId ? <p className="mt-3 text-xs text-slate-500">Job ID: {jobId}</p> : null}
+    </article>
+  );
+}
+
+function ValidationReportPanel({ report }: { report: ValidationReport }) {
+  const checks = report.checks ?? [];
+  const overall = report.overall ?? (checks.some((check) => normalizeStatus(check.status) === "FAIL") ? "FAIL" : "PASS");
+  return (
+    <section className="mt-4 border border-line bg-panel p-3" aria-label="Validation report">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-xs font-semibold uppercase text-slate-600">Validation report</h3>
+        <StatusBadge status={overall} />
+      </div>
+      {report.generated_by_model_version ? (
+        <p className="mt-1 text-xs text-slate-500">Model: {report.generated_by_model_version}</p>
+      ) : null}
+      {checks.length ? (
+        <div className="mt-3 space-y-2">
+          {checks.map((check, index) => (
+            <div key={`${checkTitle(check)}-${index}`} className="border border-line bg-white p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-medium text-slate-800">{checkTitle(check)}</p>
+                <StatusBadge status={check.status ?? "PASS"} />
+              </div>
+              {check.message ? <p className="mt-1 text-xs leading-5 text-slate-600">{check.message}</p> : null}
+              {regionLabel(check) ? <p className="mt-1 text-xs text-slate-500">Region: {regionLabel(check)}</p> : null}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-3 text-xs text-slate-500">No individual checks were returned.</p>
+      )}
+    </section>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const normalized = normalizeStatus(status);
+  const className =
+    normalized === "PASS"
+      ? "border-action/40 bg-action/10 text-action"
+      : normalized === "WARN"
+        ? "border-warning/40 bg-amber-50 text-warning"
+        : normalized === "FAIL"
+          ? "border-red-300 bg-red-50 text-red-700"
+          : "border-slate-300 bg-slate-50 text-slate-600";
+  return <span className={`border px-2 py-1 text-xs font-semibold ${className}`}>{normalized}</span>;
+}
+
+function normalizeStatus(status: string | undefined): string {
+  return (status ?? "UNKNOWN").toUpperCase();
+}
+
+function checkTitle(check: ValidationCheck): string {
+  return check.name ?? check.check ?? check.category ?? "Validation check";
+}
+
+function regionLabel(check: ValidationCheck): string | null {
+  const explicitRegions = check.regions
+    ?.map((region) => {
+      if (typeof region.start !== "number" || typeof region.end !== "number") {
+        return region.label ?? region.feature ?? null;
+      }
+      return `${region.label ?? region.feature ?? "region"} ${region.start + 1}..${region.end}`;
+    })
+    .filter(Boolean);
+  if (explicitRegions?.length) {
+    return explicitRegions.join(", ");
+  }
+  if (typeof check.start === "number" && typeof check.end === "number") {
+    return `${check.start + 1}..${check.end}`;
+  }
+  return null;
+}
+
+function jobError(job: JobStatusResponse): ApiError {
+  const detail = job.error_detail;
+  if (detail) {
+    return new ApiError(detail.message, {
+      code: detail.code,
+      retryable: detail.retryable,
+      details: detail.details
+    });
+  }
+  return new ApiError(job.error ?? "The design job failed before producing a result.", { code: "job_failed" });
+}
+
+function friendlyErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    const fieldText = error.fieldErrors.length
+      ? ` ${error.fieldErrors.map((field) => `${field.field}: ${field.message}`).join(" ")}`
+      : "";
+    const retryText = error.retryable ? " Try again in a moment." : "";
+    return `${error.message}${fieldText}${retryText}`;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return "The design request failed.";
 }
 
 function normalizeJobResult(result: unknown): JobResultPayload {

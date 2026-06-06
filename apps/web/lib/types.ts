@@ -43,6 +43,31 @@ export type RetrievedTemplate = {
   vector_profile?: string;
 };
 
+export type ValidationRegion = {
+  start?: number;
+  end?: number;
+  label?: string;
+  feature?: string;
+};
+
+export type ValidationCheck = {
+  name?: string;
+  check?: string;
+  category?: string;
+  status?: "PASS" | "WARN" | "FAIL" | string;
+  message?: string;
+  regions?: ValidationRegion[];
+  start?: number;
+  end?: number;
+  details?: unknown;
+};
+
+export type ValidationReport = {
+  overall?: "PASS" | "WARN" | "FAIL" | string;
+  checks?: ValidationCheck[];
+  generated_by_model_version?: string | null;
+};
+
 export type JobResultPayload = {
   design_id?: string;
   action?: string;
@@ -52,7 +77,7 @@ export type JobResultPayload = {
   recommendation_text?: string | null;
   retrieved_templates?: RetrievedTemplate[];
   annotated_sequence?: AnnotatedSequence | null;
-  validation_report?: unknown;
+  validation_report?: ValidationReport | null;
 };
 
 export type SessionResponse = {
@@ -68,4 +93,24 @@ export type JobStatusResponse = {
   status: string;
   result?: JobResultPayload | Record<string, unknown> | null;
   error?: string | null;
+  error_detail?: ApiErrorEnvelope["error"] | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  retry_after_ms?: number | null;
+};
+
+export type ApiFieldError = {
+  field: string;
+  message: string;
+  type: string;
+};
+
+export type ApiErrorEnvelope = {
+  error: {
+    code: string;
+    message: string;
+    retryable?: boolean;
+    field_errors?: ApiFieldError[];
+    details?: Record<string, unknown>;
+  };
 };
