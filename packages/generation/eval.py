@@ -13,7 +13,7 @@ from packages.core.schemas import AnnotatedSequence, DesignSpec, GeneratedSequen
 from packages.core.schemas.models import normalize_dna
 from packages.core.vocabularies import MARKER_TERMS, PROMOTER_TYPE_TERMS, TAG_TERMS, contains_term, normalize_text, normalize_to_controlled
 from packages.data_pipeline.ingest.genbank import env, load_dotenv
-from packages.generation.generator import FakeGenerator, SequenceGenerator, ensure_generated_sequence_count
+from packages.generation.generator import CarbonGenerator, FakeGenerator, SequenceGenerator, ensure_generated_sequence_count
 from packages.generation.spike import (
     ConstraintEngine,
     S3TemplateReannotator,
@@ -44,6 +44,8 @@ class GenerationEvalConfig:
     n: int = 1
     local_files_only: bool = False
     fake_embedder: bool = False
+    generator: str = "fake"
+    carbon_max_new_tokens: int = 4
     database_url: str = "postgresql://plasmid:plasmid@localhost:5432/plasmid_design"
 
     @classmethod
@@ -56,6 +58,8 @@ class GenerationEvalConfig:
         n: int,
         local_files_only: bool,
         fake_embedder: bool,
+        generator: str,
+        carbon_max_new_tokens: int,
     ) -> GenerationEvalConfig:
         dotenv = load_dotenv(Path(".env"))
         return cls(
@@ -65,6 +69,8 @@ class GenerationEvalConfig:
             n=n,
             local_files_only=local_files_only,
             fake_embedder=fake_embedder,
+            generator=generator,
+            carbon_max_new_tokens=carbon_max_new_tokens,
             database_url=env("DATABASE_URL", cls.database_url, dotenv),
         )
 
@@ -197,6 +203,7 @@ def run_generation_eval(config: GenerationEvalConfig) -> dict[str, Any]:
         "eval_version": EVAL_VERSION,
         "generated_at": datetime.now(UTC).isoformat(),
         "gold_path": str(config.gold_path),
+        "generator_mode": config.generator,
         "generator_version": harness.generator.model_version,
         "constraint_engine_mode": "stub",
         "constraint_engine_version": "stub-constraint-engine-v0",
@@ -222,13 +229,24 @@ def build_default_harness(config: GenerationEvalConfig) -> GenerationEvalHarness
     repository = PostgresRetrievalRepository(config.database_url)
     return GenerationEvalHarness(
         retriever=HybridRetriever(vector_index=vector_index, embedder=embedder, repository=repository),
-        generator=FakeGenerator(),
+        generator=build_sequence_generator(config),
         reannotator=S3TemplateReannotator(S3TextObjectStore.from_env()),
         constraint_engine=StubConstraintEngine(),
         novelty_sequences=load_corpus_sequences(config.database_url),
         top_k=config.top_k,
         n=config.n,
     )
+
+
+def build_sequence_generator(config: GenerationEvalConfig) -> SequenceGenerator:
+    if config.generator == "fake":
+        return FakeGenerator()
+    if config.generator == "carbon":
+        return CarbonGenerator(
+            max_new_tokens=config.carbon_max_new_tokens,
+            local_files_only=config.local_files_only,
+        )
+    raise ValueError(f"unsupported generation eval generator: {config.generator}")
 
 
 def load_gold_cases(path: Path) -> list[GenerationGoldCase]:
@@ -368,6 +386,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         "",
         f"- Generated at: `{report['generated_at']}`",
         f"- Eval version: `{report['eval_version']}`",
+        f"- Generator mode: `{report['generator_mode']}`",
         f"- Generator: `{report['generator_version']}`",
         f"- Constraint engine mode: `{report['constraint_engine_mode']}`",
         f"- Gate eligible: `{report['gate_eligible']}`",
@@ -382,7 +401,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- Phase 2 gate proxy rate: `{metrics['phase2_gate_proxy_rate']:.3f}`",
         f"- Strict generation success rate: `{metrics['strict_generation_success_rate']:.3f}`",
         "",
-        "FakeGenerator returns retrieved templates verbatim. This report verifies evaluation wiring; novelty failure is expected and this run is not Phase 2 gate-eligible.",
+        report_summary_note(report),
         "",
         "## Cases",
     ]
@@ -408,6 +427,12 @@ def render_case_markdown(result: dict[str, Any]) -> list[str]:
             f"novel=`{candidate['novelty']['novel']}`, proxy_passed=`{candidate['phase2_gate_proxy_passed']}`"
         )
     return lines
+
+
+def report_summary_note(report: dict[str, Any]) -> str:
+    if report.get("generator_mode") == "fake":
+        return "FakeGenerator returns retrieved templates verbatim. This report verifies evaluation wiring; novelty failure is expected and this run is not Phase 2 gate-eligible."
+    return "CarbonGenerator uses a pretrained CPU Carbon-500M spike path without fine-tuning. This report verifies real-model plumbing only; the stub constraint engine means the run is not Phase 2 gate-eligible."
 
 
 def template_summary(templates: list[RetrievedPlasmid]) -> list[dict[str, Any]]:
@@ -454,6 +479,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--top-k", type=int, default=1)
     parser.add_argument("--n", type=int, default=1)
+    parser.add_argument("--generator", choices=["fake", "carbon"], default="fake")
+    parser.add_argument("--carbon-max-new-tokens", type=int, default=4)
     parser.add_argument("--local-files-only", action="store_true")
     parser.add_argument("--fake-embedder", action="store_true")
     return parser
@@ -468,6 +495,8 @@ def main(argv: list[str] | None = None) -> int:
         n=args.n,
         local_files_only=args.local_files_only,
         fake_embedder=args.fake_embedder,
+        generator=args.generator,
+        carbon_max_new_tokens=args.carbon_max_new_tokens,
     )
     report = run_generation_eval(config)
     print(json.dumps({"metrics": report["metrics"], "output_dir": str(config.output_dir)}, indent=2))

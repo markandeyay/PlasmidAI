@@ -19,6 +19,8 @@ GENERATION_OUT ?= data/eval/generation
 GENERATION_TOP_K ?= 1
 VALIDATION_GOLD ?= data/eval/validation/validation_gold.jsonl
 VALIDATION_OUT ?= data/eval/validation
+GENERATION_GENERATOR ?= fake
+CARBON_MAX_NEW_TOKENS ?= 4
 
 setup:
 	$(PYTHON) -m pip install -r requirements.txt
@@ -69,7 +71,7 @@ build-training-data:
 	$(PYTHON) -m packages.generation.training_data --output-root $(TRAINING_OUT) $(if $(TRAINING_SNAPSHOT),--snapshot-id $(TRAINING_SNAPSHOT),)
 
 eval-generation:
-	$(PYTHON) -m packages.generation.eval --gold-path $(GENERATION_GOLD) --output-dir $(GENERATION_OUT) --top-k $(GENERATION_TOP_K) $(if $(filter 1 true TRUE yes YES,$(FAKE)),--fake-embedder,) $(if $(filter offline OFFLINE,$(MODE)),--local-files-only,)
+	$(PYTHON) -m packages.generation.eval --gold-path $(GENERATION_GOLD) --output-dir $(GENERATION_OUT) --top-k $(GENERATION_TOP_K) --generator $(GENERATION_GENERATOR) --carbon-max-new-tokens $(CARBON_MAX_NEW_TOKENS) $(if $(filter 1 true TRUE yes YES,$(FAKE)),--fake-embedder,) $(if $(filter offline OFFLINE,$(MODE)),--local-files-only,)
 
 validate-sample:
 	$(if $(filter gold GOLD,$(MODE)),$(PYTHON) -m packages.validation.eval --gold-path $(VALIDATION_GOLD) --output-dir $(VALIDATION_OUT),$(PYTHON) -m packages.validation.engine $(if $(N),--limit $(N),))
