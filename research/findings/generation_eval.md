@@ -287,3 +287,12 @@ Non-blocking policy questions to resolve before a real Phase 2 gate claim:
 - Should reverse-complement circular matches count as verbatim copies for plasmid novelty? This spec recommends yes for conservative copy detection.
 - Which profiles belong in the first formal generation gold set once parser and corpus support are expanded?
 - Which synthesis provider profile should be the default once Phase 3 checks are available?
+
+## Current Generation Baselines
+
+Current reports: `data/eval/generation/2026-06-05-230925-generation-eval.{md,json}` for `FakeGenerator` and `data/eval/generation/2026-06-05-230759-generation-eval.{md,json}` for Carbon-500M.
+
+- `FakeGenerator`: strict generation success `0.000`; novelty `0.000`.
+- Carbon-500M pretrained CPU inference: strict generation success `0.462`; novelty `1.000`.
+
+The Carbon result is no-fine-tuning CPU inference only. It is a current-generation plumbing baseline, not a Phase 2 gate claim.
