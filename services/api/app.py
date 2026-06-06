@@ -2,6 +2,9 @@ from __future__ import annotations
 
 """FastAPI application scaffold for session-driven design workflows."""
 
+import logging
+import time
+from uuid import uuid4
 from datetime import datetime
 from typing import Any, Literal
 
@@ -21,6 +24,14 @@ from packages.application import (
 )
 from packages.application.designs import DesignStore, InMemoryDesignStore
 from packages.application.exports import export_annotated_sequence
+from packages.application.observability import (
+    MetricsCollector,
+    configure_logging,
+    get_correlation_id,
+    log_event,
+    reset_correlation_id,
+    set_correlation_id,
+)
 
 
 MAX_PROMPT_LENGTH = 2_000
@@ -117,9 +128,12 @@ def create_app(
 ) -> FastAPI:
     """Build the FastAPI app with injectable collaborators for tests."""
 
+    configure_logging()
+    logger = logging.getLogger("pmr.api")
     store = session_store or InMemorySessionStore()
     queue = job_queue or InMemoryJobQueue()
     designs = design_store or InMemoryDesignStore()
+    metrics = MetricsCollector()
 
     app = FastAPI(title="PMR API", version="0.1.0")
 
@@ -183,6 +197,40 @@ def create_app(
     app.state.session_store = store
     app.state.job_queue = queue
     app.state.design_store = designs
+    app.state.metrics = metrics
+
+    @app.middleware("http")
+    async def correlation_and_metrics_middleware(request: Request, call_next: Any) -> Response:
+        correlation_id = request.headers.get("X-Correlation-ID") or str(uuid4())
+        token = set_correlation_id(correlation_id)
+        started_at = time.perf_counter()
+        try:
+            response = await call_next(request)
+        except Exception:
+            duration_ms = (time.perf_counter() - started_at) * 1000
+            metrics.record_request(latency_ms=duration_ms, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            log_event(
+                logger,
+                "api_request_failed",
+                method=request.method,
+                path=request.url.path,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                duration_ms=round(duration_ms, 3),
+            )
+            raise
+        duration_ms = (time.perf_counter() - started_at) * 1000
+        response.headers["X-Correlation-ID"] = correlation_id
+        metrics.record_request(latency_ms=duration_ms, status_code=response.status_code)
+        log_event(
+            logger,
+            "api_request_completed",
+            method=request.method,
+            path=request.url.path,
+            status_code=response.status_code,
+            duration_ms=round(duration_ms, 3),
+        )
+        reset_correlation_id(token)
+        return response
 
     @app.post(
         "/v1/sessions",
@@ -193,6 +241,12 @@ def create_app(
         # TODO: enforce bearer auth, per-account rate limits, and usage metering.
         session = store.create_session()
         return CreateSessionResponse(session_id=session.session_id)
+
+    @app.get("/v1/metrics")
+    def metrics_snapshot() -> dict[str, Any]:
+        """Return lightweight in-process metrics for local observability."""
+
+        return metrics.snapshot()
 
     @app.post(
         "/v1/sessions/{session_id}/design",
@@ -207,8 +261,15 @@ def create_app(
         if session is None:
             raise _http_error(status.HTTP_404_NOT_FOUND, "session_not_found", "Session not found.")
         turn = _add_turn(store, session_id=session_id, action="design", text=request.goal)
-        job_id = _enqueue(queue, session=store.get_session(session_id) or session, action="design", text=request.goal)
+        job_id = _enqueue(
+            queue,
+            session=store.get_session(session_id) or session,
+            action="design",
+            text=request.goal,
+            correlation_id=get_correlation_id(),
+        )
         _attach_job_id(store, session_id=session_id, turn=turn, job_id=job_id)
+        log_event(logger, "api_job_queued", session_id=session_id, job_id=job_id, action="design")
         return JobAcceptedResponse(job_id=job_id)
 
     @app.post(
@@ -224,8 +285,15 @@ def create_app(
         if session is None:
             raise _http_error(status.HTTP_404_NOT_FOUND, "session_not_found", "Session not found.")
         turn = _add_turn(store, session_id=session_id, action="refine", text=request.instruction)
-        job_id = _enqueue(queue, session=store.get_session(session_id) or session, action="refine", text=request.instruction)
+        job_id = _enqueue(
+            queue,
+            session=store.get_session(session_id) or session,
+            action="refine",
+            text=request.instruction,
+            correlation_id=get_correlation_id(),
+        )
         _attach_job_id(store, session_id=session_id, turn=turn, job_id=job_id)
+        log_event(logger, "api_job_queued", session_id=session_id, job_id=job_id, action="refine")
         return JobAcceptedResponse(job_id=job_id)
 
     @app.get("/v1/jobs/{job_id}", response_model=JobStatusResponse)
@@ -277,13 +345,13 @@ def create_app(
     return app
 
 
-def _enqueue(queue: Any, *, session: Any, action: str, text: str) -> str:
+def _enqueue(queue: Any, *, session: Any, action: str, text: str, correlation_id: str | None = None) -> str:
     if hasattr(queue, "enqueue"):
         context = [turn.user_text if hasattr(turn, "user_text") else turn.get("content", "") for turn in session.turns]
         record = queue.enqueue(
             session_id=session.session_id,
             action=action,
-            payload={action: text, "text": text, "context": context},
+            payload={action: text, "text": text, "context": context, "correlation_id": correlation_id},
         )
         return getattr(record, "job_id", str(record))
     if action == "design" and hasattr(queue, "enqueue_design"):
