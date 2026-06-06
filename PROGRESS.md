@@ -1,14 +1,14 @@
 ﻿# PROGRESS â€” Build State (mutable)
 
 ## AT-A-GLANCE (update every session)
-- **Current Phase:** Consolidated `master`: Phase 3 validation and Phase 2 real-generation CPU spike merged
-- **Next Concrete Task:** Await human confirmation and next wave prompt; do not start new work until authorized.
+- **Current Phase:** Phase 3 hardening on `phase3-hardening`
+- **Next Concrete Task:** Build curated validation gold sets and optimize repeat/instability validation performance without touching frontend/API/retrieval/corpus work.
 - **Overall completion estimate:** 20%
 - **Last session date:** 2026-06-05
-- **Codebase known-good?** (tests passing) Yes: final consolidated verification passed `286 passed, 1 skipped, 2 warnings` on 2026-06-05 with `C:\Program Files (x86)\GnuWin32\bin\make.exe test`
+- **Codebase known-good?** (tests passing) Yes: final consolidated `master` verification passed `286 passed, 1 skipped, 2 warnings` on 2026-06-05 with `C:\Program Files (x86)\GnuWin32\bin\make.exe test`; `phase3-hardening` started from that state.
 
 ## RESUME HERE (only if mid-task)
-RESUME HERE: Merge consolidation is complete on local `master`; do not push unless explicitly authorized. Branch integrity was verified before merging: `phase3-validation` contained only validation commits and `phase2-real-generation` contained only real-generation/corpus-quality commits. `phase3-validation` landed deterministic checks for restriction-site conflicts, repeat/instability patterns, codon-usage scoring, and regulatory compatibility under `packages/validation/`, the aggregate `ConstraintEngine`, `make validate-sample`, `make generate-validation-gold`, and `make validate-sample MODE=gold`. The default Phase 2 spike pipeline now uses the deterministic `ConstraintEngine`; explicit `StubConstraintEngine` remains available for fake-baseline tests. Synthetic deterministic gold set `data/eval/validation/validation_gold.jsonl` has 100 cases and baseline `data/eval/validation/2026-06-05-041016-validation-baseline.{json,md}` scores accuracy `1.000`, but the formal Phase 3 gate remains open pending a curated corpus/provider-backed known-good/known-bad set and repeat-detection performance optimization. `phase2-real-generation` landed Carbon-500M CPU inference behind `SequenceGenerator`, expanded generation gold set, Carbon-vs-fake comparison reports, RefSeq unknown-record audit, and classifier refinements. Corpus state is 256 records, 141 complete annotations, and 99 unknown after audit. Retrieval baseline holds at top-1 `0.900`, top-5 `1.000`, MRR `0.938`. Phase 2 remains not gate-eligible because this is CPU plumbing only without fine-tuning, GPU benchmarking, or biological validation.
+RESUME HERE: `phase3-hardening` is active from consolidated `master`. Scope is limited to Phase 3 curated validation gold sets and repeat/instability performance optimization; avoid `apps/web`, FastAPI handler layer, retrieval/classifier/corpus-ingestion work, and observability. Initial corpus probe found 256 plasmids with 141 complete annotations (11 curated, 130 GenBank), which is the candidate pool for curated known-good validation examples. Phase 3 formal gate remains open until the curated known-good/known-bad set is evaluated at >=95% accuracy.
 
 ## KNOWN ISSUES / BLOCKERS
 - `phase0-corpus-expansion`, `phase2-prep`, `phase2-spike`, `phase0-retrieval-robustness`, `phase4-foundation`, `phase2-generation-prep`, `phase4-frontend`, `phase3-validation`, and `phase2-real-generation` are merged locally into `master`; the consolidated history has not been pushed to GitHub.

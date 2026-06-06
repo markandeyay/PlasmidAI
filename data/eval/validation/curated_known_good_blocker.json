@@ -1,0 +1,13 @@
+{
+  "defensible_known_good_count": 31,
+  "output_path": "data\\eval\\validation\\curated_known_good.jsonl",
+  "reason": "Fewer than 50 complete annotated local corpus records produced PASS or only justified WARN under the Phase 3 ConstraintEngine.",
+  "required_count": 50,
+  "screened": {
+    "complete_payload": 141,
+    "validation_FAIL": 110,
+    "validation_PASS": 15,
+    "validation_WARN": 16
+  },
+  "status": "blocked_shortfall"
+}
