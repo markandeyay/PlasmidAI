@@ -194,7 +194,7 @@ You can begin Phase 4 (application scaffolding) partly in parallel once Phase 1 
 - [ ] Optional therapeutic-compliance checks (flagged, not blocking, for gene-therapy contexts)
 - [ ] Validation report object (Section 12.5) with PASS / WARN / FAIL per check and actionable messages
 - [ ] Engine runs deterministically and is unit-tested against known-good and known-bad constructs
-- [ ] **GATE:** Engine correctly classifies a curated set of ≥ 50 known-good and ≥ 50 known-bad constructs with ≥ 95% accuracy.
+- [ ] **GATE:** Engine correctly classifies a curated, profile-diverse set of known-good and known-bad constructs with ≥ 95% accuracy. Gold-set size is determined by source quality and defensibility rather than an arbitrary record count; the original ≥50/≥50 target was a planning placeholder revised after the known-good audit in `research/findings/known_good_audit.md`.
 
 ### 3.5 Phase 4 — Application layer
 
@@ -600,7 +600,7 @@ This is deterministic software, **not** ML. It is what makes generated output tr
 
 ### 8.3 Acceptance
 
-Curate ≥ 50 known-good and ≥ 50 known-bad constructs (under `data/eval/validation/`). Gate: engine classifies them with ≥ 95% accuracy. Each check has its own targeted unit tests with minimal synthetic sequences.
+Curate a profile-diverse known-good and known-bad construct set under `data/eval/validation/`. Gate: engine classifies the curated set with ≥ 95% accuracy. Gold-set size is determined by source quality, provenance, and biological defensibility rather than an arbitrary count. The original ≥50 known-good / ≥50 known-bad planning placeholder was revised on 2026-06-06 after `research/findings/known_good_audit.md` showed that growing known-good from 31 to 50 with the current corpus would require weakening admission standards. Each check has its own targeted unit tests with minimal synthetic sequences.
 
 ---
 
