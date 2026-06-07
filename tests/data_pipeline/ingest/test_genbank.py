@@ -3,9 +3,11 @@ from __future__ import annotations
 from datetime import timedelta
 from pathlib import Path
 from typing import Iterable
+from urllib.error import HTTPError
 
 from packages.core.schemas import Plasmid
 from packages.data_pipeline.ingest.genbank import (
+    EntrezNcbiClient,
     EXPANSION_QUERY,
     GenbankMappingError,
     GenbankIngestionConfig,
@@ -194,6 +196,74 @@ def test_ingestion_fetches_stale_or_missing_cache_before_parsing() -> None:
     assert result.records_seen == 1
     assert result.records_upserted == 1
     assert repository.plasmids["genbank:MIN0001.1"].raw_ref == key
+
+
+def test_ingestion_refetches_corrupted_fresh_cache_once() -> None:
+    raw = load_fixture("minimal.gb")
+    key = raw_cache_key("MIN0001.1")
+    client = FakeNCBIClient({"MIN0001.1": raw})
+    store = FakeObjectStore({key: "not genbank"}, fresh=True)
+    repository = FakeRepository()
+    config = GenbankIngestionConfig(mode="dev", limit=1)
+
+    result = run_genbank_ingestion(config, client=client, object_store=store, repository=repository)
+
+    assert client.fetches == ["MIN0001.1"]
+    assert store.puts == [key]
+    assert result.records_upserted == 1
+    assert result.errors == []
+    assert repository.plasmids["genbank:MIN0001.1"].sequence == "ATGCGTACGTAGCTAGCTAAGCAT"
+
+
+def test_ingestion_rejects_cached_blob_for_different_accession() -> None:
+    raw = load_fixture("minimal.gb")
+    key = raw_cache_key("OTHER0001.1")
+    client = FakeNCBIClient({"OTHER0001.1": raw})
+    store = FakeObjectStore({key: raw}, fresh=True)
+    repository = FakeRepository()
+    config = GenbankIngestionConfig(mode="bulk", limit=1)
+
+    result = run_genbank_ingestion(config, client=client, object_store=store, repository=repository)
+
+    assert client.fetches == ["OTHER0001.1"]
+    assert result.records_upserted == 0
+    assert result.errors == [
+        {
+            "code": "mapping_error",
+            "message": "GenBank record accession does not match requested accession",
+            "accession": "OTHER0001.1",
+            "details": {"expected_accession": "OTHER0001.1", "record_accession": "MIN0001.1"},
+        }
+    ]
+
+
+def test_entrez_retry_honors_retry_after_for_rate_limit(monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    sleeps: list[float] = []
+    attempts = 0
+    client = EntrezNcbiClient(GenbankIngestionConfig(max_retries=1, requests_per_second=1000.0))
+    client.rate_limiter.wait = lambda: None  # type: ignore[method-assign]
+
+    class SuccessfulHandle:
+        def __enter__(self) -> SuccessfulHandle:
+            return self
+
+        def __exit__(self, *args) -> None:  # type: ignore[no-untyped-def]
+            return None
+
+        def read(self) -> str:
+            return "ok"
+
+    def operation() -> SuccessfulHandle:
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise HTTPError("https://example.test", 429, "Too Many Requests", {"Retry-After": "7"}, None)
+        return SuccessfulHandle()
+
+    monkeypatch.setattr("packages.data_pipeline.ingest.genbank.time.sleep", sleeps.append)
+
+    assert client._with_retries(lambda handle: handle.read(), operation) == "ok"
+    assert sleeps == [7.0]
 
 
 def test_expansion_mode_uses_component_gated_query() -> None:

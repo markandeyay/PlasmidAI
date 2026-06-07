@@ -7,6 +7,7 @@ import re
 import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
+from email.utils import parsedate_to_datetime
 from io import StringIO
 from pathlib import Path
 from typing import Any, Iterable, Protocol
@@ -68,6 +69,9 @@ VALID_MODES = ("dev", "bulk", "refresh", "expansion", "refseq_plasmid_broad")
 IUPAC_DNA_ALPHABET = frozenset("ACGTRYSWKMBDHVN")
 CANONICAL_DNA_ALPHABET = frozenset("ACGT")
 PLACEHOLDER_EMAILS = {"", "researcher@example.com", "user@example.com", "your.email@example.com"}
+RETRYABLE_HTTP_STATUS_CODES = {429, 500, 502, 503, 504}
+
+
 class GenbankIngestionError(Exception):
     code = "genbank_ingestion_error"
 
@@ -282,7 +286,14 @@ class EntrezNcbiClient:
             try:
                 with operation() as handle:
                     return reader(handle)
-            except (HTTPError, URLError, RuntimeError, OSError) as exc:
+            except HTTPError as exc:
+                last_error = str(exc)
+                if attempt >= self.max_retries:
+                    break
+                if exc.code not in RETRYABLE_HTTP_STATUS_CODES:
+                    break
+                time.sleep(retry_delay_seconds(exc, fallback=self.backoff_seconds * (2**attempt)))
+            except (URLError, RuntimeError, OSError) as exc:
                 last_error = str(exc)
                 if attempt >= self.max_retries:
                     break
@@ -478,11 +489,20 @@ def run_genbank_ingestion(
             result.records_seen += 1
             key = raw_cache_key(accession, mode=config.mode)
             try:
+                fetched_cache = False
                 if should_fetch_cache(config, object_store, key):
                     raw = client.fetch_genbank(accession)
                     object_store.put_text(key, raw)
+                    fetched_cache = True
                 cached_raw = object_store.get_text(key)
-                plasmid = map_genbank_text_to_plasmid(cached_raw, raw_ref=key)
+                try:
+                    plasmid = map_genbank_text_to_plasmid(cached_raw, raw_ref=key, expected_accession=accession)
+                except GenbankMappingError:
+                    if fetched_cache:
+                        raise
+                    raw = client.fetch_genbank(accession)
+                    object_store.put_text(key, raw)
+                    plasmid = map_genbank_text_to_plasmid(raw, raw_ref=key, expected_accession=accession)
                 repository.upsert_plasmid(plasmid)
                 result.records_upserted += 1
             except GenbankIngestionError as exc:
@@ -532,7 +552,7 @@ def raw_cache_key(accession: str, *, mode: str = "dev") -> str:
     return f"raw/genbank/{safe_accession}.gb"
 
 
-def map_genbank_text_to_plasmid(raw_text: str, *, raw_ref: str) -> Plasmid:
+def map_genbank_text_to_plasmid(raw_text: str, *, raw_ref: str, expected_accession: str | None = None) -> Plasmid:
     validated_sequence = validate_raw_genbank_sequence(raw_text)
     try:
         record = SeqIO.read(StringIO(raw_text), "genbank")
@@ -560,6 +580,11 @@ def map_genbank_text_to_plasmid(raw_text: str, *, raw_ref: str) -> Plasmid:
     accession = record.id or record.name
     if not accession:
         raise GenbankMappingError("GenBank record is missing accession")
+    if expected_accession is not None and accession != expected_accession:
+        raise GenbankMappingError(
+            "GenBank record accession does not match requested accession",
+            details={"expected_accession": expected_accession, "record_accession": accession},
+        )
 
     organism = extract_organism(record)
     vector_type = "plasmid" if has_plasmid_signal(record) else None
@@ -613,6 +638,23 @@ def extract_locus_length(raw_text: str) -> int | None:
         match = re.search(r"\s(\d+)\s+bp\s", line)
         return int(match.group(1)) if match else None
     return None
+
+
+def retry_delay_seconds(error: HTTPError, *, fallback: float) -> float:
+    retry_after = error.headers.get("Retry-After") if error.headers else None
+    if not retry_after:
+        return fallback
+    try:
+        return max(0.0, float(retry_after))
+    except ValueError:
+        pass
+    try:
+        parsed = parsedate_to_datetime(retry_after)
+    except (TypeError, ValueError):
+        return fallback
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=UTC)
+    return max(0.0, (parsed - datetime.now(UTC)).total_seconds())
 
 
 def extract_origin_sequence(raw_text: str) -> str | None:
