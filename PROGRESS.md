@@ -1,14 +1,14 @@
 ﻿# PROGRESS â€” Build State (mutable)
 
 ## AT-A-GLANCE (update every session)
-- **Current Phase:** `phase3-gate` branch: formal Phase 3 gate attempt blocked on curated known-good defensibility
-- **Next Concrete Task:** Human review of known-good shortfall and validation policy; do not claim Phase 3 gate until 50 defensible known-good records exist or the gate policy is changed.
+- **Current Phase:** `phase3-gate` branch: formal Phase 3 gate closed under approved curated-quality policy
+- **Next Concrete Task:** Merge `phase3-gate` and `phase2-finetune-prep` into `master`, then run full verification and push consolidated `master`.
 - **Overall completion estimate:** 20%
 - **Last session date:** 2026-06-06
 - **Codebase known-good?** (tests passing) Yes: `phase3-gate` verification passed `293 passed, 1 skipped, 8 warnings` on 2026-06-06 with `COMPOSE_PROJECT_NAME=pmr` and `C:\Program Files (x86)\GnuWin32\bin\make.exe test`
 
 ## RESUME HERE (only if mid-task)
-RESUME HERE: `phase3-gate` is open from local `master` and must not be pushed unless explicitly authorized. This branch has committed `research/findings/known_good_audit.md` and repeat-validation edge-case coverage. GATE-2 could not identify 19+ additional defensible curated known-good records; `data/eval/validation/curated_known_good.jsonl` remains at 31 entries while known-bad remains at 52. Do not claim Phase 3 gate. Next decision needed: whether to keep Phase 3 open until more provider/published known-good records are available, accept a temporary proxy, or revise the known-good admission policy. Performance follow-up found the repeat checker itself is not the current 300-record scan bottleneck; GenBank parsing/reference matching dominates the validate-sample path.
+RESUME HERE: `phase3-gate` formally closes the Phase 3 gate under the approved curated-quality policy. The operational curated gold set is 31 known-good and 52 known-bad records; `data/eval/validation/2026-06-07-033018-validation-baseline.{json,md}` reports 83/83 correct, accuracy `1.000`, and per-check accuracy `1.000`. `SYSTEM_DESIGN.md` was updated to replace the arbitrary 50/50 placeholder with a profile-diverse curated-gold policy, and `research/findings/known_good_audit.md` records the decision. Next: merge `phase3-gate` and `phase2-finetune-prep` into `master`, resolve `PROGRESS.md` chronologically, run full tests, push only consolidated `master`, and delete merged review branches locally/remotely.
 
 ## WORKTREE ASSIGNMENTS
 - **Codex main worktree:** `C:\Users\yalam\PMR`
@@ -17,7 +17,7 @@ RESUME HERE: `phase3-gate` is open from local `master` and must not be pushed un
 
 ## KNOWN ISSUES / BLOCKERS
 - `phase0-corpus-expansion`, `phase2-prep`, `phase2-spike`, `phase0-retrieval-robustness`, `phase4-foundation`, `phase2-generation-prep`, `phase4-frontend`, `phase3-validation`, `phase2-real-generation`, `phase3-hardening`, and `phase4-polish` are merged locally into `master`; the consolidated history has not been pushed to GitHub.
-- Phase 3 formal gate remains open: the synthetic deterministic 100-case baseline scores 100% accuracy, and curated known-bad now has 52 cases, but curated known-good has only 31 defensible corpus/provider-backed records versus the 50-record threshold. A 2026-06-06 `phase3-gate` attempt confirmed this is still a defensibility blocker, not just unfinished bookkeeping.
+- Phase 3 gate is met under the human-approved curated-quality policy: the operational gold set has 31 defensible known-good and 52 known-bad records, and `data/eval/validation/2026-06-07-033018-validation-baseline.{json,md}` reports accuracy `1.000` with zero misclassifications.
 - Phase 3 performance follow-up: repeat-detection edge-case coverage was added, but profiling showed the 300-record `validate-sample` timeout is dominated by GenBank parsing/reference matching before validation, not by the repeat checker itself. Parser/reference-match optimization is a separate follow-up and should not be treated as a Phase 3 rule-engine defect.
 - Carbon-500M CPU generation is a real-model plumbing spike only. It is not fine-tuned, not GPU-benchmarked, not biologically validated, and not Phase 2 gate-eligible.
 - DNABERT-2 fallback smoke is blocked by missing `einops`; no dependency was installed without approval.
@@ -68,10 +68,7 @@ RESUME HERE: `phase3-gate` is open from local `master` and must not be pushed un
 - After human review/merge of `phase2-spike`, should the next approved slice stay offline with a deterministic Phase 3 checker, or separately authorize a budgeted Carbon-500M load smoke test?
 - Before any Phase 2 gate attempt, should the project build a minimum deterministic Phase 3 checker and define a research-only acquisition milestone below the formal 50,000-record Phase 0 gate?
 - Which managed-GPU provider, hardware ceiling, and budget should apply to any authorized Phase 2 benchmark?
-- Should the deterministic synthetic 100-case validation gold set be accepted as a temporary Phase 3 gate proxy, or should Phase 3 remain open until 50 corpus/provider-backed known-good constructs are added?
 - Should repeat/instability validation ignore or downgrade biologically expected repeats in natural plasmids, or should synthesis readiness treat those as blocking even when the source plasmid is naturally stable?
-- For curated known-good validation records, should records with non-blocking WARN reports remain admissible as known-good when provenance is strong, or should known-good require strict PASS across all checks?
-- Should missing downstream terminator evidence remain advisory for source vectors, or blocking for any expression-profile known-good candidate?
 - What auth/session-ownership model should Phase 4 use once authentication is in scope: user-owned sessions, organization-owned sessions, or project/workspace-owned sessions?
 - What retention policy should apply to sessions, turns, jobs, and generated design artifacts?
 - Should long-running design jobs remain polling-only for MVP, or should Phase 4 add server-sent events or WebSocket streaming?
@@ -82,7 +79,7 @@ RESUME HERE: `phase3-gate` is open from local `master` and must not be pushed un
 - [ ] Phase 0 gate met (see SYSTEM_DESIGN 3.1)
 - [x] Phase 1 gate met
 - [ ] Phase 2 gate met
-- [ ] Phase 3 gate met
+- [x] Phase 3 gate met
 - [ ] Phase 4 gate met
 - [ ] Phase 5 gate met
 
@@ -143,7 +140,7 @@ RESUME HERE: `phase3-gate` is open from local `master` and must not be pushed un
 - [ ] Optional therapeutic-compliance checks (flagged, not blocking, for gene-therapy contexts)
 - [x] Validation report object (Section 12.5) with PASS / WARN / FAIL per check and actionable messages
 - [x] Engine runs deterministically and is unit-tested against known-good and known-bad constructs
-- [ ] **GATE:** Engine correctly classifies a curated set of â‰¥ 50 known-good and â‰¥ 50 known-bad constructs with â‰¥ 95% accuracy.
+- [x] **GATE:** Engine correctly classifies a curated, profile-diverse known-good/known-bad set with â‰¥ 95% accuracy. Verified on 2026-06-07 with 31 known-good and 52 known-bad records: 83/83 correct, accuracy `1.000`, per-check accuracy `1.000`; see `data/eval/validation/2026-06-07-033018-validation-baseline.{json,md}` and `research/findings/known_good_audit.md`.
 
 ### 3.5 Phase 4 â€” Application layer
 
@@ -166,6 +163,7 @@ RESUME HERE: `phase3-gate` is open from local `master` and must not be pushed un
 - [ ] **GATE:** A full loop runs automatically â€” a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-06-07 - Closed the formal Phase 3 gate on `phase3-gate` under the approved curated-quality policy. Updated `SYSTEM_DESIGN.md` to replace the arbitrary 50/50 planning placeholder with a profile-diverse curated gold-set criterion, appended the policy decision to `research/findings/known_good_audit.md`, added curated-gold evaluation support, and generated `data/eval/validation/2026-06-07-033018-validation-baseline.{json,md}`. Result: 31 known-good + 52 known-bad, 83/83 correct, accuracy `1.000`, per-check accuracy `1.000`, zero misclassifications.
 - 2026-06-06 - Started `phase3-gate` from local `master` to attempt formal Phase 3 gate closure. Audited the curated known-good shortfall in `research/findings/known_good_audit.md`: 31 records are defensible; deterministic `FAIL` reports remain absolute exclusions; some `WARN` cases may be admissible only with explicit policy. GATE-2 could not identify 19+ additional defensible known-good records and made no file changes, so the formal Phase 3 gate remains open. Added repeat-validation edge-case tests; performance follow-up found the current 300-record scan bottleneck is GenBank parsing/reference matching rather than repeat detection. Verification passed with `COMPOSE_PROJECT_NAME=pmr` and `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 293 passed, 1 skipped, 8 warnings. Stopping for human review rather than padding the gold set.
 - 2026-06-06 - Consolidated local `master`: merged `phase3-hardening` first, then `phase4-polish`. Phase 3 hardening added 52 curated known-bad validation cases, 31 defensible curated known-good records, and explicit shortfall documentation; formal Phase 3 gate remains open until known-good reaches 50 entries and repeat detection is optimized. Phase 4 polish added the UX audit, API robustness audit, structured API error handling, frontend workflow refinements, and observability scaffolding. Worktree workflow is documented: Codex at `C:\Users\yalam\PMR`, OpenCode at `C:\Users\yalam\PMR-opencode`. Final verification passed with `COMPOSE_PROJECT_NAME=pmr` and `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 291 passed, 1 skipped, 8 warnings.
 - 2026-06-05 - Consolidated local `master`: verified branch integrity before merging, then merged `phase3-validation` followed by `phase2-real-generation`. Phase 3 now has deterministic restriction-site, repeat/instability, codon-usage, and regulatory checks wired through the aggregate `ConstraintEngine`; synthetic validation gold baseline remains `100/100` but the formal Phase 3 gate stays open pending curated corpus/provider-backed gold data and repeat-scan performance work. Phase 2 real-generation CPU spike now has Carbon-500M behind `SequenceGenerator`, expanded generation gold, and Carbon-vs-fake comparison reports; the Phase 2 gate remains open pending fine-tuning, GPU benchmarking, and biological validation. Consolidated corpus state: 256 records, 141 complete annotations, 99 unknown after audit. Retrieval baseline holds at top-1 `0.900`, top-5 `1.000`, MRR `0.938`. Final verification passed with `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 286 passed, 1 skipped, 2 warnings.

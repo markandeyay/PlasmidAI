@@ -74,3 +74,20 @@ The current implementation answers both conservatively by allowing WARNs only wh
 ## Conclusion
 
 The 31-record set is the defensible intersection of complete local corpus provenance and Phase 3 outcomes that are either `PASS` or a bounded, explicitly justified `WARN`. The shortfall is not a curation mistake in the narrow sense; it is the result of the current corpus and engine leaving too few complete records that clear that bar while still preserving source truthfulness.
+
+## Policy Decision and Gate Closure
+
+On 2026-06-06, the human owner accepted the 31 known-good / 52 known-bad curated set as the operational Phase 3 baseline. The earlier 50-record known-good threshold in `SYSTEM_DESIGN.md` was treated as a planning placeholder rather than a biology-grounded requirement.
+
+The rationale is quality-based: this audit found that the retained 31 known-good records are profile-diverse, provenance-backed, and defensible under the current deterministic engine, while expanding to 50 with the current corpus would require weakening the admission standard. The gate criterion was refined to require at least 95% accuracy across a curated, profile-diverse known-good/known-bad set whose size is determined by source quality.
+
+The curated baseline generated at `data/eval/validation/2026-06-07-033018-validation-baseline.md` reports:
+
+- Known-good cases: `31`
+- Known-bad cases: `52`
+- Total curated cases: `83`
+- Overall accuracy: `1.000`
+- Per-check accuracy: `1.000` for restriction-site conflicts, repeat/instability, codon usage, and regulatory compatibility
+- Misclassified cases: `0`
+
+Under the refined policy, this formally closes the Phase 3 validation gate while keeping the curation standard explicit and auditable.
