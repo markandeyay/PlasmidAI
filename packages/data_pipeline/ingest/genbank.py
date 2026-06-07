@@ -206,6 +206,26 @@ class IngestionResult:
     records_seen: int = 0
     records_upserted: int = 0
     errors: list[dict[str, Any]] = field(default_factory=list)
+    filtered: list[dict[str, Any]] = field(default_factory=list)
+
+
+ENGINEERED_VECTOR_TITLE_TERMS = (
+    "cloning vector",
+    "expression vector",
+    "reporter vector",
+    "shuttle vector",
+    "lentiviral vector",
+    "retroviral vector",
+    "plasmid vector",
+    "phagemid",
+)
+NATURAL_CONTEXT_TITLE_TERMS = (
+    " strain ",
+    " isolate ",
+    " unnamed ",
+    "chromosomal",
+    "chromosome",
+)
 
 
 class RateLimiter:
@@ -503,6 +523,17 @@ def run_genbank_ingestion(
                     raw = client.fetch_genbank(accession)
                     object_store.put_text(key, raw)
                     plasmid = map_genbank_text_to_plasmid(raw, raw_ref=key, expected_accession=accession)
+                filter_reason = engineered_vector_filter_reason(plasmid) if config.mode != "refresh" else None
+                if filter_reason is not None:
+                    result.filtered.append(
+                        {
+                            "accession": accession,
+                            "id": plasmid.id,
+                            "reason": filter_reason,
+                            "name": plasmid.name,
+                        }
+                    )
+                    continue
                 repository.upsert_plasmid(plasmid)
                 result.records_upserted += 1
             except GenbankIngestionError as exc:
@@ -550,6 +581,30 @@ def raw_cache_key(accession: str, *, mode: str = "dev") -> str:
     if mode == "refseq_plasmid_broad":
         return f"raw/genbank/refseq_plasmid_broad/{safe_accession}.gb"
     return f"raw/genbank/{safe_accession}.gb"
+
+
+def engineered_vector_filter_reason(plasmid: Plasmid) -> str | None:
+    """Route obvious natural/non-engineered records away from the engineered-vector lane."""
+
+    text = f" {plasmid.name} {' '.join(plasmid.use_cases)} ".lower()
+    if has_engineered_vector_title(text):
+        return None
+    if "unverified" in text:
+        return "unverified_record"
+    if "partial sequence" in text:
+        return "partial_sequence"
+    if plasmid.length > 50_000:
+        return "outside_engineered_vector_length_window"
+    accession = plasmid.id.removeprefix("genbank:")
+    if accession.startswith(("NC_", "NZ_")):
+        return "broad_refseq_natural_plasmid"
+    if any(term in text for term in NATURAL_CONTEXT_TITLE_TERMS):
+        return "natural_isolate_or_chromosomal_context"
+    return None
+
+
+def has_engineered_vector_title(text: str) -> bool:
+    return any(term in text for term in ENGINEERED_VECTOR_TITLE_TERMS)
 
 
 def map_genbank_text_to_plasmid(raw_text: str, *, raw_ref: str, expected_accession: str | None = None) -> Plasmid:
@@ -836,6 +891,7 @@ def main(argv: list[str] | None = None) -> int:
                 "run_id": result.run_id,
                 "records_seen": result.records_seen,
                 "records_upserted": result.records_upserted,
+                "filtered": result.filtered,
                 "errors": result.errors,
             },
             indent=2,

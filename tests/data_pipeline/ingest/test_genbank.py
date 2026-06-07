@@ -14,6 +14,7 @@ from packages.data_pipeline.ingest.genbank import (
     IngestionResult,
     REFSEQ_PLASMID_BROAD_QUERY,
     build_parser,
+    engineered_vector_filter_reason,
     fetch_rettype_for_mode,
     genbank_query_for_mode,
     map_genbank_text_to_plasmid,
@@ -235,6 +236,42 @@ def test_ingestion_rejects_cached_blob_for_different_accession() -> None:
             "details": {"expected_accession": "OTHER0001.1", "record_accession": "MIN0001.1"},
         }
     ]
+
+
+def test_ingestion_filters_obvious_natural_or_partial_records_without_error() -> None:
+    raw = load_fixture("minimal.gb").replace(
+        "Minimal plasmid complete sequence",
+        "UNVERIFIED: Staphylococcus aureus strain PMR plasmid pPMR, partial sequence",
+    )
+    key = raw_cache_key("MIN0001.1")
+    client = FakeNCBIClient({"MIN0001.1": raw})
+    store = FakeObjectStore({key: raw}, fresh=True)
+    repository = FakeRepository()
+    config = GenbankIngestionConfig(mode="dev", limit=1)
+
+    result = run_genbank_ingestion(config, client=client, object_store=store, repository=repository)
+
+    assert result.records_seen == 1
+    assert result.records_upserted == 0
+    assert result.errors == []
+    assert result.filtered == [
+        {
+            "accession": "MIN0001.1",
+            "id": "genbank:MIN0001.1",
+            "reason": "unverified_record",
+            "name": "UNVERIFIED: Staphylococcus aureus strain PMR plasmid pPMR, partial sequence",
+        }
+    ]
+    assert repository.plasmids == {}
+
+
+def test_engineered_vector_filter_routes_broad_refseq_unless_title_is_engineered() -> None:
+    plasmid = map_genbank_text_to_plasmid(load_fixture("minimal.gb"), raw_ref="raw/genbank/MIN0001.1.gb")
+    broad_refseq = plasmid.model_copy(update={"id": "genbank:NZ_CP000001.1"})
+    engineered_refseq = broad_refseq.model_copy(update={"name": "Synthetic cloning vector pPMR complete sequence"})
+
+    assert engineered_vector_filter_reason(broad_refseq) == "broad_refseq_natural_plasmid"
+    assert engineered_vector_filter_reason(engineered_refseq) is None
 
 
 def test_entrez_retry_honors_retry_after_for_rate_limit(monkeypatch) -> None:  # type: ignore[no-untyped-def]
