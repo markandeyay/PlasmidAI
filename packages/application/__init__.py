@@ -9,6 +9,7 @@ from .jobs import (
     JobStore,
     PostgresJobStore,
 )
+from .outcomes import InMemoryOutcomeStore, OutcomeRecord, OutcomeStore, PendingOutcomePrompt, PostgresOutcomeStore
 from .sessions import (
     DesignSession,
     InMemoryJobQueue,
@@ -30,12 +31,17 @@ __all__ = [
     "InMemoryJobQueue",
     "InMemoryDesignStore",
     "InMemoryJobStore",
+    "InMemoryOutcomeStore",
     "InMemorySessionStore",
     "JobQueue",
     "JobRecord",
     "JobStore",
+    "OutcomeRecord",
+    "OutcomeStore",
+    "PendingOutcomePrompt",
     "PostgresDesignStore",
     "PostgresJobStore",
+    "PostgresOutcomeStore",
     "PostgresSessionStore",
     "SessionJobResult",
     "SessionStore",

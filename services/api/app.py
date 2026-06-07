@@ -10,15 +10,17 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from fastapi import FastAPI, HTTPException, Request, Response, status
+from fastapi import FastAPI, Header, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from packages.application import (
     InMemoryJobQueue,
+    InMemoryOutcomeStore,
     InMemorySessionStore,
     JobQueue,
+    OutcomeStore,
     SessionJobResult,
     SessionStore,
 )
@@ -32,6 +34,7 @@ from packages.application.observability import (
     reset_correlation_id,
     set_correlation_id,
 )
+from packages.core.schemas import OutcomeReport
 
 
 MAX_PROMPT_LENGTH = 2_000
@@ -120,11 +123,29 @@ class JobStatusResponse(ApiModel):
     retry_after_ms: int | None = None
 
 
+class OutcomeResponse(ApiModel):
+    outcome_id: str = Field(min_length=1)
+    report: OutcomeReport
+    created_at: datetime
+
+
+class PendingOutcomePromptResponse(ApiModel):
+    design_id: str = Field(min_length=1)
+    session_id: str = Field(min_length=1)
+    created_at: datetime
+    days_since_created: int
+
+
+class PendingOutcomePromptsResponse(ApiModel):
+    prompts: list[PendingOutcomePromptResponse] = Field(default_factory=list)
+
+
 def create_app(
     *,
     session_store: SessionStore | None = None,
     job_queue: Any | None = None,
     design_store: DesignStore | None = None,
+    outcome_store: OutcomeStore | None = None,
 ) -> FastAPI:
     """Build the FastAPI app with injectable collaborators for tests."""
 
@@ -133,6 +154,7 @@ def create_app(
     store = session_store or InMemorySessionStore()
     queue = job_queue or InMemoryJobQueue()
     designs = design_store or InMemoryDesignStore()
+    outcomes = outcome_store or InMemoryOutcomeStore()
     metrics = MetricsCollector()
 
     app = FastAPI(title="PMR API", version="0.1.0")
@@ -197,6 +219,7 @@ def create_app(
     app.state.session_store = store
     app.state.job_queue = queue
     app.state.design_store = designs
+    app.state.outcome_store = outcomes
     app.state.metrics = metrics
 
     @app.middleware("http")
@@ -237,9 +260,9 @@ def create_app(
         response_model=CreateSessionResponse,
         status_code=status.HTTP_201_CREATED,
     )
-    def create_session() -> CreateSessionResponse:
+    def create_session(x_user_id: str | None = Header(default=None, alias="X-User-ID")) -> CreateSessionResponse:
         # TODO: enforce bearer auth, per-account rate limits, and usage metering.
-        session = store.create_session()
+        session = _create_session(store, user_id=x_user_id)
         return CreateSessionResponse(session_id=session.session_id)
 
     @app.get("/v1/metrics")
@@ -342,7 +365,70 @@ def create_app(
             headers={"Content-Disposition": f'attachment; filename="{design_id}.{suffix}"'},
         )
 
+    @app.post("/v1/designs/{design_id}/outcome", response_model=OutcomeResponse, status_code=status.HTTP_201_CREATED)
+    def submit_outcome(
+        design_id: str,
+        report: OutcomeReport,
+        x_user_id: str | None = Header(default=None, alias="X-User-ID"),
+    ) -> OutcomeResponse:
+        """Capture a user-reported wet-lab outcome for a generated design."""
+
+        user_id = _require_user_id(x_user_id)
+        design = designs.get(design_id)
+        if design is None:
+            raise _http_error(status.HTTP_404_NOT_FOUND, "design_not_found", "Design not found.")
+        _require_design_owner(store, design.session_id, user_id)
+        if report.design_id != design_id:
+            raise _http_error(status.HTTP_422_UNPROCESSABLE_ENTITY, "design_id_mismatch", "Outcome design_id must match the URL.")
+        outcome = outcomes.create(report=report, user_id=user_id)
+        return OutcomeResponse(outcome_id=outcome.outcome_id, report=outcome.report, created_at=outcome.created_at)
+
+    @app.get("/v1/designs/{design_id}/outcome", response_model=OutcomeResponse)
+    def get_outcome(
+        design_id: str,
+        x_user_id: str | None = Header(default=None, alias="X-User-ID"),
+    ) -> OutcomeResponse:
+        """Return the most recent captured outcome for a design."""
+
+        user_id = _require_user_id(x_user_id)
+        design = designs.get(design_id)
+        if design is None:
+            raise _http_error(status.HTTP_404_NOT_FOUND, "design_not_found", "Design not found.")
+        _require_design_owner(store, design.session_id, user_id)
+        outcome = outcomes.latest_for_design(design_id)
+        if outcome is None:
+            raise _http_error(status.HTTP_404_NOT_FOUND, "outcome_not_found", "Outcome not found.")
+        return OutcomeResponse(outcome_id=outcome.outcome_id, report=outcome.report, created_at=outcome.created_at)
+
+    @app.get("/v1/users/me/pending-outcome-prompts", response_model=PendingOutcomePromptsResponse)
+    def pending_outcome_prompts(
+        x_user_id: str | None = Header(default=None, alias="X-User-ID"),
+        min_age_days: int = 14,
+    ) -> PendingOutcomePromptsResponse:
+        """Return aged designs that should prompt the user for wet-lab outcomes."""
+
+        user_id = _require_user_id(x_user_id)
+        prompts = outcomes.list_pending_prompts(user_id=user_id, min_age_days=min_age_days)
+        return PendingOutcomePromptsResponse(
+            prompts=[
+                PendingOutcomePromptResponse(
+                    design_id=prompt.design_id,
+                    session_id=prompt.session_id,
+                    created_at=prompt.created_at,
+                    days_since_created=prompt.days_since_created,
+                )
+                for prompt in prompts
+            ]
+        )
+
     return app
+
+
+def _create_session(store: Any, *, user_id: str | None) -> Any:
+    try:
+        return store.create_session(user_id=user_id)
+    except TypeError:
+        return store.create_session()
 
 
 def _enqueue(queue: Any, *, session: Any, action: str, text: str, correlation_id: str | None = None) -> str:
@@ -376,6 +462,21 @@ def _get_session(store: Any, session_id: str) -> Any | None:
         return store.get_session(session_id)
     except KeyError:
         return None
+
+
+def _require_user_id(user_id: str | None) -> str:
+    if user_id is None or not user_id.strip():
+        raise _http_error(status.HTTP_401_UNAUTHORIZED, "authentication_required", "Authentication is required.")
+    return user_id.strip()
+
+
+def _require_design_owner(store: Any, session_id: str, user_id: str) -> None:
+    session = _get_session(store, session_id)
+    if session is None:
+        raise _http_error(status.HTTP_404_NOT_FOUND, "session_not_found", "Session not found.")
+    owner = getattr(session, "user_id", None)
+    if owner is not None and owner != user_id:
+        raise _http_error(status.HTTP_403_FORBIDDEN, "forbidden", "You do not own this design.")
 
 
 def _add_turn(store: Any, *, session_id: str, action: str, text: str) -> Any:

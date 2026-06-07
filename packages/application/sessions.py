@@ -72,6 +72,7 @@ class DesignSession:
     """Persisted session state with ordered user turns."""
 
     session_id: str
+    user_id: str | None
     created_at: datetime
     updated_at: datetime
     turns: list[SessionTurn]
@@ -93,7 +94,7 @@ class JobRecord:
 class SessionStore(Protocol):
     """Persistence boundary for session and turn state."""
 
-    def create_session(self, *, session_id: str | None = None) -> DesignSession: ...
+    def create_session(self, *, session_id: str | None = None, user_id: str | None = None) -> DesignSession: ...
 
     def get_session(self, session_id: str) -> DesignSession | None: ...
 
@@ -127,11 +128,12 @@ class InMemorySessionStore:
 
     sessions: dict[str, DesignSession] = field(default_factory=dict)
 
-    def create_session(self, *, session_id: str | None = None) -> DesignSession:
+    def create_session(self, *, session_id: str | None = None, user_id: str | None = None) -> DesignSession:
         now = utc_now()
         resolved_session_id = session_id or f"session_{uuid4().hex}"
         session = DesignSession(
             session_id=resolved_session_id,
+            user_id=user_id,
             created_at=now,
             updated_at=now,
             turns=[],
@@ -167,6 +169,7 @@ class InMemorySessionStore:
         )
         updated_session = DesignSession(
             session_id=session.session_id,
+            user_id=session.user_id,
             created_at=session.created_at,
             updated_at=turn.created_at,
             turns=[*session.turns, turn],
@@ -191,19 +194,20 @@ class PostgresSessionStore:
 
     database_url: str
 
-    def create_session(self, *, session_id: str | None = None) -> DesignSession:
+    def create_session(self, *, session_id: str | None = None, user_id: str | None = None) -> DesignSession:
         now = utc_now()
         resolved_session_id = session_id or f"session_{uuid4().hex}"
         with psycopg.connect(self.database_url) as connection:
             connection.execute(
                 """
-                INSERT INTO sessions (id, status, created_at, updated_at)
-                VALUES (%s, 'active', %s, %s)
+                INSERT INTO sessions (id, user_id, status, created_at, updated_at)
+                VALUES (%s, %s, 'active', %s, %s)
                 """,
-                (resolved_session_id, now, now),
+                (resolved_session_id, user_id, now, now),
             )
         return DesignSession(
             session_id=resolved_session_id,
+            user_id=user_id,
             created_at=now,
             updated_at=now,
             turns=[],
@@ -213,7 +217,7 @@ class PostgresSessionStore:
         with psycopg.connect(self.database_url) as connection:
             session_row = connection.execute(
                 """
-                SELECT id, created_at, updated_at
+                SELECT id, user_id, created_at, updated_at
                 FROM sessions
                 WHERE id = %s
                 """,
@@ -252,8 +256,9 @@ class PostgresSessionStore:
         ]
         return DesignSession(
             session_id=session_row[0],
-            created_at=session_row[1],
-            updated_at=session_row[2],
+            user_id=session_row[1],
+            created_at=session_row[2],
+            updated_at=session_row[3],
             turns=turns,
         )
 

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
+
 from fastapi.testclient import TestClient
 
-from packages.application import InMemoryJobQueue, InMemorySessionStore, SessionJobResult
+from packages.application import InMemoryJobQueue, InMemoryOutcomeStore, InMemorySessionStore, SessionJobResult
 from packages.core.schemas import (
     AnnotatedFeature,
     AnnotatedSequence,
@@ -159,3 +161,62 @@ def test_export_endpoint_returns_round_trip_genbank_design() -> None:
     assert response.headers["content-disposition"] == 'attachment; filename="design-export.gb"'
     round_tripped = read_annotated_sequence(response.text, format="genbank")
     assert round_tripped == annotated
+
+
+def test_outcome_endpoint_requires_owner_and_returns_latest_outcome() -> None:
+    store = InMemorySessionStore()
+    designs = InMemoryDesignStore()
+    outcomes = InMemoryOutcomeStore()
+    session_id = store.create_session(user_id="user-1").session_id
+    annotated = example_result().annotated_sequence
+    assert annotated is not None
+    designs.create(
+        session_id=session_id,
+        job_id="job-outcome",
+        design_id="design-outcome",
+        annotated_sequence=annotated,
+    )
+    client = TestClient(
+        create_app(
+            session_store=store,
+            job_queue=InMemoryJobQueue(),
+            design_store=designs,
+            outcome_store=outcomes,
+        )
+    )
+    payload = {
+        "design_id": "design-outcome",
+        "model_version": "fake-generator-0",
+        "construct_validated": True,
+        "sequencing_result": "Sanger sequencing matched the insert junctions.",
+        "expression_result": "GFP signal was observed.",
+        "training_consent": True,
+        "outcome_label": "positive",
+        "provenance": {"source": "unit-test"},
+    }
+
+    forbidden = client.post("/v1/designs/design-outcome/outcome", json=payload, headers={"X-User-ID": "user-2"})
+    assert forbidden.status_code == 403
+
+    response = client.post("/v1/designs/design-outcome/outcome", json=payload, headers={"X-User-ID": "user-1"})
+    assert response.status_code == 201
+    body = response.json()
+    assert body["report"]["training_consent"] is True
+
+    latest = client.get("/v1/designs/design-outcome/outcome", headers={"X-User-ID": "user-1"})
+    assert latest.status_code == 200
+    assert latest.json()["outcome_id"] == body["outcome_id"]
+
+
+def test_pending_outcome_prompt_endpoint_returns_aged_designs_without_outcomes() -> None:
+    outcomes = InMemoryOutcomeStore()
+    outcomes.design_index = {
+        "design-old": ("session-1", datetime.now(UTC) - timedelta(days=21)),
+        "design-recent": ("session-1", datetime.now(UTC) - timedelta(days=3)),
+    }
+    client = TestClient(create_app(outcome_store=outcomes))
+
+    response = client.get("/v1/users/me/pending-outcome-prompts", headers={"X-User-ID": "user-1"})
+
+    assert response.status_code == 200
+    assert [prompt["design_id"] for prompt in response.json()["prompts"]] == ["design-old"]

@@ -11,6 +11,7 @@ from packages.core.schemas import (
     FeatureRegion,
     GeneratedSequence,
     Match,
+    OutcomeReport,
     Plasmid,
     PlasmidRecommendation,
     Provenance,
@@ -185,9 +186,20 @@ def test_supporting_types_validate_retrieval_generation_and_vectors() -> None:
     )
     match = Match(id=plasmid.id, score=0.88, metadata={"source": "addgene"})
     vector = Vector([0.1, 0.2, 0.3])
+    outcome = OutcomeReport(
+        design_id="design-1",
+        model_version="fake-generator-0",
+        construct_validated=True,
+        sequencing_result="Sanger sequence matched the insert junctions.",
+        expression_result="GFP signal observed above negative control.",
+        training_consent=True,
+        outcome_label="positive",
+        provenance={"reporter": "user"},
+    )
 
     assert retrieved.score == pytest.approx(0.91)
     assert retrieval_result.recommendations[0].plasmid_id == plasmid.id
     assert generated.parent_template_ids == ["addgene:12345"]
     assert match.metadata["source"] == "addgene"
     assert vector.root == [0.1, 0.2, 0.3]
+    assert outcome.training_consent is True
