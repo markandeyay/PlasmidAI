@@ -1,4 +1,4 @@
-.PHONY: build-training-data design embed-corpus eval-generation eval-retrieval finetune-smoke generate-validation-gold ingest-addgene ingest-all ingest-curated ingest-genbank lint list-models parse-sample quality-report register-model reprocess serve-api serve-web services-down setup spike-generation test validate-sample
+.PHONY: build-training-data derive-training-signal design embed-corpus eval-generation eval-retrieval finetune-smoke generate-validation-gold ingest-addgene ingest-all ingest-curated ingest-genbank lint list-models parse-sample quality-report register-model reprocess serve-api serve-web services-down setup spike-generation test validate-sample
 
 PYTHON ?= python
 MODE ?= dev
@@ -31,6 +31,7 @@ MODEL_LICENSE_STATUS ?= unknown
 MODEL_ROLLOUT_STATE ?= registered
 MODEL_ARTIFACT_URI ?=
 MODEL_TRAINING_COST ?=
+PHASE5_TRAINING_OUT ?= data/training/phase5
 
 setup:
 	$(PYTHON) -m pip install -r requirements.txt
@@ -91,6 +92,9 @@ register-model:
 
 list-models:
 	$(PYTHON) -m packages.generation.registry list --registry-path $(MODEL_REGISTRY)
+
+derive-training-signal:
+	$(PYTHON) -m packages.feedback.training_signal --registry-path $(MODEL_REGISTRY) --output-dir $(PHASE5_TRAINING_OUT) $(if $(N),--limit $(N),)
 
 validate-sample:
 	$(if $(filter gold GOLD,$(MODE)),$(PYTHON) -m packages.validation.eval --gold-path $(VALIDATION_GOLD) --output-dir $(VALIDATION_OUT),$(PYTHON) -m packages.validation.engine $(if $(N),--limit $(N),))
