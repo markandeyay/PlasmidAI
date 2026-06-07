@@ -1,4 +1,4 @@
-.PHONY: build-training-data design embed-corpus eval-generation eval-retrieval finetune-smoke generate-validation-gold ingest-addgene ingest-all ingest-curated ingest-genbank lint list-models parse-sample quality-report register-model reprocess serve-api serve-web services-down setup spike-generation test validate-sample
+.PHONY: build-training-data design embed-corpus eval-generation eval-retrieval finetune-smoke generate-validation-gold ingest-addgene ingest-all ingest-curated ingest-genbank lint list-models parse-sample quality-report refresh-corpus register-model reprocess serve-api serve-web services-down setup spike-generation test validate-sample
 
 PYTHON ?= python
 MODE ?= dev
@@ -64,6 +64,9 @@ quality-report:
 
 reprocess:
 	$(PYTHON) -m packages.data_pipeline.reprocess --mode $(MODE) $(if $(BEFORE),--before $(BEFORE),) $(if $(SOURCE),--source $(SOURCE),) $(if $(PATTERN),--pattern $(PATTERN),) --batch-size $(BATCH_SIZE)
+
+refresh-corpus:
+	$(PYTHON) -m packages.data_pipeline.refresh_corpus --stale-days $(GENBANK_STALE_DAYS) $(if $(N),--limit $(N),) --batch-size $(BATCH_SIZE)
 
 eval-retrieval:
 	$(PYTHON) -m packages.retrieval.eval --gold-path $(EVAL_GOLD) --output-dir $(EVAL_OUT) --top-k $(TOP_K) $(if $(filter 1 true TRUE yes YES,$(FAKE)),--fake-embedder,) $(if $(filter offline OFFLINE,$(MODE)),--local-files-only,)
