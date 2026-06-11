@@ -55,9 +55,9 @@ Approved policy for the first run:
 Upload only the Phase 2 snapshot files needed for training and evaluation:
 
 ```text
-data/training/phase2/2026-06-04-010952-phase2-triplets/train.jsonl
-data/training/phase2/2026-06-04-010952-phase2-triplets/validation.jsonl
-data/training/phase2/2026-06-04-010952-phase2-triplets/test.jsonl
+data/training/phase2/2026-06-04-010952-phase2-triplets/triplets.train.jsonl
+data/training/phase2/2026-06-04-010952-phase2-triplets/triplets.validation.jsonl
+data/training/phase2/2026-06-04-010952-phase2-triplets/triplets.test.jsonl
 data/training/phase2/2026-06-04-010952-phase2-triplets/manifest.json
 data/eval/generation_gold.jsonl
 ```
@@ -73,10 +73,33 @@ Expected command shape on the GPU host:
 ```bash
 python -m packages.generation.finetune \
   --base-model HuggingFaceBio/Carbon-3B \
-  --training-snapshot data/training/phase2/2026-06-04-010952-phase2-triplets \
+  --snapshot-path data/training/phase2/2026-06-04-010952-phase2-triplets \
   --output-dir runs/phase2-carbon3b-<timestamp> \
-  --max-length <approved_length> \
-  --max-steps <approved_steps>
+  --method lora \
+  --learning-rate 2.0e-4 \
+  --per-device-train-batch-size 1 \
+  --per-device-eval-batch-size 1 \
+  --gradient-accumulation-steps 16 \
+  --num-train-epochs 3 \
+  --eval-steps 10 \
+  --save-steps 10 \
+  --max-length 8192 \
+  --seed 20260606
+```
+
+Pre-spend GPU-host dependency gate:
+
+```bash
+python -c "import torch, transformers, peft, accelerate; print(torch.__version__)"
+nvidia-smi
+```
+
+Do not start training until `peft` and `accelerate` import successfully on the GPU host. The project-local `requirements.txt` intentionally keeps CI light and does not include all GPU-host PEFT dependencies.
+
+Recommended GPU-host package install, inside the remote training environment only:
+
+```bash
+python -m pip install "peft>=0.18,<1" "accelerate>=1.10,<2" "bitsandbytes>=0.48,<1"
 ```
 
 Before running, capture:
