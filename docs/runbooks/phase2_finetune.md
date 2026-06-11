@@ -50,6 +50,28 @@ Approved policy for the first run:
 3. Record provider, GPU type, hourly price, region, image, and start time in the run notes.
 4. Stop before provisioning if estimated total cost exceeds USD 300.
 
+## Human Cloud-Account Checklist
+
+Complete this checklist before authorizing a future spend session:
+
+1. Create or confirm access to the selected provider account.
+2. Generate an API key or token with the narrowest available scope for pod/instance lifecycle management.
+3. Store the token locally in a gitignored environment file or secret store; never commit it.
+4. Configure provider-side billing alerts below the project cap, for example alerts at USD 50, USD 150, and USD 250.
+5. Configure any provider-side spend cap, budget limit, or prepaid balance limit available in the account UI.
+6. Confirm the payment method and account quota allow only the intended one-time run.
+7. Confirm there are no persistent storage volumes, snapshots, reserved instances, or idle pods from previous experiments.
+8. Decide the exact artifact egress target for the checkpoint and logs before launch.
+9. Confirm the expected teardown command for the selected provider and test account visibility before starting training.
+10. Reconfirm that inference remains CPU-only and that this authorization covers training only.
+
+Provider-specific setup notes:
+
+- **RunPod:** create an API key, verify pod launch permissions, choose a template with CUDA/PyTorch support, confirm A100 80 GB or H100 live availability, and verify how to terminate the pod from both UI and API.
+- **Lambda Labs:** create an API key or SSH launch workflow, verify account quota and region availability, confirm SSH key access, and verify how to terminate the instance from both UI and API.
+
+Stop before provisioning if the provider account cannot expose current hourly price, estimated cost, active-resource list, and teardown controls.
+
 ## Dataset Upload
 
 Upload only the Phase 2 snapshot files needed for training and evaluation:
