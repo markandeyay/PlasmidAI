@@ -1,14 +1,14 @@
 ﻿# PROGRESS â€” Build State (mutable)
 
 ## AT-A-GLANCE (update every session)
-- **Current Phase:** Consolidated `master`: Phase 3 gate closure and Phase 2 fine-tuning prep merged
-- **Next Concrete Task:** Push consolidated `master`, delete merged review branches locally/remotely, then await the next authorized wave.
+- **Current Phase:** `phase5-foundation` branch: Phase 5 outcome/flywheel foundation implemented
+- **Next Concrete Task:** Human review of `phase5-foundation`; do not merge or push until authorized.
 - **Overall completion estimate:** 21%
 - **Last session date:** 2026-06-07
-- **Codebase known-good?** (tests passing) Yes: final post-merge verification passed `305 passed, 1 skipped, 8 warnings` on 2026-06-07 with `COMPOSE_PROJECT_NAME=pmr` and `C:\Program Files (x86)\GnuWin32\bin\make.exe test`
+- **Codebase known-good?** (tests passing) Yes: `phase5-foundation` verification passed `311 passed, 1 skipped, 8 warnings` on 2026-06-07 with `COMPOSE_PROJECT_NAME=pmr` and `C:\Program Files (x86)\GnuWin32\bin\make.exe test`
 
 ## RESUME HERE (only if mid-task)
-RESUME HERE: Local `master` has merged `phase3-gate` and `phase2-finetune-prep`. Phase 3 gate is formally met under the approved curated-quality policy with 31 known-good + 52 known-bad records and `data/eval/validation/2026-06-07-033018-validation-baseline.{json,md}` reporting accuracy `1.000`. Phase 2 fine-tuning prep has landed: fine-tuning config, rollout gates, cost estimate, generation baseline docs, CPU-only smoke script, model registry, and shadow rollout wrapper. Final verification passed `305 passed, 1 skipped, 8 warnings`. Next: push only consolidated `master`, delete merged review branches locally/remotely, keep backup branches and stash local, and await the next prompt.
+RESUME HERE: `phase5-foundation` is ready for review and has not been pushed or merged. It adds outcome-capture specs, `OutcomeReport`, outcomes persistence and migration, outcome API endpoints, pending outcome prompts, consent/registry-gated training-signal derivation via `make derive-training-signal`, the Phase 2 fine-tuning runbook with the approved GPU/data/model policy, and `research/findings/feedback_flywheel.md`. Phase 5 gate is not claimed: there is no automated scheduled fine-tune or promotion loop yet. OpenCode continues separately in `C:\Users\yalam\PMR-opencode` on `phase4-iteration`.
 
 ## WORKTREE ASSIGNMENTS
 - **Codex main worktree:** `C:\Users\yalam\PMR`
@@ -30,7 +30,7 @@ RESUME HERE: Local `master` has merged `phase3-gate` and `phase2-finetune-prep`.
 - Frontend verification note: run `npm run build` and `npm run test:e2e` sequentially, not in parallel, because Next's build output and Playwright's dev server both use `.next`.
 - OpenCode coordination: API integration tests were accidentally committed once on `phase0-retrieval-robustness`; the content is identical to the `phase4-foundation` cherry-pick and was handled during merge consolidation.
 - Phase 0 scale gate remains unmet: the expanded corpus has 256 total records and 141 complete annotations, not >=50,000 fully parsed component-annotated plasmids.
-- Phase 2 gate is not met. `phase2-real-generation` loads Carbon-500M for short CPU inference behind `SequenceGenerator`, and the default spike path now uses the deterministic Phase 3 `ConstraintEngine`, but there is still no fine-tuning, no GPU benchmark, and no biological validation of model-generated sequences. Phase 2 fine-tuning authorization remains a human decision.
+- Phase 2 gate is not met. `phase2-real-generation` loads Carbon-500M for short CPU inference behind `SequenceGenerator`, and the default spike path now uses the deterministic Phase 3 `ConstraintEngine`, but there is still no fine-tuned generation baseline or biological validation of model-generated sequences. Human policy now authorizes one Phase 2 fine-tuning run up to USD 300 on Lambda Labs or RunPod, using standard Carbon-3B, the existing 117/15/8 public NCBI-derived triplets, and no FNS variant.
 - Phase 1 retrieval gate passed on 2026-05-31: `data/eval/retrieval/2026-05-31-221057-retrieval-baseline.{md,json}` scores 20 retrieval queries plus 1 clarification-only case with top-1 `0.700`, top-5 `1.000`, MRR `0.825`, and clarification pass rate `1.000`. Retrieval robustness rerun on 2026-06-02 scores top-1 `0.950`, top-5 `1.000`, MRR `0.975`, clarification pass rate `1.000`.
 - Phase 1 retrieval cleanup is implemented: exact named-record queries use a lexical lane before semantic ranking, while structured source and DOI provenance filters remain enforced. `depositing_lab` is not available in the current schema or corpus.
 - The expanded corpus still has no classified lentiviral or CRISPR vectors. `data/eval/corpus/2026-06-01-174026-lentiviral-crispr-gap.md` found no parser defect and no safe canonical NCBI-backed seed. Adding exact Addgene or reviewed GenBank-derivative seeds is blocked pending human provenance/legal policy.
@@ -48,22 +48,24 @@ RESUME HERE: Local `master` has merged `phase3-gate` and `phase2-finetune-prep`.
 - Human approved run `5` metadata-lane shuttle completeness changes on 2026-05-31. Run `6` verified idempotence with 82 examined, 0 updates, 0 missing caches, and 0 errors.
 
 ## QUESTIONS FOR THE HUMAN
-- Should Phase 2 treat public NCBI RefSeq/GenBank plasmid records as trainable by default while preserving submitter-IP caveats, or require a legal-reviewed allowlist before model training?
-- Should broad natural RefSeq/GenBank plasmids, including AMR-heavy and mobile-element records, be allowed in generation pretraining, restricted to retrieval/evaluation only, or filtered out of training artifacts?
+- Should broad natural RefSeq/GenBank plasmids beyond the current 117/15/8 triplet snapshot be allowed in generation pretraining, restricted to retrieval/evaluation only, or filtered out of training artifacts?
 - Should SEVA, iGEM Registry, DNASU, SGD-derived context, or Addgene direct downloads remain excluded until explicit training/commercial-use terms are approved?
 - For the expanded corpus, should the chloramphenicol low-copy retrieval gold case keep only `pACYC184`, admit newly added GenBank chloramphenicol vectors, or add copy-number/origin-aware retrieval before changing the gold set?
 - Which synthesis provider profile should be the default for "synthesis-ready" when no provider is selected: conservative cross-provider, Twist, IDT, GenScript, or user-selected only?
 - Should the first product only score codon usage, or may it automatically rewrite coding sequences after explicit user consent?
 - For commercial use, can Addgene-derived records be used for model training under the eventual approved data access license, or only for retrieval/display?
-- Should Evo 2 7B be the first generation candidate, with Carbon-3B as fallback, pending infrastructure and license review?
 - Are Apache-2.0 Carbon weights acceptable for this project pending legal review, and should `Carbon-500M` be pinned to a specific revision before any shared benchmark?
 - Should `einops` be installed to unblock a DNABERT-2 fallback smoke test, or should DNABERT-2 remain parked?
-- Is any later GPU authorization in scope for Carbon-3B or Evo 2, and if so what budget/provider ceiling applies?
-- Before a real fine-tune, what exact `HuggingFaceBio/Carbon-3B` revision should be pinned, and should the Carbon `fns` revision/FNS trainer path be required?
-- What minimum corpus size/profile coverage and source-by-source training-rights policy are required before a Carbon-3B adapter run can be called more than a plumbing dry run?
 - What offline rollout threshold should promote a fine-tuned model from `shadow` to `canary`: strictly better on every gate metric, or non-inferior core metrics plus improvement on at least one metric?
 - What canary traffic percentages, sample sizes, rollback thresholds, and Phase 3 warning tolerances should replace the conservative defaults in `research/findings/model_rollout.md`?
 - What retention/access policy should apply to restricted candidate sequence payloads captured during shadow comparison?
+- Should one design allow multiple outcome rows for multiple clones, or should the first implementation keep only the latest outcome per design in user-facing views?
+- What minimum sequencing evidence counts as `sequence_validated`: full-plasmid NGS consensus, full Sanger tiling, insert plus junctions, or profile-specific critical regions?
+- Can a successful restriction digest without sequencing ever create a positive training signal, or only a lower-confidence human-reviewed signal?
+- What assay-specific threshold defines `meets_expected_function` for fluorescence, luminescence, western blot, qPCR, growth selection, and phenotype assays?
+- When expression fails with a sequence-correct construct, what controls are required before treating the generated design as a negative rather than an assay/protocol failure?
+- May uploaded chromatograms, gel images, plate-reader files, or blot images be retained for training-derived feature extraction, or only for human audit?
+- What exact consent text and consent-withdrawal retention policy should govern outcomes already included in a released training snapshot?
 - Should the platform operate as a regulated-like biosecurity checkpoint before provider handoff, even where direct legal duties attach primarily to synthesis providers or procurement?
 - What is the current controlling U.S. nucleic-acid screening framework after the May 5, 2025 Executive Order directive to revise or replace the 2024 framework?
 - For circular plasmids, where should canonical base 1 be placed in generated designs: source record origin, ORI start, MCS/cloning site, or synthesis-provider convention?
@@ -163,14 +165,15 @@ RESUME HERE: Local `master` has merged `phase3-gate` and `phase2-finetune-prep`.
 
 ### 3.6 Phase 5 â€” Feedback flywheel
 
-- [ ] Outcome-capture flow (did the construct validate? sequencing + expression data) (Section 10.2)
-- [ ] Outcome data stored as labeled training signal
+- [x] Outcome-capture flow (did the construct validate? sequencing + expression data) (Section 10.2). Implemented foundation on `phase5-foundation`: `OutcomeReport`, outcomes table/store, API endpoints, and pending in-app prompts.
+- [x] Outcome data stored as labeled training signal. Implemented foundation on `phase5-foundation`: consent/registry-gated `make derive-training-signal` writes versioned Phase 5 JSONL snapshots with exclusions and manifests.
 - [ ] Scheduled re-training / fine-tuning pipeline consumes new outcomes
 - [ ] Model registry + versioning + safe rollout (shadow â†’ canary â†’ full) (Section 10.4)
 - [ ] Offline eval gate prevents regressions before any model promotion
 - [ ] **GATE:** A full loop runs automatically â€” a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-06-07 - Built local `phase5-foundation` branch without pushing. Added outcome capture specs, `OutcomeReport`, `outcomes` migration and stores, API endpoints for outcome submission/retrieval and pending prompts, consent/registry-gated `make derive-training-signal`, `research/findings/feedback_flywheel.md`, and `docs/runbooks/phase2_finetune.md`. Recorded human Phase 2 fine-tuning policy: one run up to USD 300 on Lambda Labs or RunPod, standard Carbon-3B, existing 117/15/8 public NCBI-derived triplets, no Addgene block, no FNS variant, CPU inference remains default. Phase 5 gate remains open pending scheduled fine-tune/promotion loop. Verification passed with `COMPOSE_PROJECT_NAME=pmr` and `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 311 passed, 1 skipped, 8 warnings.
 - 2026-06-07 - Consolidated local `master`: merged `phase3-gate` first, then `phase2-finetune-prep`. Phase 3 gate is formally met under the approved curated-quality policy: 31 known-good + 52 known-bad, 83/83 correct, accuracy `1.000`, per-check accuracy `1.000`. Phase 2 fine-tuning prep landed with configuration docs, rollout gates, cost estimates, generation baseline documentation, CPU-only smoke training script, JSONL model registry, and shadow rollout wrapper; Phase 2 gate remains open pending actual authorized fine-tuning, GPU/model decisions, and biological validation. Retrieval baseline still holds at top-1 `0.950`, top-5 `1.000`, MRR `0.975`. Final verification passed with `COMPOSE_PROJECT_NAME=pmr` and `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 305 passed, 1 skipped, 8 warnings.
 - 2026-06-07 - Closed the formal Phase 3 gate on `phase3-gate` under the approved curated-quality policy. Updated `SYSTEM_DESIGN.md` to replace the arbitrary 50/50 planning placeholder with a profile-diverse curated gold-set criterion, appended the policy decision to `research/findings/known_good_audit.md`, added curated-gold evaluation support, and generated `data/eval/validation/2026-06-07-033018-validation-baseline.{json,md}`. Result: 31 known-good + 52 known-bad, 83/83 correct, accuracy `1.000`, per-check accuracy `1.000`, zero misclassifications.
 - 2026-06-06 - Started `phase3-gate` from local `master` to attempt formal Phase 3 gate closure. Audited the curated known-good shortfall in `research/findings/known_good_audit.md`: 31 records are defensible; deterministic `FAIL` reports remain absolute exclusions; some `WARN` cases may be admissible only with explicit policy. GATE-2 could not identify 19+ additional defensible known-good records and made no file changes, so the formal Phase 3 gate remains open. Added repeat-validation edge-case tests; performance follow-up found the current 300-record scan bottleneck is GenBank parsing/reference matching rather than repeat detection. Verification passed with `COMPOSE_PROJECT_NAME=pmr` and `C:\Program Files (x86)\GnuWin32\bin\make.exe test`: 293 passed, 1 skipped, 8 warnings. Stopping for human review rather than padding the gold set.

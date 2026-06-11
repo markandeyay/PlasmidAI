@@ -242,6 +242,31 @@ class GeneratedSequence(SchemaModel):
     parent_template_ids: list[str] = Field(default_factory=list)
 
 
+class OutcomeReport(SchemaModel):
+    design_id: str = Field(min_length=1)
+    model_version: str = Field(min_length=1)
+    construct_validated: bool | None = None
+    sequencing_result: str | None = None
+    expression_result: str | None = None
+    functional_result: str | None = None
+    training_consent: bool = False
+    outcome_label: Literal["positive", "negative", "ambiguous"] = "ambiguous"
+    provenance: dict[str, Any] = Field(default_factory=dict)
+    notes: str | None = None
+    reported_at: datetime = Field(default_factory=utc_now)
+
+    @model_validator(mode="after")
+    def has_observed_result(self) -> OutcomeReport:
+        if (
+            self.construct_validated is None
+            and not self.sequencing_result
+            and not self.expression_result
+            and not self.functional_result
+        ):
+            raise ValueError("at least one outcome observation is required")
+        return self
+
+
 class Match(SchemaModel):
     id: str = Field(min_length=1)
     score: float = Field(ge=0.0)
