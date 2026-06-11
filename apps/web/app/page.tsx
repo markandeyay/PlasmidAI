@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ApiError, createSession, exportDesign, pollJob, submitDesign, submitRefinement } from "@/lib/api";
+import { ApiError, createSession, exportDesign, getPendingOutcomePrompts, pollJob, submitDesign, submitRefinement } from "@/lib/api";
 import { ExportActions, type ExportFormat, type ExportStatus } from "@/components/export-actions";
 import { OutcomeReportModal } from "@/components/outcome-report-modal";
 import { PlasmidMapView } from "@/components/plasmid-map-view";
-import type { AnnotatedSequence, JobResultPayload, JobStatusResponse, OutcomeReport, ValidationCheck, ValidationReport } from "@/lib/types";
+import type { AnnotatedSequence, JobResultPayload, JobStatusResponse, OutcomeReport, PendingOutcomePrompt, ValidationCheck, ValidationReport } from "@/lib/types";
 
 type UiState = "idle" | "submitting" | "polling" | "ready" | "awaiting_clarification" | "error";
 
@@ -17,6 +17,13 @@ type ChatMessage = {
   result?: JobResultPayload;
 };
 
+type OutcomeModalTarget = {
+  designId: string;
+  modelVersion: string;
+  promptKey?: string;
+  provenanceContext?: Record<string, unknown>;
+};
+
 const DEFAULT_PROMPT =
   "a bacterial expression vector for E. coli with ampicillin selection and GFP reporter readout";
 
@@ -25,6 +32,8 @@ const EXAMPLE_PROMPTS = [
   "a mammalian GFP reporter plasmid for expression analysis in cultured cells",
   "a yeast shuttle vector with URA3 selection and centromere maintenance"
 ];
+
+const DISMISSED_OUTCOME_PROMPTS_KEY = "plasmidai:dismissed-outcome-prompts";
 
 export default function Page() {
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -44,7 +53,10 @@ export default function Page() {
   const [exportStatus, setExportStatus] = useState<Record<ExportFormat, ExportStatus>>({ genbank: "idle", fasta: "idle" });
   const [exportError, setExportError] = useState<string | null>(null);
   const [outcomeModalOpen, setOutcomeModalOpen] = useState(false);
+  const [outcomeModalTarget, setOutcomeModalTarget] = useState<OutcomeModalTarget | null>(null);
   const [latestOutcome, setLatestOutcome] = useState<OutcomeReport | null>(null);
+  const [pendingOutcomePrompts, setPendingOutcomePrompts] = useState<PendingOutcomePrompt[]>([]);
+  const [dismissedPromptKeys, setDismissedPromptKeys] = useState<string[]>([]);
 
   const latestResult = useMemo(
     () => [...messages].reverse().find((message) => message.result?.annotated_sequence)?.result,
@@ -66,6 +78,27 @@ export default function Page() {
     const interval = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(interval);
   }, [isBusy, jobStartedAt]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setDismissedPromptKeys(readDismissedPromptKeys());
+    getPendingOutcomePrompts()
+      .then((prompts) => {
+        if (!cancelled) {
+          setPendingOutcomePrompts(prompts);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setPendingOutcomePrompts([]);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const visiblePendingPrompt = pendingOutcomePrompts.find((prompt) => !dismissedPromptKeys.includes(promptKey(prompt))) ?? null;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -149,8 +182,51 @@ export default function Page() {
     }
   }
 
+  function openCurrentOutcomeModal() {
+    if (!designId) {
+      return;
+    }
+    setOutcomeModalTarget({ designId, modelVersion: modelVersion ?? "unknown-model" });
+    setOutcomeModalOpen(true);
+  }
+
+  function openPromptOutcomeModal(prompt: PendingOutcomePrompt) {
+    setOutcomeModalTarget({
+      designId: prompt.design_id,
+      modelVersion: "unknown-model",
+      promptKey: promptKey(prompt),
+      provenanceContext: {
+        reported_via: "web_pending_outcome_prompt",
+        prompt_session_id: prompt.session_id,
+        prompt_created_at: prompt.created_at,
+        prompt_days_since_created: prompt.days_since_created,
+        model_version_fallback: "unknown-model"
+      }
+    });
+    setOutcomeModalOpen(true);
+  }
+
+  function dismissPrompt(prompt: PendingOutcomePrompt) {
+    const key = promptKey(prompt);
+    setDismissedPromptKeys((current) => persistDismissedPromptKey(current, key));
+  }
+
+  function handleOutcomeSubmitted(report: OutcomeReport) {
+    if (report.design_id === designId) {
+      setLatestOutcome(report);
+    }
+    const submittedPromptKey = outcomeModalTarget?.promptKey;
+    if (submittedPromptKey) {
+      setDismissedPromptKeys((current) => persistDismissedPromptKey(current, submittedPromptKey));
+      setPendingOutcomePrompts((current) => current.filter((prompt) => promptKey(prompt) !== submittedPromptKey));
+    }
+  }
+
   return (
     <main className="min-h-screen bg-panel text-ink">
+      {visiblePendingPrompt ? (
+        <PendingOutcomeToast prompt={visiblePendingPrompt} onOpen={openPromptOutcomeModal} onDismiss={dismissPrompt} />
+      ) : null}
       <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[minmax(0,1fr)_520px]">
         <section className="flex min-h-[70vh] flex-col border-r border-line bg-white lg:min-h-screen">
           <header className="border-b border-line px-4 py-5 sm:px-6">
@@ -257,18 +333,37 @@ export default function Page() {
           <div className="space-y-4 lg:sticky lg:top-5">
             <PlasmidMapView annotatedSequence={annotatedSequence as AnnotatedSequence | null} />
             <ExportActions designId={designId} status={exportStatus} error={exportError} onExport={handleExport} />
-            <OutcomePanel designId={designId} latestOutcome={latestOutcome} onOpen={() => setOutcomeModalOpen(true)} />
+            <OutcomePanel designId={designId} latestOutcome={latestOutcome} onOpen={openCurrentOutcomeModal} />
           </div>
         </aside>
       </div>
       <OutcomeReportModal
         open={outcomeModalOpen}
-        designId={designId}
-        modelVersion={modelVersion}
+        designId={outcomeModalTarget?.designId ?? null}
+        modelVersion={outcomeModalTarget?.modelVersion ?? null}
         onClose={() => setOutcomeModalOpen(false)}
-        onSubmitted={setLatestOutcome}
+        onSubmitted={handleOutcomeSubmitted}
+        provenanceContext={outcomeModalTarget?.provenanceContext}
       />
     </main>
+  );
+}
+
+function PendingOutcomeToast({ prompt, onOpen, onDismiss }: { prompt: PendingOutcomePrompt; onOpen: (prompt: PendingOutcomePrompt) => void; onDismiss: (prompt: PendingOutcomePrompt) => void }) {
+  return (
+    <aside className="fixed bottom-4 right-4 z-40 w-[calc(100%-2rem)] max-w-md border border-action/30 bg-white p-4 shadow-subtle" aria-label="Pending outcome prompt">
+      <p className="text-xs font-semibold uppercase text-action">Outcome follow-up</p>
+      <p className="mt-1 text-sm text-slate-800">Design {prompt.design_id} is ready for lab outcome feedback.</p>
+      <p className="mt-1 text-xs text-slate-500">Created {prompt.days_since_created} days ago.</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button type="button" onClick={() => onOpen(prompt)} className="border border-action bg-action px-3 py-2 text-sm font-semibold text-white">
+          Report outcome
+        </button>
+        <button type="button" onClick={() => onDismiss(prompt)} className="border border-line px-3 py-2 text-sm font-semibold text-slate-700">
+          Not now
+        </button>
+      </div>
+    </aside>
   );
 }
 
@@ -448,4 +543,28 @@ function resultSummary(result: JobResultPayload): string {
     return `Generated annotated ${sequence.topology} sequence with ${sequence.sequence.length.toLocaleString()} bp and ${sequence.features.length} labeled features.`;
   }
   return "Design job completed. Review the returned templates and validation details.";
+}
+
+function promptKey(prompt: PendingOutcomePrompt): string {
+  return `${prompt.design_id}:${prompt.session_id}`;
+}
+
+function readDismissedPromptKeys(): string[] {
+  try {
+    const raw = window.sessionStorage.getItem(DISMISSED_OUTCOME_PROMPTS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistDismissedPromptKey(current: string[], key: string): string[] {
+  const next = current.includes(key) ? current : [...current, key];
+  try {
+    window.sessionStorage.setItem(DISMISSED_OUTCOME_PROMPTS_KEY, JSON.stringify(next));
+  } catch {
+    return next;
+  }
+  return next;
 }

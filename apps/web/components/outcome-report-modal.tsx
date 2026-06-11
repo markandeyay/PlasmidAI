@@ -10,6 +10,7 @@ type OutcomeReportModalProps = {
   modelVersion: string | null;
   onClose: () => void;
   onSubmitted?: (report: OutcomeReport) => void;
+  provenanceContext?: Record<string, unknown>;
 };
 
 const testedMaterialOptions = [
@@ -60,7 +61,7 @@ const interpretationOptions = [
   "Not built or not tested"
 ];
 
-export function OutcomeReportModal({ open, designId, modelVersion, onClose, onSubmitted }: OutcomeReportModalProps) {
+export function OutcomeReportModal({ open, designId, modelVersion, onClose, onSubmitted, provenanceContext }: OutcomeReportModalProps) {
   const [testedMaterial, setTestedMaterial] = useState("");
   const [sequencingResult, setSequencingResult] = useState("");
   const [expressionResult, setExpressionResult] = useState("");
@@ -163,7 +164,8 @@ export function OutcomeReportModal({ open, designId, modelVersion, onClose, onSu
         reported_via: "web_manual_modal",
         tested_material: testedMaterial || null,
         consent_reviewed: consentReviewed,
-        reported_at: reportedAt
+        reported_at: reportedAt,
+        ...(provenanceContext ?? {})
       },
       notes: notes.trim() || null,
       reported_at: reportedAt
