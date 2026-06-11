@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { ApiError, createSession, exportDesign, pollJob, submitDesign, submitRefinement } from "@/lib/api";
 import { ExportActions, type ExportFormat, type ExportStatus } from "@/components/export-actions";
+import { OutcomeReportModal } from "@/components/outcome-report-modal";
 import { PlasmidMapView } from "@/components/plasmid-map-view";
-import type { AnnotatedSequence, JobResultPayload, JobStatusResponse, ValidationCheck, ValidationReport } from "@/lib/types";
+import type { AnnotatedSequence, JobResultPayload, JobStatusResponse, OutcomeReport, ValidationCheck, ValidationReport } from "@/lib/types";
 
 type UiState = "idle" | "submitting" | "polling" | "ready" | "awaiting_clarification" | "error";
 
@@ -42,6 +43,8 @@ export default function Page() {
   const [now, setNow] = useState(Date.now());
   const [exportStatus, setExportStatus] = useState<Record<ExportFormat, ExportStatus>>({ genbank: "idle", fasta: "idle" });
   const [exportError, setExportError] = useState<string | null>(null);
+  const [outcomeModalOpen, setOutcomeModalOpen] = useState(false);
+  const [latestOutcome, setLatestOutcome] = useState<OutcomeReport | null>(null);
 
   const latestResult = useMemo(
     () => [...messages].reverse().find((message) => message.result?.annotated_sequence)?.result,
@@ -49,6 +52,7 @@ export default function Page() {
   );
   const annotatedSequence = latestResult?.annotated_sequence ?? null;
   const designId = latestResult?.design_id ?? latestResult?.design?.design_id ?? null;
+  const modelVersion = latestResult?.validation_report?.generated_by_model_version ?? latestResult?.design?.validation_report?.generated_by_model_version ?? null;
   const isBusy = state === "submitting" || state === "polling";
   const activeClarification = useMemo(
     () => [...messages].reverse().find((message) => message.kind === "clarification")?.text ?? null,
@@ -253,10 +257,44 @@ export default function Page() {
           <div className="space-y-4 lg:sticky lg:top-5">
             <PlasmidMapView annotatedSequence={annotatedSequence as AnnotatedSequence | null} />
             <ExportActions designId={designId} status={exportStatus} error={exportError} onExport={handleExport} />
+            <OutcomePanel designId={designId} latestOutcome={latestOutcome} onOpen={() => setOutcomeModalOpen(true)} />
           </div>
         </aside>
       </div>
+      <OutcomeReportModal
+        open={outcomeModalOpen}
+        designId={designId}
+        modelVersion={modelVersion}
+        onClose={() => setOutcomeModalOpen(false)}
+        onSubmitted={setLatestOutcome}
+      />
     </main>
+  );
+}
+
+function OutcomePanel({ designId, latestOutcome, onOpen }: { designId: string | null; latestOutcome: OutcomeReport | null; onOpen: () => void }) {
+  return (
+    <section className="border border-line bg-white p-4 shadow-subtle" aria-label="Outcome reporting">
+      <h2 className="text-sm font-semibold">Lab outcome</h2>
+      <p className="mt-1 text-xs leading-5 text-slate-600">
+        {designId
+          ? latestOutcome
+            ? `Outcome reported ${new Date(latestOutcome.reported_at).toLocaleDateString()}.`
+            : "Have lab results for this design? Failed and inconclusive results are useful too."
+          : "Complete a design job to report lab results."}
+      </p>
+      {latestOutcome ? (
+        <p className="mt-2 text-xs text-slate-500">Training consent: {latestOutcome.training_consent ? "granted" : "not granted"}</p>
+      ) : null}
+      <button
+        type="button"
+        disabled={!designId}
+        onClick={onOpen}
+        className="mt-4 w-full border border-action bg-action px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-300"
+      >
+        {latestOutcome ? "Review or edit outcome" : "Report outcome"}
+      </button>
+    </section>
   );
 }
 
