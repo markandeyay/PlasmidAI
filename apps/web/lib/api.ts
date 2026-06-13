@@ -1,5 +1,17 @@
 import { API_BASE_URL } from "@/lib/config";
-import type { ApiErrorEnvelope, ApiFieldError, JobAcceptedResponse, JobStatusResponse, SessionResponse } from "@/lib/types";
+import type {
+  ApiErrorEnvelope,
+  ApiFieldError,
+  JobAcceptedResponse,
+  JobStatusResponse,
+  OutcomeResponse,
+  OutcomeReport,
+  PendingOutcomePrompt,
+  PendingOutcomePromptsResponse,
+  SessionResponse
+} from "@/lib/types";
+
+const USER_ID_HEADER = "web-demo-user";
 
 export class ApiError extends Error {
   status?: number;
@@ -83,11 +95,30 @@ export async function exportDesign(designId: string, format: "genbank" | "fasta"
   return response.blob();
 }
 
+export async function submitOutcome(designId: string, report: OutcomeReport): Promise<OutcomeReport> {
+  const response = await request<OutcomeResponse>(`/v1/designs/${encodeURIComponent(designId)}/outcome`, {
+    method: "POST",
+    body: JSON.stringify(report)
+  });
+  return response.report;
+}
+
+export async function getOutcome(designId: string): Promise<OutcomeReport> {
+  const response = await request<OutcomeResponse>(`/v1/designs/${encodeURIComponent(designId)}/outcome`, { method: "GET" });
+  return response.report;
+}
+
+export async function getPendingOutcomePrompts(): Promise<PendingOutcomePrompt[]> {
+  const response = await request<PendingOutcomePromptsResponse>("/v1/users/me/pending-outcome-prompts", { method: "GET" });
+  return response.prompts;
+}
+
 async function request<T>(path: string, init: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
+      "X-User-ID": USER_ID_HEADER,
       ...(init.headers ?? {})
     }
   });

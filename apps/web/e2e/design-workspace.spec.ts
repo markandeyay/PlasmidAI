@@ -17,6 +17,10 @@ test("researcher can design, refine, view map, and export files", async ({ page 
   const requests: string[] = [];
   let jobPolls = 0;
 
+  await page.route("http://127.0.0.1:8000/v1/users/me/pending-outcome-prompts", async (route) => {
+    await route.fulfill({ json: { prompts: [] } });
+  });
+
   await page.route("http://127.0.0.1:8000/v1/sessions", async (route) => {
     requests.push("POST /v1/sessions");
     await route.fulfill({ json: { session_id: "session-1" } });
@@ -97,4 +101,80 @@ test("researcher can design, refine, view map, and export files", async ({ page 
   expect(jobPolls).toBeGreaterThanOrEqual(2);
   expect(requests).toContain("GET /v1/designs/design-1/export?format=genbank");
   expect(requests).toContain("GET /v1/designs/design-1/export?format=fasta");
+});
+
+test("researcher can submit a prompted outcome report", async ({ page }) => {
+  let submittedOutcome: Record<string, unknown> | null = null;
+
+  await page.route("http://127.0.0.1:8000/v1/users/me/pending-outcome-prompts", async (route) => {
+    await route.fulfill({
+      json: {
+        prompts: [
+          {
+            design_id: "design-prompt-1",
+            session_id: "session-prompt-1",
+            created_at: "2026-06-01T12:00:00Z",
+            days_since_created: 11
+          }
+        ]
+      }
+    });
+  });
+
+  await page.route("http://127.0.0.1:8000/v1/designs/design-prompt-1/outcome", async (route) => {
+    const request = route.request();
+    expect(request.headers()["x-user-id"]).toBe("web-demo-user");
+    if (request.method() === "GET") {
+      if (!submittedOutcome) {
+        await route.fulfill({ status: 404, json: { error: { message: "Outcome not found" } } });
+        return;
+      }
+      await route.fulfill({ json: { outcome_id: "outcome-1", report: submittedOutcome, created_at: submittedOutcome.reported_at } });
+      return;
+    }
+
+    submittedOutcome = request.postDataJSON() as Record<string, unknown>;
+    expect(submittedOutcome.design_id).toBe("design-prompt-1");
+    expect(submittedOutcome.model_version).toBe("unknown-model");
+    expect(submittedOutcome.construct_validated).toBe(true);
+    expect(submittedOutcome.sequencing_result).toBe("Matches expected regions");
+    expect(submittedOutcome.functional_result).toBe("Met expected function");
+    expect(submittedOutcome.training_consent).toBe(true);
+    expect(submittedOutcome.outcome_label).toBe("positive");
+    expect(submittedOutcome.notes).toBe("Clone 2 matched expected reporter function.");
+    expect(submittedOutcome.provenance).toMatchObject({
+      reported_via: "web_pending_outcome_prompt",
+      prompt_session_id: "session-prompt-1",
+      prompt_days_since_created: 11,
+      model_version_fallback: "unknown-model"
+    });
+
+    await route.fulfill({ json: { outcome_id: "outcome-1", report: submittedOutcome, created_at: submittedOutcome.reported_at } });
+  });
+
+  await page.goto("/");
+  const prompt = page.getByLabel("Pending outcome prompt");
+  await expect(prompt).toContainText("Design design-prompt-1 is ready for lab outcome feedback.");
+
+  await prompt.getByRole("button", { name: "Report outcome" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByRole("heading", { name: "What happened in the lab?" })).toBeVisible();
+  await expect(dialog).toContainText("Design ID: design-prompt-1");
+  await expect(dialog).toContainText("Model version: unknown-model");
+
+  await dialog.getByLabel("What did you test?").selectOption("Delivered design exactly");
+  await dialog.getByLabel("What sequence evidence do you have?").selectOption("Matches expected regions");
+  await dialog.getByLabel("What happened in functional testing?").selectOption("Met expected function");
+  await dialog.getByLabel("Based on the evidence above, what is your interpretation?").selectOption("Accepted for intended use");
+  await dialog.getByLabel("Notes").fill("Clone 2 matched expected reporter function.");
+  await dialog.getByRole("checkbox", { name: /I consent to this outcome report/ }).check();
+  await dialog.getByRole("button", { name: "Submit outcome" }).click();
+
+  await expect(dialog.getByRole("heading", { name: "Outcome submitted" })).toBeVisible();
+  expect(submittedOutcome).not.toBeNull();
+  await dialog.getByRole("button", { name: "Back to design" }).click();
+
+  await expect(prompt).toBeHidden();
+  await expect(page.getByRole("region", { name: "My reported outcomes" })).toContainText("design-prompt-1");
+  await expect(page.getByRole("region", { name: "My reported outcomes" })).toContainText("positive");
 });

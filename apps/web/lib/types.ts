@@ -114,3 +114,43 @@ export type ApiErrorEnvelope = {
     details?: Record<string, unknown>;
   };
 };
+
+export type OutcomeLabel = "positive" | "negative" | "ambiguous";
+
+export type OutcomeReport = {
+  design_id: string;
+  model_version: string;
+  construct_validated: boolean | null;
+  sequencing_result: string | null;
+  expression_result: string | null;
+  functional_result: string | null;
+  training_consent: boolean;
+  outcome_label: OutcomeLabel;
+  provenance: Record<string, unknown>;
+  notes: string | null;
+  reported_at: string;
+};
+
+export type OutcomeResponse = {
+  outcome_id: string;
+  report: OutcomeReport;
+  created_at: string;
+};
+
+export type PendingOutcomePrompt = {
+  design_id: string;
+  session_id: string;
+  created_at: string;
+  days_since_created: number;
+};
+
+export type PendingOutcomePromptsResponse = {
+  prompts: PendingOutcomePrompt[];
+};
+
+export type ReportedOutcome = {
+  design_id: string;
+  outcome: OutcomeReport;
+  outcome_id?: string;
+  created_at?: string;
+};
