@@ -3,10 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from packages.core.schemas import DesignSpec, Plasmid, RetrievedPlasmid
-from packages.generation import FakeGenerator
+from packages.generation import FakeGenerator, MarkerSwap
 from packages.generation.registry import ModelRegistryRecord
 from packages.generation.shadow import (
     InMemoryShadowLogSink,
+    ShadowComparisonRecord,
     ShadowComparisonGenerator,
     incumbent_record,
     shadow_candidate_records,
@@ -69,6 +70,14 @@ def test_shadow_generator_returns_incumbent_output_and_logs_candidate() -> None:
     assert record.incumbent_count == 2
     assert record.candidate_count == 2
     assert record.candidate_error is None
+    assert record.incumbent_latency_ms is not None
+    assert record.candidate_latency_ms is not None
+    assert record.total_latency_ms is not None
+    assert len(record.incumbent_outputs) == 2
+    assert len(record.candidate_outputs) == 2
+    assert record.exact_sequence_match is True
+    assert record.comparison_label == "candidate_equal"
+    assert record.payload_retention == "hash_only"
 
 
 def test_shadow_generator_suppresses_candidate_failure() -> None:
@@ -94,6 +103,49 @@ def test_shadow_generator_suppresses_candidate_failure() -> None:
     assert generated[0].model_version == "incumbent"
     assert sink.records[0].candidate_count == 0
     assert sink.records[0].candidate_error == "candidate unavailable"
+    assert sink.records[0].candidate_error_class == "RuntimeError"
+    assert sink.records[0].comparison_label == "not_evaluable"
+    assert sink.records[0].reason_codes == ["candidate_error"]
+
+
+def test_shadow_generator_logs_candidate_divergence() -> None:
+    sink = InMemoryShadowLogSink()
+    generator = ShadowComparisonGenerator(
+        incumbent=FakeGenerator(version="incumbent"),
+        candidate=FakeGenerator(
+            marker_swap=MarkerSwap(original_sequence="CCCC", replacement_sequence="TTTT"),
+            version="candidate",
+        ),
+        log_sink=sink,
+    )
+
+    generated = generator.generate(DesignSpec(organism="Escherichia coli"), [_template()])
+
+    assert generated[0].model_version == "incumbent"
+    record = sink.records[0]
+    assert record.exact_sequence_match is False
+    assert record.sequence_identity == 0.0
+    assert record.length_delta_bp == 0
+    assert record.parent_template_overlap == 1
+    assert record.comparison_label == "candidate_diverged"
+    assert record.reason_codes == ["sequence_hash_differs"]
+
+
+def test_shadow_log_sink_failure_does_not_break_served_output() -> None:
+    class FailingSink:
+        def record(self, comparison: ShadowComparisonRecord) -> None:
+            del comparison
+            raise RuntimeError("log sink unavailable")
+
+    generator = ShadowComparisonGenerator(
+        incumbent=FakeGenerator(version="incumbent"),
+        candidate=FakeGenerator(version="candidate"),
+        log_sink=FailingSink(),
+    )
+
+    generated = generator.generate(DesignSpec(organism="Escherichia coli"), [_template()])
+
+    assert generated[0].model_version == "incumbent"
 
 
 def test_rollout_state_helpers_gate_serving_and_shadow_records() -> None:

@@ -1,4 +1,4 @@
-.PHONY: build-training-data derive-training-signal design embed-corpus eval-generation eval-retrieval finetune-smoke generate-validation-gold ingest-addgene ingest-all ingest-curated ingest-genbank lint list-models parse-sample quality-report refresh-corpus register-model reprocess serve-api serve-web services-down setup spike-generation test validate-sample
+.PHONY: build-training-data derive-training-signal design embed-corpus eval-generation eval-retrieval finetune-smoke generate-validation-gold ingest-addgene ingest-all ingest-curated ingest-genbank lint list-models parse-sample quality-report refresh-corpus register-model reprocess serve-api serve-web services-down setup shadow-eval spike-generation test validate-sample
 
 PYTHON ?= python
 MODE ?= dev
@@ -86,6 +86,9 @@ build-training-data:
 
 eval-generation:
 	$(PYTHON) -m packages.generation.eval --gold-path $(GENERATION_GOLD) --output-dir $(GENERATION_OUT) --top-k $(GENERATION_TOP_K) --generator $(GENERATION_GENERATOR) --carbon-max-new-tokens $(CARBON_MAX_NEW_TOKENS) $(if $(filter 1 true TRUE yes YES,$(FAKE)),--fake-embedder,) $(if $(filter offline OFFLINE,$(MODE)),--local-files-only,)
+
+shadow-eval:
+	$(PYTHON) -m packages.generation.rollout_eval --gold data/eval/retrieval_gold.jsonl --limit $(or $(N),20) --output-dir data/eval/shadow
 
 finetune-smoke:
 	$(PYTHON) -m packages.generation.finetune --smoke --output-dir $(FINETUNE_OUTPUT) --max-train-examples 5 --max-eval-examples 2 --max-steps 1 --max-length 96

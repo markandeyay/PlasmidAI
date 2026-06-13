@@ -1,0 +1,1240 @@
+{
+  "generated_at": "2026-06-11T02:20:37.404682+00:00",
+  "gold_path": "data\\eval\\retrieval_gold.jsonl",
+  "limit": 20,
+  "summary": {
+    "records": 20,
+    "candidate_errors": 0,
+    "candidate_timeouts": 0,
+    "exact_sequence_match_rate": 0.0,
+    "output_divergence_rate": 1.0,
+    "mean_sequence_identity": 0.0,
+    "mean_incumbent_latency_ms": 0.04,
+    "mean_candidate_latency_ms": 0.039,
+    "comparison_labels": {
+      "candidate_diverged": 20
+    }
+  },
+  "records": [
+    {
+      "request_id": "shadow-gold-001",
+      "incumbent_model_version": "fake-incumbent-template-v1",
+      "candidate_model_version": "fake-candidate-marker-swap-v1",
+      "served_model_version": "fake-incumbent-template-v1",
+      "incumbent_count": 1,
+      "candidate_count": 1,
+      "timestamp": "2026-06-11T02:20:37.401041+00:00",
+      "trace_id": null,
+      "incumbent_latency_ms": 0.109,
+      "candidate_latency_ms": 0.058,
+      "total_latency_ms": 0.289,
+      "incumbent_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-incumbent-template-v1",
+          "sequence_sha256": "4366bd2fb9da2bb5525129b704c2b1560e4df133e2925a28c5d2964d541af226",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "candidate_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-candidate-marker-swap-v1",
+          "sequence_sha256": "56174ff592064d73f44ed675ca0803ed210f304aba1e1cc45b4475bd3689dc5c",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "sequence_identity": 0.0,
+      "length_delta_bp": 0,
+      "exact_sequence_match": false,
+      "parent_template_overlap": 1,
+      "comparison_label": "candidate_diverged",
+      "reason_codes": [
+        "sequence_hash_differs"
+      ],
+      "payload_retention": "hash_only",
+      "incumbent_error": null,
+      "incumbent_error_class": null,
+      "candidate_error": null,
+      "candidate_error_class": null,
+      "candidate_timed_out": false
+    },
+    {
+      "request_id": "shadow-gold-002",
+      "incumbent_model_version": "fake-incumbent-template-v1",
+      "candidate_model_version": "fake-candidate-marker-swap-v1",
+      "served_model_version": "fake-incumbent-template-v1",
+      "incumbent_count": 1,
+      "candidate_count": 1,
+      "timestamp": "2026-06-11T02:20:37.401202+00:00",
+      "trace_id": null,
+      "incumbent_latency_ms": 0.043,
+      "candidate_latency_ms": 0.036,
+      "total_latency_ms": 0.112,
+      "incumbent_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-incumbent-template-v1",
+          "sequence_sha256": "4366bd2fb9da2bb5525129b704c2b1560e4df133e2925a28c5d2964d541af226",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "candidate_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-candidate-marker-swap-v1",
+          "sequence_sha256": "56174ff592064d73f44ed675ca0803ed210f304aba1e1cc45b4475bd3689dc5c",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "sequence_identity": 0.0,
+      "length_delta_bp": 0,
+      "exact_sequence_match": false,
+      "parent_template_overlap": 1,
+      "comparison_label": "candidate_diverged",
+      "reason_codes": [
+        "sequence_hash_differs"
+      ],
+      "payload_retention": "hash_only",
+      "incumbent_error": null,
+      "incumbent_error_class": null,
+      "candidate_error": null,
+      "candidate_error_class": null,
+      "candidate_timed_out": false
+    },
+    {
+      "request_id": "shadow-gold-003",
+      "incumbent_model_version": "fake-incumbent-template-v1",
+      "candidate_model_version": "fake-candidate-marker-swap-v1",
+      "served_model_version": "fake-incumbent-template-v1",
+      "incumbent_count": 1,
+      "candidate_count": 1,
+      "timestamp": "2026-06-11T02:20:37.401322+00:00",
+      "trace_id": null,
+      "incumbent_latency_ms": 0.033,
+      "candidate_latency_ms": 0.031,
+      "total_latency_ms": 0.086,
+      "incumbent_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-incumbent-template-v1",
+          "sequence_sha256": "4366bd2fb9da2bb5525129b704c2b1560e4df133e2925a28c5d2964d541af226",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "candidate_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-candidate-marker-swap-v1",
+          "sequence_sha256": "56174ff592064d73f44ed675ca0803ed210f304aba1e1cc45b4475bd3689dc5c",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "sequence_identity": 0.0,
+      "length_delta_bp": 0,
+      "exact_sequence_match": false,
+      "parent_template_overlap": 1,
+      "comparison_label": "candidate_diverged",
+      "reason_codes": [
+        "sequence_hash_differs"
+      ],
+      "payload_retention": "hash_only",
+      "incumbent_error": null,
+      "incumbent_error_class": null,
+      "candidate_error": null,
+      "candidate_error_class": null,
+      "candidate_timed_out": false
+    },
+    {
+      "request_id": "shadow-gold-004",
+      "incumbent_model_version": "fake-incumbent-template-v1",
+      "candidate_model_version": "fake-candidate-marker-swap-v1",
+      "served_model_version": "fake-incumbent-template-v1",
+      "incumbent_count": 1,
+      "candidate_count": 1,
+      "timestamp": "2026-06-11T02:20:37.401472+00:00",
+      "trace_id": null,
+      "incumbent_latency_ms": 0.034,
+      "candidate_latency_ms": 0.028,
+      "total_latency_ms": 0.084,
+      "incumbent_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-incumbent-template-v1",
+          "sequence_sha256": "4366bd2fb9da2bb5525129b704c2b1560e4df133e2925a28c5d2964d541af226",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "candidate_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-candidate-marker-swap-v1",
+          "sequence_sha256": "56174ff592064d73f44ed675ca0803ed210f304aba1e1cc45b4475bd3689dc5c",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "sequence_identity": 0.0,
+      "length_delta_bp": 0,
+      "exact_sequence_match": false,
+      "parent_template_overlap": 1,
+      "comparison_label": "candidate_diverged",
+      "reason_codes": [
+        "sequence_hash_differs"
+      ],
+      "payload_retention": "hash_only",
+      "incumbent_error": null,
+      "incumbent_error_class": null,
+      "candidate_error": null,
+      "candidate_error_class": null,
+      "candidate_timed_out": false
+    },
+    {
+      "request_id": "shadow-gold-005",
+      "incumbent_model_version": "fake-incumbent-template-v1",
+      "candidate_model_version": "fake-candidate-marker-swap-v1",
+      "served_model_version": "fake-incumbent-template-v1",
+      "incumbent_count": 1,
+      "candidate_count": 1,
+      "timestamp": "2026-06-11T02:20:37.401568+00:00",
+      "trace_id": null,
+      "incumbent_latency_ms": 0.029,
+      "candidate_latency_ms": 0.028,
+      "total_latency_ms": 0.075,
+      "incumbent_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-incumbent-template-v1",
+          "sequence_sha256": "4366bd2fb9da2bb5525129b704c2b1560e4df133e2925a28c5d2964d541af226",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "candidate_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-candidate-marker-swap-v1",
+          "sequence_sha256": "56174ff592064d73f44ed675ca0803ed210f304aba1e1cc45b4475bd3689dc5c",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "sequence_identity": 0.0,
+      "length_delta_bp": 0,
+      "exact_sequence_match": false,
+      "parent_template_overlap": 1,
+      "comparison_label": "candidate_diverged",
+      "reason_codes": [
+        "sequence_hash_differs"
+      ],
+      "payload_retention": "hash_only",
+      "incumbent_error": null,
+      "incumbent_error_class": null,
+      "candidate_error": null,
+      "candidate_error_class": null,
+      "candidate_timed_out": false
+    },
+    {
+      "request_id": "shadow-gold-006",
+      "incumbent_model_version": "fake-incumbent-template-v1",
+      "candidate_model_version": "fake-candidate-marker-swap-v1",
+      "served_model_version": "fake-incumbent-template-v1",
+      "incumbent_count": 1,
+      "candidate_count": 1,
+      "timestamp": "2026-06-11T02:20:37.401661+00:00",
+      "trace_id": null,
+      "incumbent_latency_ms": 0.026,
+      "candidate_latency_ms": 0.027,
+      "total_latency_ms": 0.072,
+      "incumbent_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-incumbent-template-v1",
+          "sequence_sha256": "4366bd2fb9da2bb5525129b704c2b1560e4df133e2925a28c5d2964d541af226",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "candidate_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-candidate-marker-swap-v1",
+          "sequence_sha256": "56174ff592064d73f44ed675ca0803ed210f304aba1e1cc45b4475bd3689dc5c",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "sequence_identity": 0.0,
+      "length_delta_bp": 0,
+      "exact_sequence_match": false,
+      "parent_template_overlap": 1,
+      "comparison_label": "candidate_diverged",
+      "reason_codes": [
+        "sequence_hash_differs"
+      ],
+      "payload_retention": "hash_only",
+      "incumbent_error": null,
+      "incumbent_error_class": null,
+      "candidate_error": null,
+      "candidate_error_class": null,
+      "candidate_timed_out": false
+    },
+    {
+      "request_id": "shadow-gold-007",
+      "incumbent_model_version": "fake-incumbent-template-v1",
+      "candidate_model_version": "fake-candidate-marker-swap-v1",
+      "served_model_version": "fake-incumbent-template-v1",
+      "incumbent_count": 1,
+      "candidate_count": 1,
+      "timestamp": "2026-06-11T02:20:37.401751+00:00",
+      "trace_id": null,
+      "incumbent_latency_ms": 0.029,
+      "candidate_latency_ms": 0.027,
+      "total_latency_ms": 0.073,
+      "incumbent_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-incumbent-template-v1",
+          "sequence_sha256": "4366bd2fb9da2bb5525129b704c2b1560e4df133e2925a28c5d2964d541af226",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "candidate_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-candidate-marker-swap-v1",
+          "sequence_sha256": "56174ff592064d73f44ed675ca0803ed210f304aba1e1cc45b4475bd3689dc5c",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "sequence_identity": 0.0,
+      "length_delta_bp": 0,
+      "exact_sequence_match": false,
+      "parent_template_overlap": 1,
+      "comparison_label": "candidate_diverged",
+      "reason_codes": [
+        "sequence_hash_differs"
+      ],
+      "payload_retention": "hash_only",
+      "incumbent_error": null,
+      "incumbent_error_class": null,
+      "candidate_error": null,
+      "candidate_error_class": null,
+      "candidate_timed_out": false
+    },
+    {
+      "request_id": "shadow-gold-008",
+      "incumbent_model_version": "fake-incumbent-template-v1",
+      "candidate_model_version": "fake-candidate-marker-swap-v1",
+      "served_model_version": "fake-incumbent-template-v1",
+      "incumbent_count": 1,
+      "candidate_count": 1,
+      "timestamp": "2026-06-11T02:20:37.401840+00:00",
+      "trace_id": null,
+      "incumbent_latency_ms": 0.026,
+      "candidate_latency_ms": 0.026,
+      "total_latency_ms": 0.07,
+      "incumbent_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-incumbent-template-v1",
+          "sequence_sha256": "4366bd2fb9da2bb5525129b704c2b1560e4df133e2925a28c5d2964d541af226",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "candidate_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-candidate-marker-swap-v1",
+          "sequence_sha256": "56174ff592064d73f44ed675ca0803ed210f304aba1e1cc45b4475bd3689dc5c",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "sequence_identity": 0.0,
+      "length_delta_bp": 0,
+      "exact_sequence_match": false,
+      "parent_template_overlap": 1,
+      "comparison_label": "candidate_diverged",
+      "reason_codes": [
+        "sequence_hash_differs"
+      ],
+      "payload_retention": "hash_only",
+      "incumbent_error": null,
+      "incumbent_error_class": null,
+      "candidate_error": null,
+      "candidate_error_class": null,
+      "candidate_timed_out": false
+    },
+    {
+      "request_id": "shadow-gold-009",
+      "incumbent_model_version": "fake-incumbent-template-v1",
+      "candidate_model_version": "fake-candidate-marker-swap-v1",
+      "served_model_version": "fake-incumbent-template-v1",
+      "incumbent_count": 1,
+      "candidate_count": 1,
+      "timestamp": "2026-06-11T02:20:37.401925+00:00",
+      "trace_id": null,
+      "incumbent_latency_ms": 0.025,
+      "candidate_latency_ms": 0.025,
+      "total_latency_ms": 0.067,
+      "incumbent_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-incumbent-template-v1",
+          "sequence_sha256": "4366bd2fb9da2bb5525129b704c2b1560e4df133e2925a28c5d2964d541af226",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "candidate_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-candidate-marker-swap-v1",
+          "sequence_sha256": "56174ff592064d73f44ed675ca0803ed210f304aba1e1cc45b4475bd3689dc5c",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "sequence_identity": 0.0,
+      "length_delta_bp": 0,
+      "exact_sequence_match": false,
+      "parent_template_overlap": 1,
+      "comparison_label": "candidate_diverged",
+      "reason_codes": [
+        "sequence_hash_differs"
+      ],
+      "payload_retention": "hash_only",
+      "incumbent_error": null,
+      "incumbent_error_class": null,
+      "candidate_error": null,
+      "candidate_error_class": null,
+      "candidate_timed_out": false
+    },
+    {
+      "request_id": "shadow-gold-010",
+      "incumbent_model_version": "fake-incumbent-template-v1",
+      "candidate_model_version": "fake-candidate-marker-swap-v1",
+      "served_model_version": "fake-incumbent-template-v1",
+      "incumbent_count": 1,
+      "candidate_count": 1,
+      "timestamp": "2026-06-11T02:20:37.402033+00:00",
+      "trace_id": null,
+      "incumbent_latency_ms": 0.04,
+      "candidate_latency_ms": 0.029,
+      "total_latency_ms": 0.089,
+      "incumbent_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-incumbent-template-v1",
+          "sequence_sha256": "4366bd2fb9da2bb5525129b704c2b1560e4df133e2925a28c5d2964d541af226",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "candidate_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-candidate-marker-swap-v1",
+          "sequence_sha256": "56174ff592064d73f44ed675ca0803ed210f304aba1e1cc45b4475bd3689dc5c",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "sequence_identity": 0.0,
+      "length_delta_bp": 0,
+      "exact_sequence_match": false,
+      "parent_template_overlap": 1,
+      "comparison_label": "candidate_diverged",
+      "reason_codes": [
+        "sequence_hash_differs"
+      ],
+      "payload_retention": "hash_only",
+      "incumbent_error": null,
+      "incumbent_error_class": null,
+      "candidate_error": null,
+      "candidate_error_class": null,
+      "candidate_timed_out": false
+    },
+    {
+      "request_id": "shadow-gold-011",
+      "incumbent_model_version": "fake-incumbent-template-v1",
+      "candidate_model_version": "fake-candidate-marker-swap-v1",
+      "served_model_version": "fake-incumbent-template-v1",
+      "incumbent_count": 1,
+      "candidate_count": 1,
+      "timestamp": "2026-06-11T02:20:37.402130+00:00",
+      "trace_id": null,
+      "incumbent_latency_ms": 0.026,
+      "candidate_latency_ms": 0.027,
+      "total_latency_ms": 0.071,
+      "incumbent_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-incumbent-template-v1",
+          "sequence_sha256": "4366bd2fb9da2bb5525129b704c2b1560e4df133e2925a28c5d2964d541af226",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "candidate_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-candidate-marker-swap-v1",
+          "sequence_sha256": "56174ff592064d73f44ed675ca0803ed210f304aba1e1cc45b4475bd3689dc5c",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "sequence_identity": 0.0,
+      "length_delta_bp": 0,
+      "exact_sequence_match": false,
+      "parent_template_overlap": 1,
+      "comparison_label": "candidate_diverged",
+      "reason_codes": [
+        "sequence_hash_differs"
+      ],
+      "payload_retention": "hash_only",
+      "incumbent_error": null,
+      "incumbent_error_class": null,
+      "candidate_error": null,
+      "candidate_error_class": null,
+      "candidate_timed_out": false
+    },
+    {
+      "request_id": "shadow-gold-012",
+      "incumbent_model_version": "fake-incumbent-template-v1",
+      "candidate_model_version": "fake-candidate-marker-swap-v1",
+      "served_model_version": "fake-incumbent-template-v1",
+      "incumbent_count": 1,
+      "candidate_count": 1,
+      "timestamp": "2026-06-11T02:20:37.402361+00:00",
+      "trace_id": null,
+      "incumbent_latency_ms": 0.037,
+      "candidate_latency_ms": 0.028,
+      "total_latency_ms": 0.116,
+      "incumbent_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-incumbent-template-v1",
+          "sequence_sha256": "4366bd2fb9da2bb5525129b704c2b1560e4df133e2925a28c5d2964d541af226",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "candidate_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-candidate-marker-swap-v1",
+          "sequence_sha256": "56174ff592064d73f44ed675ca0803ed210f304aba1e1cc45b4475bd3689dc5c",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "sequence_identity": 0.0,
+      "length_delta_bp": 0,
+      "exact_sequence_match": false,
+      "parent_template_overlap": 1,
+      "comparison_label": "candidate_diverged",
+      "reason_codes": [
+        "sequence_hash_differs"
+      ],
+      "payload_retention": "hash_only",
+      "incumbent_error": null,
+      "incumbent_error_class": null,
+      "candidate_error": null,
+      "candidate_error_class": null,
+      "candidate_timed_out": false
+    },
+    {
+      "request_id": "shadow-gold-013",
+      "incumbent_model_version": "fake-incumbent-template-v1",
+      "candidate_model_version": "fake-candidate-marker-swap-v1",
+      "served_model_version": "fake-incumbent-template-v1",
+      "incumbent_count": 1,
+      "candidate_count": 1,
+      "timestamp": "2026-06-11T02:20:37.402459+00:00",
+      "trace_id": null,
+      "incumbent_latency_ms": 0.03,
+      "candidate_latency_ms": 0.027,
+      "total_latency_ms": 0.075,
+      "incumbent_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-incumbent-template-v1",
+          "sequence_sha256": "4366bd2fb9da2bb5525129b704c2b1560e4df133e2925a28c5d2964d541af226",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "candidate_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-candidate-marker-swap-v1",
+          "sequence_sha256": "56174ff592064d73f44ed675ca0803ed210f304aba1e1cc45b4475bd3689dc5c",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "sequence_identity": 0.0,
+      "length_delta_bp": 0,
+      "exact_sequence_match": false,
+      "parent_template_overlap": 1,
+      "comparison_label": "candidate_diverged",
+      "reason_codes": [
+        "sequence_hash_differs"
+      ],
+      "payload_retention": "hash_only",
+      "incumbent_error": null,
+      "incumbent_error_class": null,
+      "candidate_error": null,
+      "candidate_error_class": null,
+      "candidate_timed_out": false
+    },
+    {
+      "request_id": "shadow-gold-014",
+      "incumbent_model_version": "fake-incumbent-template-v1",
+      "candidate_model_version": "fake-candidate-marker-swap-v1",
+      "served_model_version": "fake-incumbent-template-v1",
+      "incumbent_count": 1,
+      "candidate_count": 1,
+      "timestamp": "2026-06-11T02:20:37.402552+00:00",
+      "trace_id": null,
+      "incumbent_latency_ms": 0.026,
+      "candidate_latency_ms": 0.028,
+      "total_latency_ms": 0.072,
+      "incumbent_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-incumbent-template-v1",
+          "sequence_sha256": "4366bd2fb9da2bb5525129b704c2b1560e4df133e2925a28c5d2964d541af226",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "candidate_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-candidate-marker-swap-v1",
+          "sequence_sha256": "56174ff592064d73f44ed675ca0803ed210f304aba1e1cc45b4475bd3689dc5c",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "sequence_identity": 0.0,
+      "length_delta_bp": 0,
+      "exact_sequence_match": false,
+      "parent_template_overlap": 1,
+      "comparison_label": "candidate_diverged",
+      "reason_codes": [
+        "sequence_hash_differs"
+      ],
+      "payload_retention": "hash_only",
+      "incumbent_error": null,
+      "incumbent_error_class": null,
+      "candidate_error": null,
+      "candidate_error_class": null,
+      "candidate_timed_out": false
+    },
+    {
+      "request_id": "shadow-gold-015",
+      "incumbent_model_version": "fake-incumbent-template-v1",
+      "candidate_model_version": "fake-candidate-marker-swap-v1",
+      "served_model_version": "fake-incumbent-template-v1",
+      "incumbent_count": 1,
+      "candidate_count": 1,
+      "timestamp": "2026-06-11T02:20:37.402641+00:00",
+      "trace_id": null,
+      "incumbent_latency_ms": 0.027,
+      "candidate_latency_ms": 0.026,
+      "total_latency_ms": 0.071,
+      "incumbent_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-incumbent-template-v1",
+          "sequence_sha256": "4366bd2fb9da2bb5525129b704c2b1560e4df133e2925a28c5d2964d541af226",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "candidate_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-candidate-marker-swap-v1",
+          "sequence_sha256": "56174ff592064d73f44ed675ca0803ed210f304aba1e1cc45b4475bd3689dc5c",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "sequence_identity": 0.0,
+      "length_delta_bp": 0,
+      "exact_sequence_match": false,
+      "parent_template_overlap": 1,
+      "comparison_label": "candidate_diverged",
+      "reason_codes": [
+        "sequence_hash_differs"
+      ],
+      "payload_retention": "hash_only",
+      "incumbent_error": null,
+      "incumbent_error_class": null,
+      "candidate_error": null,
+      "candidate_error_class": null,
+      "candidate_timed_out": false
+    },
+    {
+      "request_id": "shadow-gold-016",
+      "incumbent_model_version": "fake-incumbent-template-v1",
+      "candidate_model_version": "fake-candidate-marker-swap-v1",
+      "served_model_version": "fake-incumbent-template-v1",
+      "incumbent_count": 1,
+      "candidate_count": 1,
+      "timestamp": "2026-06-11T02:20:37.402731+00:00",
+      "trace_id": null,
+      "incumbent_latency_ms": 0.026,
+      "candidate_latency_ms": 0.027,
+      "total_latency_ms": 0.07,
+      "incumbent_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-incumbent-template-v1",
+          "sequence_sha256": "4366bd2fb9da2bb5525129b704c2b1560e4df133e2925a28c5d2964d541af226",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "candidate_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-candidate-marker-swap-v1",
+          "sequence_sha256": "56174ff592064d73f44ed675ca0803ed210f304aba1e1cc45b4475bd3689dc5c",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "sequence_identity": 0.0,
+      "length_delta_bp": 0,
+      "exact_sequence_match": false,
+      "parent_template_overlap": 1,
+      "comparison_label": "candidate_diverged",
+      "reason_codes": [
+        "sequence_hash_differs"
+      ],
+      "payload_retention": "hash_only",
+      "incumbent_error": null,
+      "incumbent_error_class": null,
+      "candidate_error": null,
+      "candidate_error_class": null,
+      "candidate_timed_out": false
+    },
+    {
+      "request_id": "shadow-gold-017",
+      "incumbent_model_version": "fake-incumbent-template-v1",
+      "candidate_model_version": "fake-candidate-marker-swap-v1",
+      "served_model_version": "fake-incumbent-template-v1",
+      "incumbent_count": 1,
+      "candidate_count": 1,
+      "timestamp": "2026-06-11T02:20:37.402818+00:00",
+      "trace_id": null,
+      "incumbent_latency_ms": 0.027,
+      "candidate_latency_ms": 0.025,
+      "total_latency_ms": 0.069,
+      "incumbent_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-incumbent-template-v1",
+          "sequence_sha256": "4366bd2fb9da2bb5525129b704c2b1560e4df133e2925a28c5d2964d541af226",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "candidate_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-candidate-marker-swap-v1",
+          "sequence_sha256": "56174ff592064d73f44ed675ca0803ed210f304aba1e1cc45b4475bd3689dc5c",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "sequence_identity": 0.0,
+      "length_delta_bp": 0,
+      "exact_sequence_match": false,
+      "parent_template_overlap": 1,
+      "comparison_label": "candidate_diverged",
+      "reason_codes": [
+        "sequence_hash_differs"
+      ],
+      "payload_retention": "hash_only",
+      "incumbent_error": null,
+      "incumbent_error_class": null,
+      "candidate_error": null,
+      "candidate_error_class": null,
+      "candidate_timed_out": false
+    },
+    {
+      "request_id": "shadow-gold-018",
+      "incumbent_model_version": "fake-incumbent-template-v1",
+      "candidate_model_version": "fake-candidate-marker-swap-v1",
+      "served_model_version": "fake-incumbent-template-v1",
+      "incumbent_count": 1,
+      "candidate_count": 1,
+      "timestamp": "2026-06-11T02:20:37.403102+00:00",
+      "trace_id": null,
+      "incumbent_latency_ms": 0.025,
+      "candidate_latency_ms": 0.208,
+      "total_latency_ms": 0.262,
+      "incumbent_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-incumbent-template-v1",
+          "sequence_sha256": "4366bd2fb9da2bb5525129b704c2b1560e4df133e2925a28c5d2964d541af226",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "candidate_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-candidate-marker-swap-v1",
+          "sequence_sha256": "56174ff592064d73f44ed675ca0803ed210f304aba1e1cc45b4475bd3689dc5c",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "sequence_identity": 0.0,
+      "length_delta_bp": 0,
+      "exact_sequence_match": false,
+      "parent_template_overlap": 1,
+      "comparison_label": "candidate_diverged",
+      "reason_codes": [
+        "sequence_hash_differs"
+      ],
+      "payload_retention": "hash_only",
+      "incumbent_error": null,
+      "incumbent_error_class": null,
+      "candidate_error": null,
+      "candidate_error_class": null,
+      "candidate_timed_out": false
+    },
+    {
+      "request_id": "shadow-gold-019",
+      "incumbent_model_version": "fake-incumbent-template-v1",
+      "candidate_model_version": "fake-candidate-marker-swap-v1",
+      "served_model_version": "fake-incumbent-template-v1",
+      "incumbent_count": 1,
+      "candidate_count": 1,
+      "timestamp": "2026-06-11T02:20:37.403459+00:00",
+      "trace_id": null,
+      "incumbent_latency_ms": 0.144,
+      "candidate_latency_ms": 0.047,
+      "total_latency_ms": 0.248,
+      "incumbent_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-incumbent-template-v1",
+          "sequence_sha256": "4366bd2fb9da2bb5525129b704c2b1560e4df133e2925a28c5d2964d541af226",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "candidate_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-candidate-marker-swap-v1",
+          "sequence_sha256": "56174ff592064d73f44ed675ca0803ed210f304aba1e1cc45b4475bd3689dc5c",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "sequence_identity": 0.0,
+      "length_delta_bp": 0,
+      "exact_sequence_match": false,
+      "parent_template_overlap": 1,
+      "comparison_label": "candidate_diverged",
+      "reason_codes": [
+        "sequence_hash_differs"
+      ],
+      "payload_retention": "hash_only",
+      "incumbent_error": null,
+      "incumbent_error_class": null,
+      "candidate_error": null,
+      "candidate_error_class": null,
+      "candidate_timed_out": false
+    },
+    {
+      "request_id": "shadow-gold-020",
+      "incumbent_model_version": "fake-incumbent-template-v1",
+      "candidate_model_version": "fake-candidate-marker-swap-v1",
+      "served_model_version": "fake-incumbent-template-v1",
+      "incumbent_count": 1,
+      "candidate_count": 1,
+      "timestamp": "2026-06-11T02:20:37.403590+00:00",
+      "trace_id": null,
+      "incumbent_latency_ms": 0.036,
+      "candidate_latency_ms": 0.03,
+      "total_latency_ms": 0.089,
+      "incumbent_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-incumbent-template-v1",
+          "sequence_sha256": "4366bd2fb9da2bb5525129b704c2b1560e4df133e2925a28c5d2964d541af226",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "candidate_outputs": [
+        {
+          "index": 0,
+          "model_version": "fake-candidate-marker-swap-v1",
+          "sequence_sha256": "56174ff592064d73f44ed675ca0803ed210f304aba1e1cc45b4475bd3689dc5c",
+          "length_bp": 16,
+          "annotation_complete": false,
+          "vector_profile": "bacterial_cloning_vector",
+          "feature_counts": {},
+          "parent_template_ids": [
+            "shadow:template"
+          ],
+          "validation_overall": null,
+          "validation_fail_count": null,
+          "validation_warn_count": null
+        }
+      ],
+      "sequence_identity": 0.0,
+      "length_delta_bp": 0,
+      "exact_sequence_match": false,
+      "parent_template_overlap": 1,
+      "comparison_label": "candidate_diverged",
+      "reason_codes": [
+        "sequence_hash_differs"
+      ],
+      "payload_retention": "hash_only",
+      "incumbent_error": null,
+      "incumbent_error_class": null,
+      "candidate_error": null,
+      "candidate_error_class": null,
+      "candidate_timed_out": false
+    }
+  ]
+}
