@@ -10,6 +10,7 @@ type OutcomeReportModalProps = {
   modelVersion: string | null;
   onClose: () => void;
   onSubmitted?: (report: OutcomeReport) => void;
+  initialReport?: OutcomeReport;
   provenanceContext?: Record<string, unknown>;
 };
 
@@ -61,7 +62,7 @@ const interpretationOptions = [
   "Not built or not tested"
 ];
 
-export function OutcomeReportModal({ open, designId, modelVersion, onClose, onSubmitted, provenanceContext }: OutcomeReportModalProps) {
+export function OutcomeReportModal({ open, designId, modelVersion, onClose, onSubmitted, initialReport, provenanceContext }: OutcomeReportModalProps) {
   const [testedMaterial, setTestedMaterial] = useState("");
   const [sequencingResult, setSequencingResult] = useState("");
   const [expressionResult, setExpressionResult] = useState("");
@@ -84,6 +85,20 @@ export function OutcomeReportModal({ open, designId, modelVersion, onClose, onSu
   useEffect(() => {
     setSubmittedReport(null);
   }, [designId]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    setTestedMaterial(readStringProvenance(initialReport, "tested_material"));
+    setSequencingResult(initialReport?.sequencing_result ?? "");
+    setExpressionResult(initialReport?.expression_result ?? "");
+    setFunctionalResult(initialReport?.functional_result ?? "");
+    setInterpretation(interpretationFromReport(initialReport));
+    setNotes(initialReport?.notes ?? "");
+    setTrainingConsent(initialReport?.training_consent ?? false);
+    setConsentReviewed(Boolean(initialReport));
+  }, [open, designId, initialReport]);
 
   const constructValidated = useMemo(() => {
     if (interpretation === "Accepted for intended use") {
@@ -343,6 +358,24 @@ function labelText(label: OutcomeLabel, trainingConsent: boolean): string {
     return "Likely negative evidence";
   }
   return "Ambiguous evidence";
+}
+
+function interpretationFromReport(report: OutcomeReport | undefined): string {
+  if (!report) {
+    return "";
+  }
+  if (report.construct_validated === true) {
+    return "Accepted for intended use";
+  }
+  if (report.construct_validated === false) {
+    return "Did not validate";
+  }
+  return report.outcome_label === "ambiguous" ? "Attempted, but inconclusive" : "";
+}
+
+function readStringProvenance(report: OutcomeReport | undefined, key: string): string {
+  const value = report?.provenance?.[key];
+  return typeof value === "string" ? value : "";
 }
 
 function friendlyErrorMessage(error: unknown): string {

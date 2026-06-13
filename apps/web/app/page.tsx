@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ApiError, createSession, exportDesign, getPendingOutcomePrompts, pollJob, submitDesign, submitRefinement } from "@/lib/api";
+import { ApiError, createSession, exportDesign, getOutcome, getPendingOutcomePrompts, pollJob, submitDesign, submitRefinement } from "@/lib/api";
 import { ExportActions, type ExportFormat, type ExportStatus } from "@/components/export-actions";
 import { OutcomeReportModal } from "@/components/outcome-report-modal";
 import { PlasmidMapView } from "@/components/plasmid-map-view";
@@ -20,6 +20,7 @@ type ChatMessage = {
 type OutcomeModalTarget = {
   designId: string;
   modelVersion: string;
+  initialReport?: OutcomeReport;
   promptKey?: string;
   provenanceContext?: Record<string, unknown>;
 };
@@ -34,6 +35,7 @@ const EXAMPLE_PROMPTS = [
 ];
 
 const DISMISSED_OUTCOME_PROMPTS_KEY = "plasmidai:dismissed-outcome-prompts";
+const REPORTED_OUTCOMES_KEY = "plasmidai:reported-outcomes";
 
 export default function Page() {
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -55,6 +57,7 @@ export default function Page() {
   const [outcomeModalOpen, setOutcomeModalOpen] = useState(false);
   const [outcomeModalTarget, setOutcomeModalTarget] = useState<OutcomeModalTarget | null>(null);
   const [latestOutcome, setLatestOutcome] = useState<OutcomeReport | null>(null);
+  const [reportedOutcomes, setReportedOutcomes] = useState<OutcomeReport[]>([]);
   const [pendingOutcomePrompts, setPendingOutcomePrompts] = useState<PendingOutcomePrompt[]>([]);
   const [dismissedPromptKeys, setDismissedPromptKeys] = useState<string[]>([]);
 
@@ -82,6 +85,7 @@ export default function Page() {
   useEffect(() => {
     let cancelled = false;
     setDismissedPromptKeys(readDismissedPromptKeys());
+    setReportedOutcomes(readReportedOutcomes());
     getPendingOutcomePrompts()
       .then((prompts) => {
         if (!cancelled) {
@@ -97,6 +101,59 @@ export default function Page() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!designId) {
+      setLatestOutcome(null);
+      return;
+    }
+    setLatestOutcome(reportedOutcomes.find((outcome) => outcome.design_id === designId) ?? null);
+  }, [designId, reportedOutcomes]);
+
+  useEffect(() => {
+    if (!designId) {
+      return;
+    }
+    let cancelled = false;
+    getOutcome(designId)
+      .then((outcome) => {
+        if (!cancelled) {
+          setReportedOutcomes((current) => persistReportedOutcomes(upsertReportedOutcome(current, outcome)));
+        }
+      })
+      .catch(() => {
+        // A missing outcome is expected for designs that have not been reported yet.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [designId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const designIds = reportedOutcomes.map((outcome) => outcome.design_id);
+    if (!designIds.length) {
+      return;
+    }
+    Promise.all(
+      designIds.map((knownDesignId) =>
+        getOutcome(knownDesignId)
+          .then((outcome) => outcome)
+          .catch(() => null)
+      )
+    ).then((refreshed) => {
+      if (cancelled) {
+        return;
+      }
+      const outcomes = refreshed.filter((outcome): outcome is OutcomeReport => Boolean(outcome));
+      if (outcomes.length) {
+        setReportedOutcomes((current) => persistReportedOutcomes(mergeReportedOutcomes(current, outcomes)));
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [reportedOutcomes.length]);
 
   const visiblePendingPrompt = pendingOutcomePrompts.find((prompt) => !dismissedPromptKeys.includes(promptKey(prompt))) ?? null;
 
@@ -186,7 +243,7 @@ export default function Page() {
     if (!designId) {
       return;
     }
-    setOutcomeModalTarget({ designId, modelVersion: modelVersion ?? "unknown-model" });
+    setOutcomeModalTarget({ designId, modelVersion: modelVersion ?? latestOutcome?.model_version ?? "unknown-model", initialReport: latestOutcome ?? undefined });
     setOutcomeModalOpen(true);
   }
 
@@ -206,12 +263,23 @@ export default function Page() {
     setOutcomeModalOpen(true);
   }
 
+  function openReportedOutcomeModal(outcome: OutcomeReport) {
+    setOutcomeModalTarget({
+      designId: outcome.design_id,
+      modelVersion: outcome.model_version,
+      initialReport: outcome,
+      provenanceContext: { reported_via: "web_my_outcomes_panel" }
+    });
+    setOutcomeModalOpen(true);
+  }
+
   function dismissPrompt(prompt: PendingOutcomePrompt) {
     const key = promptKey(prompt);
     setDismissedPromptKeys((current) => persistDismissedPromptKey(current, key));
   }
 
   function handleOutcomeSubmitted(report: OutcomeReport) {
+    setReportedOutcomes((current) => persistReportedOutcomes(upsertReportedOutcome(current, report)));
     if (report.design_id === designId) {
       setLatestOutcome(report);
     }
@@ -334,6 +402,7 @@ export default function Page() {
             <PlasmidMapView annotatedSequence={annotatedSequence as AnnotatedSequence | null} />
             <ExportActions designId={designId} status={exportStatus} error={exportError} onExport={handleExport} />
             <OutcomePanel designId={designId} latestOutcome={latestOutcome} onOpen={openCurrentOutcomeModal} />
+            <MyOutcomesPanel outcomes={reportedOutcomes} onOpen={openReportedOutcomeModal} />
           </div>
         </aside>
       </div>
@@ -343,10 +412,59 @@ export default function Page() {
         modelVersion={outcomeModalTarget?.modelVersion ?? null}
         onClose={() => setOutcomeModalOpen(false)}
         onSubmitted={handleOutcomeSubmitted}
+        initialReport={outcomeModalTarget?.initialReport}
         provenanceContext={outcomeModalTarget?.provenanceContext}
       />
     </main>
   );
+}
+
+function MyOutcomesPanel({ outcomes, onOpen }: { outcomes: OutcomeReport[]; onOpen: (outcome: OutcomeReport) => void }) {
+  const sortedOutcomes = [...outcomes].sort((a, b) => new Date(b.reported_at).getTime() - new Date(a.reported_at).getTime());
+  return (
+    <section className="border border-line bg-white p-4 shadow-subtle" aria-label="My reported outcomes">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold">My outcomes</h2>
+          <p className="mt-1 text-xs leading-5 text-slate-600">
+            Shows outcomes reported from this browser until a backend list endpoint is available. Known designs are refreshed individually when possible.
+          </p>
+        </div>
+        <span className="border border-line bg-panel px-2 py-1 text-xs font-semibold text-slate-600">{outcomes.length}</span>
+      </div>
+      {sortedOutcomes.length ? (
+        <div className="mt-3 space-y-2">
+          {sortedOutcomes.map((outcome) => (
+            <article key={outcome.design_id} className="border border-line bg-panel p-3">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <p className="break-all text-sm font-semibold text-slate-800">{outcome.design_id}</p>
+                  <p className="mt-1 text-xs text-slate-500">Reported {new Date(outcome.reported_at).toLocaleDateString()}</p>
+                </div>
+                <OutcomeStatusBadge label={outcome.outcome_label} />
+              </div>
+              <p className="mt-2 text-xs text-slate-600">Training consent: {outcome.training_consent ? "granted" : "not granted"}</p>
+              <button type="button" onClick={() => onOpen(outcome)} className="mt-3 w-full border border-action bg-white px-3 py-2 text-sm font-semibold text-action hover:bg-action/5">
+                Review or edit outcome
+              </button>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-3 border border-line bg-panel p-3 text-xs leading-5 text-slate-600">No locally known reported outcomes yet. Reports submitted from this browser will appear here.</p>
+      )}
+    </section>
+  );
+}
+
+function OutcomeStatusBadge({ label }: { label: OutcomeReport["outcome_label"] }) {
+  const className =
+    label === "positive"
+      ? "border-action/40 bg-action/10 text-action"
+      : label === "negative"
+        ? "border-red-300 bg-red-50 text-red-700"
+        : "border-warning/40 bg-amber-50 text-warning";
+  return <span className={`border px-2 py-1 text-xs font-semibold capitalize ${className}`}>{label}</span>;
 }
 
 function PendingOutcomeToast({ prompt, onOpen, onDismiss }: { prompt: PendingOutcomePrompt; onOpen: (prompt: PendingOutcomePrompt) => void; onDismiss: (prompt: PendingOutcomePrompt) => void }) {
@@ -567,4 +685,52 @@ function persistDismissedPromptKey(current: string[], key: string): string[] {
     return next;
   }
   return next;
+}
+
+function readReportedOutcomes(): OutcomeReport[] {
+  try {
+    const raw = window.localStorage.getItem(REPORTED_OUTCOMES_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return parsed.filter(isOutcomeReport);
+  } catch {
+    return [];
+  }
+}
+
+function persistReportedOutcomes(outcomes: OutcomeReport[]): OutcomeReport[] {
+  try {
+    window.localStorage.setItem(REPORTED_OUTCOMES_KEY, JSON.stringify(outcomes));
+  } catch {
+    return outcomes;
+  }
+  return outcomes;
+}
+
+function upsertReportedOutcome(current: OutcomeReport[], outcome: OutcomeReport): OutcomeReport[] {
+  return mergeReportedOutcomes(current, [outcome]);
+}
+
+function mergeReportedOutcomes(current: OutcomeReport[], incoming: OutcomeReport[]): OutcomeReport[] {
+  const byDesignId = new Map(current.map((outcome) => [outcome.design_id, outcome]));
+  for (const outcome of incoming) {
+    byDesignId.set(outcome.design_id, outcome);
+  }
+  return Array.from(byDesignId.values()).sort((a, b) => new Date(b.reported_at).getTime() - new Date(a.reported_at).getTime());
+}
+
+function isOutcomeReport(value: unknown): value is OutcomeReport {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const record = value as Partial<OutcomeReport>;
+  return (
+    typeof record.design_id === "string" &&
+    typeof record.model_version === "string" &&
+    typeof record.training_consent === "boolean" &&
+    (record.outcome_label === "positive" || record.outcome_label === "negative" || record.outcome_label === "ambiguous") &&
+    typeof record.reported_at === "string"
+  );
 }
