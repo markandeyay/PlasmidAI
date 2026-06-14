@@ -359,7 +359,7 @@ export default function Page() {
                     key={prompt}
                     type="button"
                     onClick={() => setInput(prompt)}
-                    className="border border-line bg-white px-3 py-2 text-left text-xs text-slate-700 hover:border-action hover:text-action"
+                    className="border border-line bg-white px-3 py-2 text-left text-xs text-slate-700 hover:border-action hover:text-action focus:border-action focus:outline-none focus:ring-2 focus:ring-action/20"
                   >
                     {prompt}
                   </button>
@@ -376,7 +376,7 @@ export default function Page() {
                 onChange={(event) => setInput(event.target.value)}
                 disabled={isBusy}
                 rows={3}
-                className="min-h-24 flex-1 resize-none border border-line bg-white px-4 py-3 text-sm shadow-subtle outline-none focus:border-action"
+                className="min-h-24 flex-1 resize-none border border-line bg-white px-4 py-3 text-sm shadow-subtle outline-none focus:border-action focus:ring-2 focus:ring-action/20"
                 placeholder={
                   state === "awaiting_clarification"
                     ? "Answer the clarification question..."
@@ -386,7 +386,7 @@ export default function Page() {
               <button
                 type="submit"
                 disabled={!input.trim() || isBusy}
-                className="h-12 border border-action bg-action px-5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-300"
+                className="h-12 border border-action bg-action px-5 text-sm font-semibold text-white hover:bg-action/90 focus:border-action focus:outline-none focus:ring-2 focus:ring-action/20 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-300 disabled:hover:bg-slate-300"
               >
                 {state === "submitting" ? "Starting" : state === "polling" ? "Designing" : state === "awaiting_clarification" ? "Answer" : sessionId ? "Refine" : "Design"}
               </button>
@@ -444,7 +444,7 @@ function MyOutcomesPanel({ outcomes, onOpen }: { outcomes: OutcomeReport[]; onOp
                 <OutcomeStatusBadge label={outcome.outcome_label} />
               </div>
               <p className="mt-2 text-xs text-slate-600">Training consent: {outcome.training_consent ? "granted" : "not granted"}</p>
-              <button type="button" onClick={() => onOpen(outcome)} className="mt-3 w-full border border-action bg-white px-3 py-2 text-sm font-semibold text-action hover:bg-action/5">
+              <button type="button" onClick={() => onOpen(outcome)} className="mt-3 w-full border border-action bg-action px-3 py-2 text-sm font-semibold text-white hover:bg-action/90 focus:border-action focus:outline-none focus:ring-2 focus:ring-action/20">
                 Review or edit outcome
               </button>
             </article>
@@ -469,15 +469,15 @@ function OutcomeStatusBadge({ label }: { label: OutcomeReport["outcome_label"] }
 
 function PendingOutcomeToast({ prompt, onOpen, onDismiss }: { prompt: PendingOutcomePrompt; onOpen: (prompt: PendingOutcomePrompt) => void; onDismiss: (prompt: PendingOutcomePrompt) => void }) {
   return (
-    <aside className="fixed bottom-4 right-4 z-40 w-[calc(100%-2rem)] max-w-md border border-action/30 bg-white p-4 shadow-subtle" aria-label="Pending outcome prompt">
+    <aside className="fixed left-4 right-4 top-4 z-40 border border-action/30 bg-white p-4 shadow-subtle sm:left-auto sm:top-auto sm:bottom-4 sm:w-[calc(100%-2rem)] sm:max-w-md" aria-label="Pending outcome prompt">
       <p className="text-xs font-semibold uppercase text-action">Outcome follow-up</p>
       <p className="mt-1 text-sm text-slate-800">Design {prompt.design_id} is ready for lab outcome feedback.</p>
       <p className="mt-1 text-xs text-slate-500">Created {prompt.days_since_created} days ago.</p>
       <div className="mt-3 flex flex-wrap gap-2">
-        <button type="button" onClick={() => onOpen(prompt)} className="border border-action bg-action px-3 py-2 text-sm font-semibold text-white">
+        <button type="button" onClick={() => onOpen(prompt)} className="border border-action bg-action px-3 py-2 text-sm font-semibold text-white hover:bg-action/90 focus:border-action focus:outline-none focus:ring-2 focus:ring-action/20">
           Report outcome
         </button>
-        <button type="button" onClick={() => onDismiss(prompt)} className="border border-line px-3 py-2 text-sm font-semibold text-slate-700">
+        <button type="button" onClick={() => onDismiss(prompt)} className="border border-line bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:border-action hover:text-action focus:border-action focus:outline-none focus:ring-2 focus:ring-action/20">
           Not now
         </button>
       </div>
@@ -503,7 +503,7 @@ function OutcomePanel({ designId, latestOutcome, onOpen }: { designId: string | 
         type="button"
         disabled={!designId}
         onClick={onOpen}
-        className="mt-4 w-full border border-action bg-action px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-300"
+        className="mt-4 w-full border border-action bg-action px-3 py-2 text-sm font-semibold text-white hover:bg-action/90 focus:border-action focus:outline-none focus:ring-2 focus:ring-action/20 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-300 disabled:hover:bg-slate-300"
       >
         {latestOutcome ? "Review or edit outcome" : "Report outcome"}
       </button>

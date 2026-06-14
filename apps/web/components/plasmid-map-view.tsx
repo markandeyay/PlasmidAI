@@ -44,7 +44,7 @@ export function PlasmidMapView({ annotatedSequence }: PlasmidMapViewProps) {
           </p>
         </div>
         <span
-          className={`border px-2 py-1 text-xs ${
+          className={`border px-2 py-1 text-xs font-semibold ${
             annotatedSequence.annotation_complete
               ? "border-action/40 bg-action/10 text-action"
               : "border-warning/40 bg-amber-50 text-warning"

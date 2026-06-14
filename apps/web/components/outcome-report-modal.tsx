@@ -240,7 +240,7 @@ export function OutcomeReportModal({ open, designId, modelVersion, onClose, onSu
             <h2 className="mt-1 text-2xl font-semibold">What happened in the lab?</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">Partial, failed, and uncertain results are useful.</p>
           </div>
-          <span className="border border-line bg-panel px-2 py-1 text-xs font-semibold text-slate-600">
+          <span className={`border px-2 py-1 text-xs font-semibold ${validationIssues.length ? "border-warning/40 bg-amber-50 text-warning" : "border-action/40 bg-action/10 text-action"}`}>
             {validationIssues.length ? "Needs evidence" : "Ready to submit"}
           </span>
         </div>
@@ -281,7 +281,7 @@ export function OutcomeReportModal({ open, designId, modelVersion, onClose, onSu
             />
             <span>I consent to this outcome report and non-sensitive linked design metadata being used to improve future design models.</span>
           </label>
-          <button type="button" onClick={() => setConsentReviewed(true)} className="mt-3 text-xs font-semibold text-action">
+          <button type="button" onClick={() => setConsentReviewed(true)} className="mt-3 text-xs font-semibold text-action hover:text-action/80 focus:outline-none focus:ring-2 focus:ring-action/20">
             {consentReviewed ? "Consent choice reviewed" : "Submit without training consent"}
           </button>
           <p className="mt-2 text-xs leading-5 text-slate-500">Submitting an outcome does not require this consent. If unchecked, your report can still be saved, but it must not be used for model training or preference optimization.</p>
@@ -297,10 +297,10 @@ export function OutcomeReportModal({ open, designId, modelVersion, onClose, onSu
         {apiError ? <p className="border border-red-200 bg-red-50 p-3 text-sm text-red-700">{apiError}</p> : null}
 
         <div className="sticky bottom-0 -mx-5 flex flex-wrap justify-end gap-2 border-t border-line bg-white px-5 py-4">
-          <button type="button" onClick={onClose} disabled={submitting} className="border border-line px-4 py-2 text-sm font-semibold text-slate-700 disabled:text-slate-400">
+          <button type="button" onClick={onClose} disabled={submitting} className="border border-line bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-action hover:text-action focus:border-action focus:outline-none focus:ring-2 focus:ring-action/20 disabled:cursor-not-allowed disabled:border-line disabled:text-slate-400 disabled:hover:text-slate-400">
             Close
           </button>
-          <button type="submit" disabled={submitting || Boolean(validationIssues.length)} className="border border-action bg-action px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-300">
+          <button type="submit" disabled={submitting || Boolean(validationIssues.length)} className="border border-action bg-action px-4 py-2 text-sm font-semibold text-white hover:bg-action/90 focus:border-action focus:outline-none focus:ring-2 focus:ring-action/20 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-300 disabled:hover:bg-slate-300">
             {submitting ? "Submitting..." : "Submit outcome"}
           </button>
         </div>
@@ -314,7 +314,7 @@ function ModalFrame({ children, onClose }: { children: React.ReactNode; onClose:
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/50 px-4 py-6" role="dialog" aria-modal="true">
       <div className="mx-auto max-w-3xl border border-line bg-white p-5 shadow-subtle">
         <div className="mb-4 flex justify-end">
-          <button type="button" onClick={onClose} className="text-sm font-semibold text-slate-500 hover:text-slate-800">
+          <button type="button" onClick={onClose} className="text-sm font-semibold text-slate-500 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-action/20">
             Close
           </button>
         </div>
