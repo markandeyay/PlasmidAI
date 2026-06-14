@@ -7,13 +7,13 @@ import { OutcomeReportModal } from "@/components/outcome-report-modal";
 import { PlasmidMapView } from "@/components/plasmid-map-view";
 import type { AnnotatedSequence, JobResultPayload, JobStatusResponse, OutcomeReport, PendingOutcomePrompt, ValidationCheck, ValidationReport } from "@/lib/types";
 
-type UiState = "idle" | "submitting" | "polling" | "ready" | "awaiting_clarification" | "error";
+type UiState = "idle" | "submitting" | "polling" | "poll_timeout" | "ready" | "awaiting_clarification" | "error";
 type PendingPromptStatus = "loading" | "ready" | "error";
 
 type ChatMessage = {
   id: string;
   role: "user" | "assistant" | "system";
-  kind: "prompt" | "result" | "clarification" | "error";
+  kind: "prompt" | "clarification_answer" | "result" | "clarification" | "status" | "error";
   text: string;
   result?: JobResultPayload;
 };
@@ -187,11 +187,13 @@ export default function Page() {
     setInput("");
     setExportStatus({ ...INITIAL_EXPORT_STATUS });
     setExportError({ ...INITIAL_EXPORT_ERRORS });
+    const submittedKind = state === "awaiting_clarification" ? "clarification_answer" : "prompt";
     setMessages((current) => [
       ...current,
-      { id: crypto.randomUUID(), role: "user", kind: "prompt", text }
+      { id: crypto.randomUUID(), role: "user", kind: submittedKind, text }
     ]);
 
+    let keepActiveJob = false;
     try {
       setState("submitting");
       setAppStatus("Starting design job.");
@@ -204,30 +206,25 @@ export default function Page() {
         : await submitDesign(currentSessionId, text);
 
       setActiveJobId(response.job_id);
-      setState("polling");
-      setAppStatus("Designing and validating plasmid.");
-      const job = await pollJob(response.job_id, { onUpdate: () => setNow(Date.now()) });
-      const result = normalizeJobResult(job.result);
-      const clarification = clarificationQuestion(result);
-      if (job.error || job.status.toLowerCase() === "failed") {
-        throw jobError(job);
-      }
-      if (clarification) {
-        setMessages((current) => [
-          ...current,
-          { id: crypto.randomUUID(), role: "assistant", kind: "clarification", text: clarification, result }
-        ]);
-        setState("awaiting_clarification");
-        setAppStatus("Clarification needed.");
-      } else {
-        setMessages((current) => [
-          ...current,
-          { id: crypto.randomUUID(), role: "assistant", kind: "result", text: resultSummary(result), result }
-        ]);
-        setState("ready");
-        setAppStatus("Design complete.");
-      }
+      await pollAndApplyJob(response.job_id);
     } catch (error) {
+      if (isPollingTimeout(error)) {
+        keepActiveJob = true;
+        const jobId = String(error.details.job_id ?? activeJobId ?? "unknown");
+        setActiveJobId(jobId);
+        setMessages((current) => [
+          ...current,
+          {
+            id: crypto.randomUUID(),
+            role: "system",
+            kind: "status",
+            text: `Job ${jobId} is still running. Keep this page open and use Check status when you want to resume polling.`
+          }
+        ]);
+        setState("poll_timeout");
+        setAppStatus(`Job ${jobId} is still running.`);
+        return;
+      }
       const text = friendlyErrorMessage(error);
       setMessages((current) => [
         ...current,
@@ -236,8 +233,75 @@ export default function Page() {
       setState("error");
       setAppStatus(`Design failed. ${text}`);
     } finally {
-      setActiveJobId(null);
-      setJobStartedAt(null);
+      if (!keepActiveJob) {
+        setActiveJobId(null);
+        setJobStartedAt(null);
+      }
+    }
+  }
+
+  async function handleCheckJob() {
+    if (!activeJobId || isBusy) {
+      return;
+    }
+    let keepActiveJob = false;
+    try {
+      setJobStartedAt(Date.now());
+      await pollAndApplyJob(activeJobId);
+    } catch (error) {
+      if (isPollingTimeout(error)) {
+        keepActiveJob = true;
+        setMessages((current) => [
+          ...current,
+          {
+            id: crypto.randomUUID(),
+            role: "system",
+            kind: "status",
+            text: `Job ${activeJobId} is still running. Try again in a moment.`
+          }
+        ]);
+        setState("poll_timeout");
+        setAppStatus(`Job ${activeJobId} is still running.`);
+        return;
+      }
+      const text = friendlyErrorMessage(error);
+      setMessages((current) => [
+        ...current,
+        { id: crypto.randomUUID(), role: "system", kind: "error", text }
+      ]);
+      setState("error");
+      setAppStatus(`Status check failed. ${text}`);
+    } finally {
+      if (!keepActiveJob) {
+        setActiveJobId(null);
+        setJobStartedAt(null);
+      }
+    }
+  }
+
+  async function pollAndApplyJob(jobId: string) {
+    setState("polling");
+    setAppStatus("Designing and validating plasmid.");
+    const job = await pollJob(jobId, { onUpdate: () => setNow(Date.now()) });
+    const result = normalizeJobResult(job.result);
+    const clarification = clarificationQuestion(result);
+    if (job.error || job.status.toLowerCase() === "failed") {
+      throw jobError(job);
+    }
+    if (clarification) {
+      setMessages((current) => [
+        ...current,
+        { id: crypto.randomUUID(), role: "assistant", kind: "clarification", text: clarification, result }
+      ]);
+      setState("awaiting_clarification");
+      setAppStatus("Clarification needed.");
+    } else {
+      setMessages((current) => [
+        ...current,
+        { id: crypto.randomUUID(), role: "assistant", kind: "result", text: resultSummary(result), result }
+      ]);
+      setState("ready");
+      setAppStatus("Design complete.");
     }
   }
 
@@ -344,12 +408,21 @@ export default function Page() {
                 }`}
               >
                 <div className="mb-2 text-xs font-semibold uppercase text-slate-500">
-                  {message.role === "user" ? "Researcher" : message.kind === "clarification" ? "Clarification" : "Design agent"}
+                  {message.role === "user"
+                    ? message.kind === "clarification_answer"
+                      ? "Clarification answer"
+                      : "Researcher"
+                    : message.kind === "clarification"
+                      ? "Clarification"
+                      : message.kind === "status"
+                        ? "Job status"
+                        : "Design agent"}
                 </div>
                 <p className="whitespace-pre-wrap text-sm leading-6 text-slate-800">{message.text}</p>
                 {message.result ? (
                   message.result.validation_report ? <ValidationReportPanel report={message.result.validation_report} /> : <MissingValidationReportPanel />
                 ) : null}
+                {message.result && !message.result.annotated_sequence ? <PartialResultNotice result={message.result} /> : null}
                 {message.result ? <RetrievedTemplatesPanel result={message.result} messageId={message.id} /> : null}
                 {message.result?.annotated_sequence ? (
                   <a href="#plasmid-map" className="mt-3 inline-flex text-xs font-semibold text-action">
@@ -410,7 +483,14 @@ export default function Page() {
               </button>
             </div>
             {activeJobId ? (
-              <p className="mt-2 text-xs text-slate-500">Job {activeJobId} is running. You can keep this page open while results are prepared.</p>
+              <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                <span>Job {activeJobId} is running. You can keep this page open while results are prepared.</span>
+                {state === "poll_timeout" ? (
+                  <button type="button" className="font-semibold text-action" onClick={() => void handleCheckJob()}>
+                    Check status
+                  </button>
+                ) : null}
+              </div>
             ) : null}
           </form>
         </section>
@@ -590,13 +670,16 @@ function RetrievedTemplatesPanel({ result, messageId }: { result: JobResultPaylo
   }
 
   return (
-    <section className="mt-3 border border-line bg-panel p-3" aria-label="Retrieved templates">
-      <h3 className="text-xs font-semibold uppercase text-slate-600">Retrieved templates</h3>
+    <section className="mt-3 border border-line bg-panel p-3" aria-label="Retrieved template evidence">
+      <h3 className="text-xs font-semibold uppercase text-slate-600">Retrieved template evidence</h3>
       <ul className="mt-2 space-y-1 text-xs text-slate-600">
         {result.retrieved_templates.slice(0, 3).map((template, index) => (
           <li key={`${messageId}-${template.source_id ?? index}`}>
-            Retrieved {index + 1}: {template.name ?? template.source_id ?? "template"}{" "}
+            <span className="font-medium text-slate-800">Retrieved {index + 1}: {template.name ?? template.source_id ?? "template"}</span>{" "}
             {typeof template.score === "number" ? `(${template.score.toFixed(3)})` : ""}
+            <span className="block text-slate-500">
+              {[template.source_id, template.vector_profile, template.source].filter(Boolean).join(" · ") || "No additional source metadata returned."}
+            </span>
           </li>
         ))}
       </ul>
@@ -645,6 +728,21 @@ function ValidationReportPanel({ report }: { report: ValidationReport }) {
       ) : (
         <p className="mt-3 text-xs text-slate-500">No individual checks were returned.</p>
       )}
+    </section>
+  );
+}
+
+function PartialResultNotice({ result }: { result: JobResultPayload }) {
+  const hasEvidence = Boolean(result.retrieved_templates?.length || result.validation_report);
+  if (!hasEvidence) {
+    return null;
+  }
+  return (
+    <section className="mt-4 border border-warning/40 bg-amber-50 p-3 text-xs leading-5 text-slate-700" aria-label="Partial result">
+      <p className="font-semibold text-warning">Partial result</p>
+      <p className="mt-1">
+        The job returned supporting evidence but no annotated sequence, so the plasmid map and exports are not available yet. Refine the request or retry the job if a full design was expected.
+      </p>
     </section>
   );
 }
@@ -716,6 +814,10 @@ function friendlyErrorMessage(error: unknown): string {
 
 function formatLabel(format: ExportFormat): string {
   return format === "genbank" ? "GenBank" : "FASTA";
+}
+
+function isPollingTimeout(error: unknown): error is ApiError {
+  return error instanceof ApiError && error.code === "job_poll_timeout";
 }
 
 function normalizeJobResult(result: unknown): JobResultPayload {

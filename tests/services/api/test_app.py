@@ -382,4 +382,99 @@ def test_failed_job_response_includes_structured_error_detail() -> None:
     body = response.json()
     assert body["status"] == "failed"
     assert body["error_detail"]["code"] == "job_failed"
-    assert body["error_detail"]["details"]["raw_error"] == "pipeline unavailable"
+    assert body["error_detail"]["message"] == "The design job failed before producing a result."
+    assert body["error_detail"]["details"] == {}
+
+
+def test_rate_limited_session_creation_returns_structured_429() -> None:
+    from services.api.app import RateLimitConfig, RateLimitRule, create_app
+
+    client = TestClient(
+        create_app(
+            rate_limit_config=RateLimitConfig(
+                session_create=RateLimitRule(limit=1, window_seconds=60),
+            )
+        )
+    )
+
+    assert client.post("/v1/sessions").status_code == 201
+    response = client.post("/v1/sessions")
+
+    assert response.status_code == 429
+    assert response.headers["Retry-After"]
+    body = response.json()
+    assert body["error"]["code"] == "rate_limited"
+    assert body["error"]["retryable"] is True
+
+
+def test_rate_limited_job_enqueue_is_scoped_to_session() -> None:
+    from services.api.app import RateLimitConfig, RateLimitRule, create_app
+
+    session_store = InMemorySessionStore()
+    job_queue = SynchronousJobQueue(session_store)
+    client = TestClient(
+        create_app(
+            session_store=session_store,
+            job_queue=job_queue,
+            rate_limit_config=RateLimitConfig(job_enqueue=RateLimitRule(limit=1, window_seconds=60)),
+        )
+    )
+    first_session = client.post("/v1/sessions").json()["session_id"]
+    second_session = client.post("/v1/sessions").json()["session_id"]
+
+    assert client.post(f"/v1/sessions/{first_session}/design", json={"goal": "build reporter"}).status_code == 202
+    limited = client.post(f"/v1/sessions/{first_session}/refine", json={"instruction": "switch marker"})
+    other_session = client.post(f"/v1/sessions/{second_session}/design", json={"goal": "build reporter"})
+
+    assert limited.status_code == 429
+    assert limited.json()["error"]["code"] == "rate_limited"
+    assert other_session.status_code == 202
+
+
+def test_job_queue_unavailable_returns_retryable_503() -> None:
+    create_app = _load_create_app()
+    session_store = InMemorySessionStore()
+
+    class BrokenJobQueue:
+        def submit(self, *args: Any, **kwargs: Any) -> str:
+            del args, kwargs
+            raise RuntimeError("redis unavailable")
+
+        def get_job(self, job_id: str) -> dict[str, Any] | None:
+            del job_id
+            return None
+
+    client = TestClient(create_app(session_store=session_store, job_queue=BrokenJobQueue()))
+    session_id = client.post("/v1/sessions").json()["session_id"]
+
+    response = client.post(f"/v1/sessions/{session_id}/design", json={"goal": "build reporter"})
+
+    assert response.status_code == 503
+    body = response.json()
+    assert body["error"]["code"] == "job_queue_unavailable"
+    assert body["error"]["retryable"] is True
+    assert "redis unavailable" not in body["error"]["message"]
+
+
+def test_typed_job_error_payload_is_rendered_without_raw_internal_details() -> None:
+    create_app = _load_create_app()
+
+    class FixedJobQueue:
+        def get_job(self, job_id: str) -> AttrDict:
+            return AttrDict(
+                job_id=job_id,
+                status="failed",
+                result=None,
+                error='{"code":"model_provider_unavailable","message":"The model provider is temporarily unavailable.","retryable":true,"stage":"generation"}',
+            )
+
+    client = TestClient(create_app(job_queue=FixedJobQueue()))
+
+    response = client.get("/v1/jobs/job-failed")
+
+    assert response.status_code == 200
+    detail = response.json()["error_detail"]
+    assert detail["code"] == "model_provider_unavailable"
+    assert detail["message"] == "The model provider is temporarily unavailable."
+    assert detail["retryable"] is True
+    assert detail["details"] == {"stage": "generation"}

@@ -8,7 +8,16 @@ from .generator import (
     SequenceGenerator,
 )
 from .canary import CanaryAssignmentRecord, CanaryGenerator, CanaryPolicy, InMemoryCanaryMetricsSink
-from .shadow import InMemoryShadowLogSink, ShadowComparisonGenerator, ShadowComparisonRecord, ShadowOutputSummary
+from .rollout_policy import RolloutEvaluation, RolloutObservation, RolloutPolicy, evaluate_rollout
+from .shadow import (
+    InMemoryShadowLogSink,
+    JsonlShadowLogSink,
+    ShadowComparisonGenerator,
+    ShadowComparisonRecord,
+    ShadowOutputSummary,
+    ShadowPayload,
+    ShadowRetentionPolicy,
+)
 
 __all__ = [
     "CARBON_500M_MODEL",
@@ -21,9 +30,16 @@ __all__ = [
     "FakeGenerator",
     "InMemoryCanaryMetricsSink",
     "MarkerSwap",
+    "RolloutEvaluation",
+    "RolloutObservation",
+    "RolloutPolicy",
     "SequenceGenerator",
     "InMemoryShadowLogSink",
+    "JsonlShadowLogSink",
     "ShadowComparisonGenerator",
     "ShadowComparisonRecord",
     "ShadowOutputSummary",
+    "ShadowPayload",
+    "ShadowRetentionPolicy",
+    "evaluate_rollout",
 ]

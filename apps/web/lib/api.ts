@@ -19,6 +19,7 @@ export class ApiError extends Error {
   retryable: boolean;
   fieldErrors: ApiFieldError[];
   details: Record<string, unknown>;
+  lastJob?: JobStatusResponse;
 
   constructor(
     message: string,
@@ -28,6 +29,7 @@ export class ApiError extends Error {
       retryable?: boolean;
       fieldErrors?: ApiFieldError[];
       details?: Record<string, unknown>;
+      lastJob?: JobStatusResponse;
     } = {}
   ) {
     super(message);
@@ -37,6 +39,7 @@ export class ApiError extends Error {
     this.retryable = options.retryable ?? false;
     this.fieldErrors = options.fieldErrors ?? [];
     this.details = options.details ?? {};
+    this.lastJob = options.lastJob;
   }
 }
 
@@ -80,7 +83,7 @@ export async function pollJob(
     if (Date.now() - startedAt > timeoutMs) {
       throw new ApiError(
         `The job is still running. You can try again in a moment with job ID ${jobId}.`,
-        { code: "job_poll_timeout", retryable: true, details: { job_id: jobId } }
+        { code: "job_poll_timeout", retryable: true, details: { job_id: jobId }, lastJob: job }
       );
     }
     await sleep(job.retry_after_ms ?? intervalMs);
