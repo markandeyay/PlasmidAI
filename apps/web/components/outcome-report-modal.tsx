@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ApiError, submitOutcome } from "@/lib/api";
 import type { OutcomeLabel, OutcomeReport } from "@/lib/types";
 
@@ -201,12 +201,12 @@ export function OutcomeReportModal({ open, designId, modelVersion, onClose, onSu
 
   if (submittedReport) {
     return (
-      <ModalFrame onClose={onClose}>
+      <ModalFrame onClose={onClose} titleId="outcome-submitted-title" descriptionId="outcome-submitted-description">
         <div className="space-y-4">
           <div>
             <p className="text-xs font-semibold uppercase text-action">Submitted</p>
-            <h2 className="mt-1 text-2xl font-semibold">Outcome submitted</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Your report was saved for this design. Thank you for sharing what happened.</p>
+            <h2 id="outcome-submitted-title" tabIndex={-1} className="mt-1 text-2xl font-semibold outline-none">Outcome submitted</h2>
+            <p id="outcome-submitted-description" className="mt-2 text-sm leading-6 text-slate-600">Your report was saved for this design. Thank you for sharing what happened.</p>
           </div>
           <div className="border border-line bg-panel p-4 text-sm text-slate-700">
             <p><span className="font-semibold">Interpretation:</span> {interpretation || "Not specified"}</p>
@@ -232,13 +232,13 @@ export function OutcomeReportModal({ open, designId, modelVersion, onClose, onSu
   }
 
   return (
-    <ModalFrame onClose={onClose}>
+    <ModalFrame onClose={onClose} titleId="outcome-report-title" descriptionId="outcome-report-description">
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase text-action">Report outcome</p>
-            <h2 className="mt-1 text-2xl font-semibold">What happened in the lab?</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Partial, failed, and uncertain results are useful.</p>
+            <h2 id="outcome-report-title" tabIndex={-1} className="mt-1 text-2xl font-semibold outline-none">What happened in the lab?</h2>
+            <p id="outcome-report-description" className="mt-2 text-sm leading-6 text-slate-600">Partial, failed, and uncertain results are useful.</p>
           </div>
           <span className={`border px-2 py-1 text-xs font-semibold ${validationIssues.length ? "border-warning/40 bg-amber-50 text-warning" : "border-action/40 bg-action/10 text-action"}`}>
             {validationIssues.length ? "Needs evidence" : "Ready to submit"}
@@ -309,9 +309,70 @@ export function OutcomeReportModal({ open, designId, modelVersion, onClose, onSu
   );
 }
 
-function ModalFrame({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+function ModalFrame({ children, onClose, titleId, descriptionId }: { children: React.ReactNode; onClose: () => void; titleId: string; descriptionId: string }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const heading = document.getElementById(titleId);
+    if (heading instanceof HTMLElement) {
+      heading.focus();
+    } else {
+      dialogRef.current?.focus();
+    }
+    return () => {
+      openerRef.current?.focus();
+    };
+  }, [titleId]);
+
+  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      onClose();
+      return;
+    }
+    if (event.key !== "Tab") {
+      return;
+    }
+
+    const dialog = dialogRef.current;
+    if (!dialog) {
+      return;
+    }
+    const focusable = Array.from(
+      dialog.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+    ).filter((element) => !element.hasAttribute("disabled") && element.getAttribute("aria-hidden") !== "true");
+    if (!focusable.length) {
+      event.preventDefault();
+      dialog.focus();
+      return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/50 px-4 py-6" role="dialog" aria-modal="true">
+    <div
+      ref={dialogRef}
+      className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/50 px-4 py-6"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      aria-describedby={descriptionId}
+      tabIndex={-1}
+      onKeyDown={handleKeyDown}
+    >
       <div className="mx-auto max-w-3xl border border-line bg-white p-5 shadow-subtle">
         <div className="mb-4 flex justify-end">
           <button type="button" onClick={onClose} className="text-sm font-semibold text-slate-500 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-action/20">

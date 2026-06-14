@@ -16,8 +16,8 @@ type PlasmidMapViewProps = {
 export function PlasmidMapView({ annotatedSequence }: PlasmidMapViewProps) {
   if (!annotatedSequence) {
     return (
-      <section id="plasmid-map" className="border border-line bg-white p-4 shadow-subtle" aria-label="Plasmid map">
-        <h2 className="text-sm font-semibold">Plasmid map</h2>
+      <section id="plasmid-map" className="border border-line bg-white p-4 shadow-subtle" aria-labelledby="plasmid-map-title-empty">
+        <h2 id="plasmid-map-title-empty" className="text-sm font-semibold">Plasmid map</h2>
         <div className="mt-4 flex h-64 items-center justify-center border border-dashed border-line bg-panel px-6 text-center text-sm text-slate-500 sm:h-80 lg:h-96">
           Submit a design to render the annotated plasmid.
         </div>
@@ -35,10 +35,10 @@ export function PlasmidMapView({ annotatedSequence }: PlasmidMapViewProps) {
   }));
 
   return (
-    <section id="plasmid-map" className="border border-line bg-white p-4 shadow-subtle" aria-label="Plasmid map">
+    <section id="plasmid-map" className="border border-line bg-white p-4 shadow-subtle" aria-labelledby="plasmid-map-title">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-sm font-semibold">Plasmid map</h2>
+          <h2 id="plasmid-map-title" className="text-sm font-semibold">Plasmid map</h2>
           <p className="mt-1 text-xs text-slate-600">
             {annotatedSequence.sequence.length.toLocaleString()} bp {annotatedSequence.topology} sequence
           </p>
@@ -54,7 +54,19 @@ export function PlasmidMapView({ annotatedSequence }: PlasmidMapViewProps) {
         </span>
       </div>
 
-      <div className="mt-4 overflow-auto border border-line">
+      <div className="mt-4 border border-line bg-panel p-3 text-xs leading-5 text-slate-700">
+        <p className="font-semibold text-slate-800">Accessible map summary</p>
+        <dl className="mt-2 grid gap-1 sm:grid-cols-2">
+          <div><dt className="inline font-semibold">Name: </dt><dd className="inline">{annotatedSequence.vector_profile ?? "Plasmid design"}</dd></div>
+          <div><dt className="inline font-semibold">Topology: </dt><dd className="inline">{annotatedSequence.topology}</dd></div>
+          <div><dt className="inline font-semibold">Length: </dt><dd className="inline">{annotatedSequence.sequence.length.toLocaleString()} bp</dd></div>
+          <div><dt className="inline font-semibold">Annotations: </dt><dd className="inline">{annotatedSequence.annotation_complete ? "complete" : "incomplete"}</dd></div>
+          <div><dt className="inline font-semibold">Feature count: </dt><dd className="inline">{annotatedSequence.features.length}</dd></div>
+        </dl>
+        <p className="mt-2 text-slate-600">The interactive plasmid map is visual; use the feature list below for the accessible annotation summary.</p>
+      </div>
+
+      <div className="mt-4 overflow-auto border border-line" aria-label="Visual interactive plasmid map">
         <div data-testid="seqviz-map" className="h-[360px] min-w-[320px] bg-white sm:h-[440px] lg:h-[520px]">
           <SeqViz
             name={annotatedSequence.vector_profile ?? "Plasmid design"}
@@ -78,24 +90,29 @@ function FeatureLegend({ features, sequenceLength }: { features: AnnotatedFeatur
   }
 
   return (
-    <div className="mt-4 max-h-56 overflow-y-auto border border-line">
+    <section className="mt-4 border border-line" aria-labelledby="feature-list-title">
+      <div className="border-b border-line bg-panel px-3 py-2">
+        <h3 id="feature-list-title" className="text-xs font-semibold uppercase text-slate-600">Feature list</h3>
+      </div>
+      <ul className="max-h-56 overflow-y-auto">
       {features.map((feature, index) => (
-        <div
+        <li
           key={`${feature.name}-${feature.start}-${index}`}
           className="grid grid-cols-[12px_minmax(0,1fr)_auto] items-center gap-3 border-b border-line px-3 py-2 last:border-b-0"
           title={`${feature.name} (${feature.type}) ${feature.start + 1}..${feature.end}`}
         >
           <span className="h-3 w-3" style={{ backgroundColor: componentColor(feature.type) }} aria-hidden />
           <div className="min-w-0">
-            <p className="truncate text-xs font-medium text-slate-800">{feature.name}</p>
+            <p className="break-words text-xs font-medium text-slate-800">{feature.name}</p>
             <p className="text-xs text-slate-500">
-              {feature.type} · {feature.start + 1}..{Math.min(feature.end, sequenceLength)} · {strandLabel(feature.strand)}
+              Type: {feature.type} · Coordinates: {feature.start + 1}..{Math.min(feature.end, sequenceLength)} · Strand: {strandLabel(feature.strand)}
             </p>
           </div>
-          <span className="text-xs tabular-nums text-slate-500">{Math.round(feature.confidence * 100)}%</span>
-        </div>
+          <span className="text-xs tabular-nums text-slate-500" aria-label={`Confidence ${Math.round(feature.confidence * 100)} percent`}>{Math.round(feature.confidence * 100)}%</span>
+        </li>
       ))}
-    </div>
+      </ul>
+    </section>
   );
 }
 

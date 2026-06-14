@@ -60,6 +60,7 @@ export default function Page() {
   const [reportedOutcomes, setReportedOutcomes] = useState<OutcomeReport[]>([]);
   const [pendingOutcomePrompts, setPendingOutcomePrompts] = useState<PendingOutcomePrompt[]>([]);
   const [dismissedPromptKeys, setDismissedPromptKeys] = useState<string[]>([]);
+  const [appStatus, setAppStatus] = useState("");
 
   const latestResult = useMemo(
     () => [...messages].reverse().find((message) => message.result?.annotated_sequence)?.result,
@@ -156,6 +157,13 @@ export default function Page() {
   }, [reportedOutcomes.length]);
 
   const visiblePendingPrompt = pendingOutcomePrompts.find((prompt) => !dismissedPromptKeys.includes(promptKey(prompt))) ?? null;
+  const visiblePendingPromptKey = visiblePendingPrompt ? promptKey(visiblePendingPrompt) : null;
+
+  useEffect(() => {
+    if (visiblePendingPrompt) {
+      setAppStatus(`Outcome follow-up available for design ${visiblePendingPrompt.design_id}.`);
+    }
+  }, [visiblePendingPromptKey, visiblePendingPrompt]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -173,6 +181,7 @@ export default function Page() {
 
     try {
       setState("submitting");
+      setAppStatus("Starting design job.");
       setJobStartedAt(Date.now());
       const currentSessionId = sessionId ?? (await createSession()).session_id;
       const hasExistingSession = Boolean(sessionId);
@@ -183,6 +192,7 @@ export default function Page() {
 
       setActiveJobId(response.job_id);
       setState("polling");
+      setAppStatus("Designing and validating plasmid.");
       const job = await pollJob(response.job_id, { onUpdate: () => setNow(Date.now()) });
       const result = normalizeJobResult(job.result);
       const clarification = clarificationQuestion(result);
@@ -195,12 +205,14 @@ export default function Page() {
           { id: crypto.randomUUID(), role: "assistant", kind: "clarification", text: clarification, result }
         ]);
         setState("awaiting_clarification");
+        setAppStatus("Clarification needed.");
       } else {
         setMessages((current) => [
           ...current,
           { id: crypto.randomUUID(), role: "assistant", kind: "result", text: resultSummary(result), result }
         ]);
         setState("ready");
+        setAppStatus("Design complete.");
       }
     } catch (error) {
       const text = friendlyErrorMessage(error);
@@ -209,6 +221,7 @@ export default function Page() {
         { id: crypto.randomUUID(), role: "system", kind: "error", text }
       ]);
       setState("error");
+      setAppStatus(`Design failed. ${text}`);
     } finally {
       setActiveJobId(null);
       setJobStartedAt(null);
@@ -292,6 +305,7 @@ export default function Page() {
 
   return (
     <main className="min-h-screen bg-panel text-ink">
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">{appStatus}</p>
       {visiblePendingPrompt ? (
         <PendingOutcomeToast prompt={visiblePendingPrompt} onOpen={openPromptOutcomeModal} onDismiss={dismissPrompt} />
       ) : null}
@@ -302,7 +316,7 @@ export default function Page() {
             <h1 className="mt-1 text-2xl font-semibold">Design workspace</h1>
           </header>
 
-          <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-6" aria-live="polite">
+          <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-6">
             {messages.map((message) => (
               <article
                 key={message.id}
@@ -515,10 +529,10 @@ function JobProgressCard({ jobId, state, elapsedMs }: { jobId: string | null; st
   const elapsedSeconds = Math.max(0, Math.round(elapsedMs / 1000));
   const label = state === "submitting" ? "Starting design job" : "Designing and validating plasmid";
   return (
-    <article className="max-w-3xl border border-action/30 bg-action/5 p-4 shadow-subtle">
+    <article className="max-w-3xl border border-action/30 bg-action/5 p-4 shadow-subtle" role="status" aria-live="polite" aria-atomic="true">
       <div className="mb-2 flex items-center justify-between gap-4 text-xs font-semibold uppercase text-action">
         <span>{label}</span>
-        <span>{elapsedSeconds}s</span>
+        <span aria-hidden="true">{elapsedSeconds}s</span>
       </div>
       <div className="space-y-2" aria-hidden>
         <div className="h-2 w-full overflow-hidden bg-white">

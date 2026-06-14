@@ -9,8 +9,11 @@ type ExportActionsProps = {
 };
 
 export function ExportActions({ designId, status, error, onExport }: ExportActionsProps) {
+  const loading = status.genbank === "loading" || status.fasta === "loading";
+  const successLabel = status.genbank === "success" ? "GenBank download started." : status.fasta === "success" ? "FASTA download started." : null;
+
   return (
-    <section className="border border-line bg-white p-4 shadow-subtle" aria-label="Export actions">
+    <section className="border border-line bg-white p-4 shadow-subtle" aria-label="Export actions" aria-busy={loading}>
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold">Export</h2>
@@ -23,9 +26,10 @@ export function ExportActions({ designId, status, error, onExport }: ExportActio
         <ExportButton designId={designId} format="genbank" label="GenBank" status={status.genbank} onExport={onExport} />
         <ExportButton designId={designId} format="fasta" label="FASTA" status={status.fasta} onExport={onExport} />
       </div>
-      {error ? <p className="mt-3 border border-red-200 bg-red-50 p-3 text-xs font-medium text-red-700">{error}</p> : null}
-      {status.genbank === "success" || status.fasta === "success" ? (
-        <p className="mt-3 border border-action/40 bg-action/10 p-3 text-xs font-semibold text-action">Download started.</p>
+      {loading ? <p className="sr-only" role="status" aria-live="polite">Preparing export.</p> : null}
+      {error ? <p className="mt-3 border border-red-200 bg-red-50 p-3 text-xs font-medium text-red-700" role="alert">{error}</p> : null}
+      {successLabel ? (
+        <p className="mt-3 border border-action/40 bg-action/10 p-3 text-xs font-semibold text-action" role="status" aria-live="polite">{successLabel}</p>
       ) : null}
     </section>
   );
