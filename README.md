@@ -4,7 +4,7 @@ PlasmidAI is an AI-assisted plasmid design platform. A researcher describes an e
 
 ## Project Status
 
-The consolidated `master` baseline is known-good at **305+ tests**. Phase 1 retrieval and Phase 3 validation have met their gates. Phase 4 API and frontend foundations are implemented, but the Phase 4 gate is still open because deployed sign-up/auth, full synthesis-ready export, primer design, and synthesis handoff are not complete. Phase 5 foundation work is in progress on a separate Codex branch and is not gated.
+The consolidated `master` baseline is known-good at **328 passing tests plus 1 skipped test**. Phase 1 retrieval and Phase 3 validation have met their gates. Phase 4 API/frontend foundations are implemented, including the design workspace, seqviz map, export surface, and outcome-submission UI, but the Phase 4 gate is still open because deployed auth, primer design, complete synthesis handoff, and production hosting are not complete. Phase 5 foundation work is merged: outcome capture and consent-gated training-signal derivation exist, but the full feedback flywheel gate remains open.
 
 See [PROGRESS.md](PROGRESS.md) for the authoritative real-time build state and open questions.
 
@@ -13,10 +13,10 @@ See [PROGRESS.md](PROGRESS.md) for the authoritative real-time build state and o
 - **Phase R - Research:** gate met; research findings and synthesis are under [`research/`](research/).
 - **Phase 0 - Foundations and data pipeline:** core schemas, local services, NCBI/curated ingestion, parser, reprocess, and data-quality reports are in place. Gate is **not met**: corpus scale remains far below 50,000 fully parsed component-annotated plasmids, Addgene access is pending, and literature/context extraction is incomplete.
 - **Phase 1 - Retrieval MVP:** gate met. The retrieval layer includes intent parsing, embeddings, hybrid structured/vector retrieval, recommendations, and evaluation. Latest robustness baseline reports top-5 `1.000` with clarification pass rate `1.000`.
-- **Phase 2 - Sequence generation:** scaffolding and real-model plumbing exist, including training-data formatting, deterministic fake generation, Carbon-500M CPU spike support, generation evaluation, model registry, and fine-tuning prep. Gate is **not met**: there is no authorized fine-tune, no GPU benchmark, and no biological validation of generated sequences.
+- **Phase 2 - Sequence generation:** scaffolding and real-model plumbing exist, including training-data formatting, deterministic fake generation, Carbon-500M CPU spike support, generation evaluation, model registry, fine-tuning prep, shadow comparison, and fake-backed canary routing. Gate is **not met**: real Carbon-3B fine-tuning is deferred pending cloud account setup and explicit spend authorization, and generated sequences have not been biologically validated.
 - **Phase 3 - Constraint and validation:** gate met under the approved curated-quality policy. The deterministic engine covers restriction sites, repeats/instability, codon usage, regulatory compatibility, and validation reports; curated baseline accuracy is `1.000` on 31 known-good plus 52 known-bad records.
-- **Phase 4 - Application layer:** FastAPI backend, session/refinement/job persistence, export codecs, OpenAPI docs, Next.js frontend, chat workflow, and seqviz maps are implemented. Gate is **not met**: auth, deployment, primer-design output, complete synthesis handoff, and production readiness remain open.
-- **Phase 5 - Feedback flywheel:** foundation work is in progress in Codex's separate branch. Gate is **not met**: automated outcome capture, retraining, offline promotion, and safe rollout are not complete.
+- **Phase 4 - Application layer:** FastAPI backend, session/refinement/job persistence, export codecs, OpenAPI docs, Next.js frontend, chat workflow, seqviz maps, outcome prompts, and local outcome history are implemented. Gate is **not met**: auth, deployment, primer-design output, complete synthesis handoff, and production readiness remain open.
+- **Phase 5 - Feedback flywheel:** outcome capture, pending prompts, consent-gated training-signal derivation, and rollout documentation are in place. Gate is **not met**: captured outcomes do not yet flow automatically into scheduled fine-tuning and model promotion.
 
 ## Repository Orientation
 
@@ -26,6 +26,14 @@ Two files keep the long-running build aligned:
 - [PROGRESS.md](PROGRESS.md) is the mutable session state: completed work, current phase, blockers, and the next task.
 
 Phase R research lives under [`research/`](research/). The shareable research report is [`research/phase_r_report.pdf`](research/phase_r_report.pdf), with its LaTeX source beside it.
+
+Demo and review artifacts:
+
+- [`docs/demo.md`](docs/demo.md) - five-minute product demo script.
+- [`data/eval/ui/demo_walkthrough.md`](data/eval/ui/demo_walkthrough.md) - latest local demo walkthrough punch list.
+- [`research/findings/open_decisions.md`](research/findings/open_decisions.md) - consolidated decisions waiting on human review.
+- [`research/findings/system_design_drift.md`](research/findings/system_design_drift.md) - audit of where the original design doc lags current policy/reality.
+- [`data/audits/dependencies_2026-06-13.md`](data/audits/dependencies_2026-06-13.md) - latest dependency vulnerability audit.
 
 The main packages are:
 
@@ -84,6 +92,7 @@ make quality-report
 make eval-retrieval
 make validate-sample MODE=gold
 make serve-api
+make shadow-eval
 ```
 
 Run a retrieval-only design query:
@@ -104,9 +113,11 @@ The API defaults to `http://127.0.0.1:8000`; the web app defaults to `http://127
 
 For frontend verification, run `npm run build` and `npm run test:e2e` sequentially because both use `.next`.
 
+Demo caveat: `make serve-api` starts the API, but a live design job may remain queued unless the worker/fake demo path is also running or a seeded completed design is available. See [`data/eval/ui/demo_walkthrough.md`](data/eval/ui/demo_walkthrough.md).
+
 ## Current Flow
 
-The `IntentParser` converts a plain-English research goal into a structured design specification. The `Retriever` finds relevant real plasmids and templates from the indexed corpus. The `SequenceGenerator` proposes candidate plasmid sequences from the specification and retrieved templates. The deterministic `ConstraintEngine` validates biological structure and synthesis constraints. The application layer persists sessions, jobs, and design artifacts, and the current export codecs produce GenBank/FASTA payloads. Primer output and synthesis-provider handoff remain future Phase 4/5 work.
+The `IntentParser` converts a plain-English research goal into a structured design specification. The `Retriever` finds relevant real plasmids and templates from the indexed corpus. The `SequenceGenerator` proposes candidate plasmid sequences from the specification and retrieved templates; current production-safe paths use deterministic fakes and CPU plumbing, while real fine-tuning remains deferred. The deterministic `ConstraintEngine` validates biological structure and synthesis constraints. The application layer persists sessions, jobs, and design artifacts, and the current export codecs produce GenBank/FASTA payloads. Outcome capture feeds a consent-gated training-signal pipeline, but scheduled retraining and promotion are not active.
 
 ## Operating Notes
 
