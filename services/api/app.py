@@ -2,11 +2,14 @@ from __future__ import annotations
 
 """FastAPI application scaffold for session-driven design workflows."""
 
+import json
 import logging
+import math
 import time
-from uuid import uuid4
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Literal
+from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -140,12 +143,47 @@ class PendingOutcomePromptsResponse(ApiModel):
     prompts: list[PendingOutcomePromptResponse] = Field(default_factory=list)
 
 
+@dataclass(frozen=True)
+class RateLimitRule:
+    limit: int
+    window_seconds: int
+
+
+@dataclass(frozen=True)
+class RateLimitConfig:
+    session_create: RateLimitRule = RateLimitRule(limit=60, window_seconds=60)
+    job_enqueue: RateLimitRule = RateLimitRule(limit=30, window_seconds=60)
+    job_poll: RateLimitRule = RateLimitRule(limit=600, window_seconds=60)
+    export: RateLimitRule = RateLimitRule(limit=120, window_seconds=60)
+    enabled: bool = True
+
+
+@dataclass
+class InMemoryRateLimiter:
+    buckets: dict[str, list[float]] = field(default_factory=dict)
+
+    def check(self, key: str, *, limit: int, window_seconds: int, now: float | None = None) -> float | None:
+        if limit <= 0 or window_seconds <= 0:
+            return 0.0
+        current = time.monotonic() if now is None else now
+        cutoff = current - window_seconds
+        timestamps = [timestamp for timestamp in self.buckets.get(key, []) if timestamp > cutoff]
+        if len(timestamps) >= limit:
+            self.buckets[key] = timestamps
+            return max(0.0, window_seconds - (current - timestamps[0]))
+        timestamps.append(current)
+        self.buckets[key] = timestamps
+        return None
+
+
 def create_app(
     *,
     session_store: SessionStore | None = None,
     job_queue: Any | None = None,
     design_store: DesignStore | None = None,
     outcome_store: OutcomeStore | None = None,
+    rate_limiter: InMemoryRateLimiter | None = None,
+    rate_limit_config: RateLimitConfig | None = None,
 ) -> FastAPI:
     """Build the FastAPI app with injectable collaborators for tests."""
 
@@ -156,6 +194,8 @@ def create_app(
     designs = design_store or InMemoryDesignStore()
     outcomes = outcome_store or InMemoryOutcomeStore()
     metrics = MetricsCollector()
+    limiter = rate_limiter or InMemoryRateLimiter()
+    limits = rate_limit_config or RateLimitConfig()
 
     app = FastAPI(title="PMR API", version="0.1.0")
 
@@ -179,6 +219,7 @@ def create_app(
             message=message,
             retryable=retryable,
             details=details,
+            headers=exc.headers,
         )
 
     @app.exception_handler(RequestValidationError)
@@ -221,6 +262,7 @@ def create_app(
     app.state.design_store = designs
     app.state.outcome_store = outcomes
     app.state.metrics = metrics
+    app.state.rate_limiter = limiter
 
     @app.middleware("http")
     async def correlation_and_metrics_middleware(request: Request, call_next: Any) -> Response:
@@ -260,8 +302,9 @@ def create_app(
         response_model=CreateSessionResponse,
         status_code=status.HTTP_201_CREATED,
     )
-    def create_session(x_user_id: str | None = Header(default=None, alias="X-User-ID")) -> CreateSessionResponse:
-        # TODO: enforce bearer auth, per-account rate limits, and usage metering.
+    def create_session(request: Request, x_user_id: str | None = Header(default=None, alias="X-User-ID")) -> CreateSessionResponse:
+        # TODO: enforce bearer auth, durable account-aware rate limits, and usage metering.
+        _enforce_rate_limit(request, limiter=limiter, config=limits, bucket="session_create", rule=limits.session_create)
         session = _create_session(store, user_id=x_user_id)
         return CreateSessionResponse(session_id=session.session_id)
 
@@ -276,21 +319,31 @@ def create_app(
         response_model=JobAcceptedResponse,
         status_code=status.HTTP_202_ACCEPTED,
     )
-    def design_session(session_id: str, request: DesignRequest) -> JobAcceptedResponse:
+    def design_session(session_id: str, request: Request, payload: DesignRequest) -> JobAcceptedResponse:
         """Queue a design job for the session without blocking on model work."""
 
-        # TODO: enforce bearer auth, per-account rate limits, and usage metering.
+        # TODO: enforce bearer auth, durable account-aware rate limits, and usage metering.
+        _enforce_rate_limit(request, limiter=limiter, config=limits, bucket="job_enqueue", rule=limits.job_enqueue, subject=session_id)
         session = _get_session(store, session_id)
         if session is None:
             raise _http_error(status.HTTP_404_NOT_FOUND, "session_not_found", "Session not found.")
-        turn = _add_turn(store, session_id=session_id, action="design", text=request.goal)
-        job_id = _enqueue(
-            queue,
-            session=store.get_session(session_id) or session,
-            action="design",
-            text=request.goal,
-            correlation_id=get_correlation_id(),
-        )
+        turn = _add_turn(store, session_id=session_id, action="design", text=payload.goal)
+        try:
+            job_id = _enqueue(
+                queue,
+                session=store.get_session(session_id) or session,
+                action="design",
+                text=payload.goal,
+                correlation_id=get_correlation_id(),
+            )
+        except Exception as exc:
+            log_event(logger, "api_job_queue_unavailable", session_id=session_id, action="design", error_type=type(exc).__name__)
+            raise _http_error(
+                status.HTTP_503_SERVICE_UNAVAILABLE,
+                "job_queue_unavailable",
+                "The design job queue is temporarily unavailable.",
+                retryable=True,
+            ) from exc
         _attach_job_id(store, session_id=session_id, turn=turn, job_id=job_id)
         log_event(logger, "api_job_queued", session_id=session_id, job_id=job_id, action="design")
         return JobAcceptedResponse(job_id=job_id)
@@ -300,30 +353,41 @@ def create_app(
         response_model=JobAcceptedResponse,
         status_code=status.HTTP_202_ACCEPTED,
     )
-    def refine_session(session_id: str, request: RefineRequest) -> JobAcceptedResponse:
+    def refine_session(session_id: str, request: Request, payload: RefineRequest) -> JobAcceptedResponse:
         """Queue a refinement job for the session without blocking on model work."""
 
-        # TODO: enforce bearer auth, per-account rate limits, and usage metering.
+        # TODO: enforce bearer auth, durable account-aware rate limits, and usage metering.
+        _enforce_rate_limit(request, limiter=limiter, config=limits, bucket="job_enqueue", rule=limits.job_enqueue, subject=session_id)
         session = _get_session(store, session_id)
         if session is None:
             raise _http_error(status.HTTP_404_NOT_FOUND, "session_not_found", "Session not found.")
-        turn = _add_turn(store, session_id=session_id, action="refine", text=request.instruction)
-        job_id = _enqueue(
-            queue,
-            session=store.get_session(session_id) or session,
-            action="refine",
-            text=request.instruction,
-            correlation_id=get_correlation_id(),
-        )
+        turn = _add_turn(store, session_id=session_id, action="refine", text=payload.instruction)
+        try:
+            job_id = _enqueue(
+                queue,
+                session=store.get_session(session_id) or session,
+                action="refine",
+                text=payload.instruction,
+                correlation_id=get_correlation_id(),
+            )
+        except Exception as exc:
+            log_event(logger, "api_job_queue_unavailable", session_id=session_id, action="refine", error_type=type(exc).__name__)
+            raise _http_error(
+                status.HTTP_503_SERVICE_UNAVAILABLE,
+                "job_queue_unavailable",
+                "The design job queue is temporarily unavailable.",
+                retryable=True,
+            ) from exc
         _attach_job_id(store, session_id=session_id, turn=turn, job_id=job_id)
         log_event(logger, "api_job_queued", session_id=session_id, job_id=job_id, action="refine")
         return JobAcceptedResponse(job_id=job_id)
 
     @app.get("/v1/jobs/{job_id}", response_model=JobStatusResponse)
-    def get_job(job_id: str) -> JobStatusResponse:
+    def get_job(job_id: str, request: Request) -> JobStatusResponse:
         """Poll async job state and any available result payload."""
 
-        # TODO: enforce bearer auth, per-account rate limits, and usage metering.
+        # TODO: enforce bearer auth, durable account-aware rate limits, and usage metering.
+        _enforce_rate_limit(request, limiter=limiter, config=limits, bucket="job_poll", rule=limits.job_poll)
         job = _get_job(queue, job_id)
         if job is None:
             raise _http_error(status.HTTP_404_NOT_FOUND, "job_not_found", "Job not found.")
@@ -341,10 +405,11 @@ def create_app(
         )
 
     @app.get("/v1/designs/{design_id}/export")
-    def export_design(design_id: str, format: Literal["genbank", "fasta"]) -> Response:
+    def export_design(design_id: str, format: Literal["genbank", "fasta"], request: Request) -> Response:
         """Export a persisted annotated design as GenBank or FASTA."""
 
-        # TODO: enforce bearer auth, per-account rate limits, and usage metering.
+        # TODO: enforce bearer auth, durable account-aware rate limits, and usage metering.
+        _enforce_rate_limit(request, limiter=limiter, config=limits, bucket="export", rule=limits.export, subject=design_id)
         design = designs.get(design_id)
         if design is None:
             raise _http_error(status.HTTP_404_NOT_FOUND, "design_not_found", "Design not found.")
@@ -502,10 +567,44 @@ def _require_non_blank(value: str) -> str:
     return value
 
 
-def _http_error(status_code: int, code: str, message: str, *, retryable: bool = False) -> HTTPException:
+def _http_error(
+    status_code: int,
+    code: str,
+    message: str,
+    *,
+    retryable: bool = False,
+    headers: dict[str, str] | None = None,
+) -> HTTPException:
     return HTTPException(
         status_code=status_code,
         detail={"code": code, "message": message, "retryable": retryable},
+        headers=headers,
+    )
+
+
+def _enforce_rate_limit(
+    request: Request,
+    *,
+    limiter: InMemoryRateLimiter,
+    config: RateLimitConfig,
+    bucket: str,
+    rule: RateLimitRule,
+    subject: str | None = None,
+) -> None:
+    if not config.enabled:
+        return
+    client = request.client.host if request.client is not None else "unknown"
+    key = ":".join(part for part in (bucket, client, subject) if part)
+    retry_after = limiter.check(key, limit=rule.limit, window_seconds=rule.window_seconds)
+    if retry_after is None:
+        return
+    retry_seconds = max(1, math.ceil(retry_after))
+    raise _http_error(
+        status.HTTP_429_TOO_MANY_REQUESTS,
+        "rate_limited",
+        "Too many requests. Please wait before trying again.",
+        retryable=True,
+        headers={"Retry-After": str(retry_seconds)},
     )
 
 
@@ -517,6 +616,7 @@ def _error_response(
     retryable: bool = False,
     field_errors: list[ApiFieldError] | None = None,
     details: dict[str, Any] | None = None,
+    headers: dict[str, str] | None = None,
 ) -> JSONResponse:
     payload = ApiErrorResponse(
         error=ApiErrorDetail(
@@ -527,7 +627,7 @@ def _error_response(
             details=details or {},
         )
     )
-    return JSONResponse(status_code=status_code, content=payload.model_dump(mode="json"))
+    return JSONResponse(status_code=status_code, content=payload.model_dump(mode="json"), headers=headers)
 
 
 def _default_error_code(status_code: int) -> str:
@@ -561,11 +661,34 @@ def _friendly_message(message: str, status_code: int) -> str:
 def _job_error_detail(error_text: str | None) -> ApiErrorDetail | None:
     if not error_text:
         return None
+    parsed = _parse_job_error(error_text)
+    if parsed is not None:
+        return parsed
     return ApiErrorDetail(
         code="job_failed",
         message="The design job failed before producing a result.",
         retryable=True,
-        details={"raw_error": error_text},
+    )
+
+
+def _parse_job_error(error_text: str) -> ApiErrorDetail | None:
+    if not error_text.startswith("{"):
+        return None
+    try:
+        payload = json.loads(error_text)
+    except Exception:
+        return None
+    if not isinstance(payload, dict):
+        return None
+    code = payload.get("code")
+    message = payload.get("message")
+    if not code or not message:
+        return None
+    return ApiErrorDetail(
+        code=str(code),
+        message=str(message),
+        retryable=bool(payload.get("retryable", False)),
+        details={key: value for key, value in payload.items() if key not in {"code", "message", "retryable"}},
     )
 
 
