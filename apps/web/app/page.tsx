@@ -8,6 +8,7 @@ import { PlasmidMapView } from "@/components/plasmid-map-view";
 import type { AnnotatedSequence, JobResultPayload, JobStatusResponse, OutcomeReport, PendingOutcomePrompt, ValidationCheck, ValidationReport } from "@/lib/types";
 
 type UiState = "idle" | "submitting" | "polling" | "ready" | "awaiting_clarification" | "error";
+type PendingPromptStatus = "loading" | "ready" | "error";
 
 type ChatMessage = {
   id: string;
@@ -36,6 +37,8 @@ const EXAMPLE_PROMPTS = [
 
 const DISMISSED_OUTCOME_PROMPTS_KEY = "plasmidai:dismissed-outcome-prompts";
 const REPORTED_OUTCOMES_KEY = "plasmidai:reported-outcomes";
+const INITIAL_EXPORT_STATUS: Record<ExportFormat, ExportStatus> = { genbank: "idle", fasta: "idle" };
+const INITIAL_EXPORT_ERRORS: Record<ExportFormat, string | null> = { genbank: null, fasta: null };
 
 export default function Page() {
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -52,13 +55,14 @@ export default function Page() {
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [jobStartedAt, setJobStartedAt] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
-  const [exportStatus, setExportStatus] = useState<Record<ExportFormat, ExportStatus>>({ genbank: "idle", fasta: "idle" });
-  const [exportError, setExportError] = useState<string | null>(null);
+  const [exportStatus, setExportStatus] = useState<Record<ExportFormat, ExportStatus>>(INITIAL_EXPORT_STATUS);
+  const [exportError, setExportError] = useState<Record<ExportFormat, string | null>>(INITIAL_EXPORT_ERRORS);
   const [outcomeModalOpen, setOutcomeModalOpen] = useState(false);
   const [outcomeModalTarget, setOutcomeModalTarget] = useState<OutcomeModalTarget | null>(null);
   const [latestOutcome, setLatestOutcome] = useState<OutcomeReport | null>(null);
   const [reportedOutcomes, setReportedOutcomes] = useState<OutcomeReport[]>([]);
   const [pendingOutcomePrompts, setPendingOutcomePrompts] = useState<PendingOutcomePrompt[]>([]);
+  const [pendingPromptStatus, setPendingPromptStatus] = useState<PendingPromptStatus>("loading");
   const [dismissedPromptKeys, setDismissedPromptKeys] = useState<string[]>([]);
   const [appStatus, setAppStatus] = useState("");
 
@@ -87,15 +91,18 @@ export default function Page() {
     let cancelled = false;
     setDismissedPromptKeys(readDismissedPromptKeys());
     setReportedOutcomes(readReportedOutcomes());
+    setPendingPromptStatus("loading");
     getPendingOutcomePrompts()
       .then((prompts) => {
         if (!cancelled) {
           setPendingOutcomePrompts(prompts);
+          setPendingPromptStatus("ready");
         }
       })
       .catch(() => {
         if (!cancelled) {
           setPendingOutcomePrompts([]);
+          setPendingPromptStatus("error");
         }
       });
     return () => {
@@ -156,6 +163,11 @@ export default function Page() {
     };
   }, [reportedOutcomes.length]);
 
+  useEffect(() => {
+    setExportStatus({ ...INITIAL_EXPORT_STATUS });
+    setExportError({ ...INITIAL_EXPORT_ERRORS });
+  }, [designId]);
+
   const visiblePendingPrompt = pendingOutcomePrompts.find((prompt) => !dismissedPromptKeys.includes(promptKey(prompt))) ?? null;
   const visiblePendingPromptKey = visiblePendingPrompt ? promptKey(visiblePendingPrompt) : null;
 
@@ -173,7 +185,8 @@ export default function Page() {
     }
 
     setInput("");
-    setExportError(null);
+    setExportStatus({ ...INITIAL_EXPORT_STATUS });
+    setExportError({ ...INITIAL_EXPORT_ERRORS });
     setMessages((current) => [
       ...current,
       { id: crypto.randomUUID(), role: "user", kind: "prompt", text }
@@ -229,10 +242,10 @@ export default function Page() {
   }
 
   async function handleExport(format: ExportFormat) {
-    if (!designId) {
+    if (!designId || isBusy) {
       return;
     }
-    setExportError(null);
+    setExportError((current) => ({ ...current, [format]: null }));
     setExportStatus((current) => ({ ...current, [format]: "loading" }));
     try {
       const blob = await exportDesign(designId, format);
@@ -248,7 +261,7 @@ export default function Page() {
       setExportStatus((current) => ({ ...current, [format]: "success" }));
     } catch (error) {
       setExportStatus((current) => ({ ...current, [format]: "error" }));
-      setExportError(friendlyErrorMessage(error));
+      setExportError((current) => ({ ...current, [format]: `${formatLabel(format)} export failed. ${friendlyErrorMessage(error)}` }));
     }
   }
 
@@ -334,19 +347,10 @@ export default function Page() {
                   {message.role === "user" ? "Researcher" : message.kind === "clarification" ? "Clarification" : "Design agent"}
                 </div>
                 <p className="whitespace-pre-wrap text-sm leading-6 text-slate-800">{message.text}</p>
-                {message.result?.validation_report ? (
-                  <ValidationReportPanel report={message.result.validation_report} />
+                {message.result ? (
+                  message.result.validation_report ? <ValidationReportPanel report={message.result.validation_report} /> : <MissingValidationReportPanel />
                 ) : null}
-                {message.result?.retrieved_templates?.length ? (
-                  <ul className="mt-3 space-y-1 text-xs text-slate-600">
-                    {message.result.retrieved_templates.slice(0, 3).map((template, index) => (
-                      <li key={`${message.id}-${template.source_id ?? index}`}>
-                        Retrieved {index + 1}: {template.name ?? template.source_id ?? "template"}{" "}
-                        {typeof template.score === "number" ? `(${template.score.toFixed(3)})` : ""}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
+                {message.result ? <RetrievedTemplatesPanel result={message.result} messageId={message.id} /> : null}
                 {message.result?.annotated_sequence ? (
                   <a href="#plasmid-map" className="mt-3 inline-flex text-xs font-semibold text-action">
                     View plasmid map
@@ -413,9 +417,11 @@ export default function Page() {
 
         <aside className="min-h-0 bg-panel px-4 py-4 sm:px-5 sm:py-5 lg:min-h-screen">
           <div className="space-y-4 lg:sticky lg:top-5">
+            {isBusy ? <RightRailJobNotice jobId={activeJobId} hasPreviousDesign={Boolean(designId)} /> : null}
+            {pendingPromptStatus === "error" ? <PendingPromptFetchMessage /> : null}
             <PlasmidMapView annotatedSequence={annotatedSequence as AnnotatedSequence | null} />
-            <ExportActions designId={designId} status={exportStatus} error={exportError} onExport={handleExport} />
-            <OutcomePanel designId={designId} latestOutcome={latestOutcome} onOpen={openCurrentOutcomeModal} />
+            <ExportActions designId={designId} status={exportStatus} error={exportError} disabledReason={isBusy ? "A new design job is running. Exports stay disabled to avoid downloading the previous design by mistake." : null} onExport={handleExport} />
+            <OutcomePanel designId={designId} latestOutcome={latestOutcome} disabledReason={isBusy ? "A new design job is running. Outcome reporting is disabled until the current result is ready." : null} onOpen={openCurrentOutcomeModal} />
             <MyOutcomesPanel outcomes={reportedOutcomes} onOpen={openReportedOutcomeModal} />
           </div>
         </aside>
@@ -499,12 +505,37 @@ function PendingOutcomeToast({ prompt, onOpen, onDismiss }: { prompt: PendingOut
   );
 }
 
-function OutcomePanel({ designId, latestOutcome, onOpen }: { designId: string | null; latestOutcome: OutcomeReport | null; onOpen: () => void }) {
+function RightRailJobNotice({ jobId, hasPreviousDesign }: { jobId: string | null; hasPreviousDesign: boolean }) {
+  return (
+    <section className="border border-action/30 bg-action/5 p-4 shadow-subtle" role="status" aria-live="polite">
+      <p className="text-xs font-semibold uppercase text-action">Design running</p>
+      <p className="mt-1 text-sm leading-6 text-slate-700">
+        {hasPreviousDesign
+          ? "A new design is running. The panels below still show the last completed design until the current result is ready."
+          : "A design is running. The map, export, and outcome panels will update when the result is ready."}
+      </p>
+      {jobId ? <p className="mt-2 text-xs text-slate-500">Job ID: {jobId}</p> : null}
+    </section>
+  );
+}
+
+function PendingPromptFetchMessage() {
+  return (
+    <section className="border border-line bg-white p-3 text-xs leading-5 text-slate-600 shadow-subtle" aria-label="Outcome prompt status">
+      Outcome follow-ups could not be checked. You can continue designing; prompts will be checked again on reload.
+    </section>
+  );
+}
+
+function OutcomePanel({ designId, latestOutcome, disabledReason, onOpen }: { designId: string | null; latestOutcome: OutcomeReport | null; disabledReason: string | null; onOpen: () => void }) {
+  const disabled = !designId || Boolean(disabledReason);
   return (
     <section className="border border-line bg-white p-4 shadow-subtle" aria-label="Outcome reporting">
       <h2 className="text-sm font-semibold">Lab outcome</h2>
       <p className="mt-1 text-xs leading-5 text-slate-600">
-        {designId
+        {disabledReason
+          ? disabledReason
+          : designId
           ? latestOutcome
             ? `Outcome reported ${new Date(latestOutcome.reported_at).toLocaleDateString()}.`
             : "Have lab results for this design? Failed and inconclusive results are useful too."
@@ -515,7 +546,7 @@ function OutcomePanel({ designId, latestOutcome, onOpen }: { designId: string | 
       ) : null}
       <button
         type="button"
-        disabled={!designId}
+        disabled={disabled}
         onClick={onOpen}
         className="mt-4 w-full border border-action bg-action px-3 py-2 text-sm font-semibold text-white hover:bg-action/90 focus:border-action focus:outline-none focus:ring-2 focus:ring-action/20 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-300 disabled:hover:bg-slate-300"
       >
@@ -546,6 +577,43 @@ function JobProgressCard({ jobId, state, elapsedMs }: { jobId: string | null; st
       </div>
       {jobId ? <p className="mt-3 text-xs text-slate-500">Job ID: {jobId}</p> : null}
     </article>
+  );
+}
+
+function RetrievedTemplatesPanel({ result, messageId }: { result: JobResultPayload; messageId: string }) {
+  if (!Array.isArray(result.retrieved_templates)) {
+    return <ResultNote title="Retrieved templates" text="Template retrieval was not returned for this job." />;
+  }
+
+  if (!result.retrieved_templates.length) {
+    return <ResultNote title="Retrieved templates" text="No matching templates were retrieved." />;
+  }
+
+  return (
+    <section className="mt-3 border border-line bg-panel p-3" aria-label="Retrieved templates">
+      <h3 className="text-xs font-semibold uppercase text-slate-600">Retrieved templates</h3>
+      <ul className="mt-2 space-y-1 text-xs text-slate-600">
+        {result.retrieved_templates.slice(0, 3).map((template, index) => (
+          <li key={`${messageId}-${template.source_id ?? index}`}>
+            Retrieved {index + 1}: {template.name ?? template.source_id ?? "template"}{" "}
+            {typeof template.score === "number" ? `(${template.score.toFixed(3)})` : ""}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function MissingValidationReportPanel() {
+  return <ResultNote title="Validation report" text="Validation report was not returned for this job." />;
+}
+
+function ResultNote({ title, text }: { title: string; text: string }) {
+  return (
+    <section className="mt-3 border border-line bg-panel p-3" aria-label={title}>
+      <h3 className="text-xs font-semibold uppercase text-slate-600">{title}</h3>
+      <p className="mt-1 text-xs leading-5 text-slate-500">{text}</p>
+    </section>
   );
 }
 
@@ -644,6 +712,10 @@ function friendlyErrorMessage(error: unknown): string {
     return error.message;
   }
   return "The design request failed.";
+}
+
+function formatLabel(format: ExportFormat): string {
+  return format === "genbank" ? "GenBank" : "FASTA";
 }
 
 function normalizeJobResult(result: unknown): JobResultPayload {
