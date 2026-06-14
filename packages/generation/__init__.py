@@ -8,6 +8,7 @@ from .generator import (
     SequenceGenerator,
 )
 from .canary import CanaryAssignmentRecord, CanaryGenerator, CanaryPolicy, InMemoryCanaryMetricsSink
+from .rollout_policy import RolloutEvaluation, RolloutObservation, RolloutPolicy, evaluate_rollout
 from .shadow import (
     InMemoryShadowLogSink,
     JsonlShadowLogSink,
@@ -29,6 +30,9 @@ __all__ = [
     "FakeGenerator",
     "InMemoryCanaryMetricsSink",
     "MarkerSwap",
+    "RolloutEvaluation",
+    "RolloutObservation",
+    "RolloutPolicy",
     "SequenceGenerator",
     "InMemoryShadowLogSink",
     "JsonlShadowLogSink",
@@ -37,4 +41,5 @@ __all__ = [
     "ShadowOutputSummary",
     "ShadowPayload",
     "ShadowRetentionPolicy",
+    "evaluate_rollout",
 ]
