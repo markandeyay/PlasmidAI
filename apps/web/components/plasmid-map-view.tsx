@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { Component, type ReactNode } from "react";
 import { componentColor } from "@/lib/component-colors";
 import type { AnnotatedFeature, AnnotatedSequence } from "@/lib/types";
 
@@ -54,21 +55,46 @@ export function PlasmidMapView({ annotatedSequence }: PlasmidMapViewProps) {
         </span>
       </div>
 
-      <div className="mt-4 overflow-auto border border-line">
-        <div data-testid="seqviz-map" className="h-[360px] min-w-[320px] bg-white sm:h-[440px] lg:h-[520px]">
-          <SeqViz
-            name={annotatedSequence.vector_profile ?? "Plasmid design"}
-            seq={annotatedSequence.sequence}
-            annotations={annotations}
-            disableExternalFonts
-            primers={[]}
-            viewer={annotatedSequence.topology === "circular" ? "both" : "linear"}
-          />
+      <MapErrorBoundary fallback={<MapFallback annotatedSequence={annotatedSequence} />}>
+        <div className="mt-4 overflow-auto border border-line">
+          <div data-testid="seqviz-map" className="h-[360px] min-w-[320px] bg-white sm:h-[440px] lg:h-[520px]">
+            <SeqViz
+              name={annotatedSequence.vector_profile ?? "Plasmid design"}
+              seq={annotatedSequence.sequence}
+              annotations={annotations}
+              disableExternalFonts
+              primers={[]}
+              viewer={annotatedSequence.topology === "circular" ? "both" : "linear"}
+            />
+          </div>
         </div>
-      </div>
+      </MapErrorBoundary>
 
       <FeatureLegend features={annotatedSequence.features} sequenceLength={annotatedSequence.sequence.length} />
     </section>
+  );
+}
+
+class MapErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  render() {
+    return this.state.failed ? this.props.fallback : this.props.children;
+  }
+}
+
+function MapFallback({ annotatedSequence }: { annotatedSequence: AnnotatedSequence }) {
+  return (
+    <div className="mt-4 border border-warning/40 bg-amber-50 p-4 text-sm text-slate-700" data-testid="map-fallback">
+      <p className="font-semibold text-warning">Map could not render</p>
+      <p className="mt-1 text-xs leading-5">
+        The sequence and feature table are still available below: {annotatedSequence.sequence.length.toLocaleString()} bp {annotatedSequence.topology} sequence with {annotatedSequence.features.length} returned features.
+      </p>
+    </div>
   );
 }
 

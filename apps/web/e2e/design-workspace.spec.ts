@@ -80,6 +80,8 @@ test("researcher can design, refine, view map, and export files", async ({ page 
   await page.getByLabel("Experimental goal").fill("build a GFP reporter");
   await page.getByRole("button", { name: "Design" }).click();
   await expect(page.getByText("Generated annotated circular reporter plasmid.")).toBeVisible();
+  await expect(page.getByText("Retrieved template evidence")).toBeVisible();
+  await expect(page.getByText("curated:pEGFP-N1")).toBeVisible();
   await expect(page.getByTestId("seqviz-map")).toBeVisible();
   await expect(page.getByText("CMV promoter")).toBeVisible();
 
@@ -101,6 +103,51 @@ test("researcher can design, refine, view map, and export files", async ({ page 
   expect(jobPolls).toBeGreaterThanOrEqual(2);
   expect(requests).toContain("GET /v1/designs/design-1/export?format=genbank");
   expect(requests).toContain("GET /v1/designs/design-1/export?format=fasta");
+});
+
+test("completed job without sequence shows partial result evidence", async ({ page }) => {
+  await page.route("http://127.0.0.1:8000/v1/users/me/pending-outcome-prompts", async (route) => {
+    await route.fulfill({ json: { prompts: [] } });
+  });
+
+  await page.route("http://127.0.0.1:8000/v1/sessions", async (route) => {
+    await route.fulfill({ json: { session_id: "session-partial" } });
+  });
+
+  await page.route("http://127.0.0.1:8000/v1/sessions/session-partial/design", async (route) => {
+    await route.fulfill({ json: { job_id: "job-partial" } });
+  });
+
+  await page.route("http://127.0.0.1:8000/v1/jobs/job-partial", async (route) => {
+    await route.fulfill({
+      json: {
+        job_id: "job-partial",
+        status: "completed",
+        result: {
+          recommendation_text: "Found candidate templates, but the request needs another pass before sequence assembly.",
+          annotated_sequence: null,
+          retrieved_templates: [
+            { source_id: "addgene:12345", name: "Template A", score: 0.91, source: "Addgene", vector_profile: "bacterial_expression" }
+          ],
+          validation_report: {
+            overall: "WARN",
+            checks: [{ name: "Assembly completeness", status: "WARN", message: "No annotated sequence returned." }]
+          }
+        }
+      }
+    });
+  });
+
+  await page.goto("/");
+  await page.getByLabel("Experimental goal").fill("find a bacterial reporter template");
+  await page.getByRole("button", { name: "Design" }).click();
+
+  await expect(page.getByText("Found candidate templates, but the request needs another pass before sequence assembly.")).toBeVisible();
+  await expect(page.getByText("Partial result")).toBeVisible();
+  await expect(page.getByText("Retrieved template evidence")).toBeVisible();
+  await expect(page.getByText("Template A")).toBeVisible();
+  await expect(page.getByText("Assembly completeness")).toBeVisible();
+  await expect(page.getByText("Submit a design to render the annotated plasmid.")).toBeVisible();
 });
 
 test("researcher can submit a prompted outcome report", async ({ page }) => {
