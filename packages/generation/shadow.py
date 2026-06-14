@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Callable, Protocol
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from typing import Any, Callable, Literal, Mapping, Protocol
 from uuid import uuid4
 
 from packages.core.schemas import DesignSpec, GeneratedSequence, RetrievedPlasmid, ValidationReport
@@ -66,6 +68,107 @@ class InMemoryShadowLogSink:
 
     def record(self, comparison: ShadowComparisonRecord) -> None:
         self.records.append(comparison)
+
+
+ShadowPayloadClass = Literal["raw", "redacted", "aggregate"]
+PAYLOAD_CLASSES: tuple[ShadowPayloadClass, ...] = ("raw", "redacted", "aggregate")
+
+
+@dataclass(frozen=True)
+class ShadowRetentionPolicy:
+    raw_payload_days: int = 7
+    redacted_payload_days: int = 30
+    aggregate_payload_days: int = 90
+    raw_sample_rate: float = 1.0
+    redacted_sample_rate: float = 1.0
+    aggregate_sample_rate: float = 1.0
+
+    def retention_days_for(self, payload_class: ShadowPayloadClass) -> int:
+        if payload_class == "raw":
+            return self.raw_payload_days
+        if payload_class == "redacted":
+            return self.redacted_payload_days
+        if payload_class == "aggregate":
+            return self.aggregate_payload_days
+        raise ValueError(f"unsupported shadow payload class: {payload_class}")
+
+    def sample_rate_for(self, payload_class: ShadowPayloadClass) -> float:
+        if payload_class == "raw":
+            return self.raw_sample_rate
+        if payload_class == "redacted":
+            return self.redacted_sample_rate
+        if payload_class == "aggregate":
+            return self.aggregate_sample_rate
+        raise ValueError(f"unsupported shadow payload class: {payload_class}")
+
+
+@dataclass(frozen=True)
+class ShadowPayload:
+    payload_id: str
+    payload_class: ShadowPayloadClass
+    payload: Mapping[str, Any]
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+    def as_record(self) -> dict[str, Any]:
+        return {
+            "payload_id": self.payload_id,
+            "payload_class": self.payload_class,
+            "created_at": _ensure_utc(self.created_at).isoformat(),
+            "payload": dict(self.payload),
+        }
+
+
+@dataclass(frozen=True)
+class ShadowPruneResult:
+    kept: int
+    removed: int
+
+
+@dataclass(frozen=True)
+class JsonlShadowLogSink:
+    root: Path
+    policy: ShadowRetentionPolicy = field(default_factory=ShadowRetentionPolicy)
+
+    def append(self, payload: ShadowPayload) -> bool:
+        if not should_sample_payload(payload.payload_id, self.policy.sample_rate_for(payload.payload_class)):
+            return False
+        self.root.mkdir(parents=True, exist_ok=True)
+        path = self._path(payload.payload_class)
+        with path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(payload.as_record(), sort_keys=True) + "\n")
+        return True
+
+    def prune(self, *, now: datetime | None = None) -> ShadowPruneResult:
+        reference_time = _ensure_utc(now or datetime.now(timezone.utc))
+        kept = 0
+        removed = 0
+        for payload_class in PAYLOAD_CLASSES:
+            path = self._path(payload_class)
+            if not path.exists():
+                continue
+            kept_lines: list[str] = []
+            for line in path.read_text(encoding="utf-8").splitlines():
+                if not line.strip():
+                    continue
+                if _line_is_expired(line, payload_class, policy=self.policy, now=reference_time):
+                    removed += 1
+                    continue
+                kept += 1
+                kept_lines.append(line)
+            if kept_lines:
+                path.write_text("\n".join(kept_lines) + "\n", encoding="utf-8")
+            else:
+                path.unlink()
+        return ShadowPruneResult(kept=kept, removed=removed)
+
+    def iter_records(self, payload_class: ShadowPayloadClass) -> list[dict[str, Any]]:
+        path = self._path(payload_class)
+        if not path.exists():
+            return []
+        return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+    def _path(self, payload_class: ShadowPayloadClass) -> Path:
+        return self.root / f"{payload_class}.jsonl"
 
 
 @dataclass(frozen=True)
@@ -289,3 +392,49 @@ def incumbent_record(records: list[ModelRegistryRecord]) -> ModelRegistryRecord 
 
 def shadow_candidate_records(records: list[ModelRegistryRecord]) -> list[ModelRegistryRecord]:
     return [record for record in records if should_shadow_model(record)]
+
+
+def should_sample_payload(payload_id: str, sample_rate: float) -> bool:
+    if sample_rate <= 0:
+        return False
+    if sample_rate >= 1:
+        return True
+    digest = hashlib.sha256(payload_id.encode("utf-8")).hexdigest()
+    bucket = int(digest[:8], 16) / 0xFFFFFFFF
+    return bucket < sample_rate
+
+
+def payload_is_expired(
+    payload_class: ShadowPayloadClass,
+    created_at: datetime,
+    *,
+    policy: ShadowRetentionPolicy | None = None,
+    now: datetime | None = None,
+) -> bool:
+    active_policy = policy or ShadowRetentionPolicy()
+    reference_time = _ensure_utc(now or datetime.now(timezone.utc))
+    cutoff = reference_time - timedelta(days=active_policy.retention_days_for(payload_class))
+    return _ensure_utc(created_at) < cutoff
+
+
+def _line_is_expired(line: str, payload_class: ShadowPayloadClass, *, policy: ShadowRetentionPolicy, now: datetime) -> bool:
+    try:
+        record = json.loads(line)
+        created_at = _parse_timestamp(str(record["created_at"]))
+        record_class = record.get("payload_class", payload_class)
+        if record_class not in PAYLOAD_CLASSES:
+            return True
+        return payload_is_expired(record_class, created_at, policy=policy, now=now)
+    except Exception:
+        return True
+
+
+def _parse_timestamp(value: str) -> datetime:
+    normalized = value.removesuffix("Z") + "+00:00" if value.endswith("Z") else value
+    return _ensure_utc(datetime.fromisoformat(normalized))
+
+
+def _ensure_utc(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)

@@ -8,7 +8,15 @@ from .generator import (
     SequenceGenerator,
 )
 from .canary import CanaryAssignmentRecord, CanaryGenerator, CanaryPolicy, InMemoryCanaryMetricsSink
-from .shadow import InMemoryShadowLogSink, ShadowComparisonGenerator, ShadowComparisonRecord, ShadowOutputSummary
+from .shadow import (
+    InMemoryShadowLogSink,
+    JsonlShadowLogSink,
+    ShadowComparisonGenerator,
+    ShadowComparisonRecord,
+    ShadowOutputSummary,
+    ShadowPayload,
+    ShadowRetentionPolicy,
+)
 
 __all__ = [
     "CARBON_500M_MODEL",
@@ -23,7 +31,10 @@ __all__ = [
     "MarkerSwap",
     "SequenceGenerator",
     "InMemoryShadowLogSink",
+    "JsonlShadowLogSink",
     "ShadowComparisonGenerator",
     "ShadowComparisonRecord",
     "ShadowOutputSummary",
+    "ShadowPayload",
+    "ShadowRetentionPolicy",
 ]

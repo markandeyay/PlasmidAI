@@ -1,18 +1,24 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 
 from packages.core.schemas import DesignSpec, Plasmid, RetrievedPlasmid
 from packages.generation import FakeGenerator, MarkerSwap
 from packages.generation.registry import ModelRegistryRecord
 from packages.generation.shadow import (
     InMemoryShadowLogSink,
+    JsonlShadowLogSink,
     ShadowComparisonRecord,
     ShadowComparisonGenerator,
+    ShadowPayload,
+    ShadowRetentionPolicy,
     incumbent_record,
+    payload_is_expired,
     shadow_candidate_records,
     should_serve_model,
     should_shadow_model,
+    should_sample_payload,
 )
 
 
@@ -161,3 +167,72 @@ def test_rollout_state_helpers_gate_serving_and_shadow_records() -> None:
     assert should_shadow_model(registered) is False
     assert incumbent_record([registered, shadow, canary, full]) == full
     assert shadow_candidate_records([registered, shadow, canary, full]) == [shadow]
+
+
+def test_shadow_log_sink_writes_jsonl_payload_records(tmp_path) -> None:
+    sink = JsonlShadowLogSink(tmp_path)
+    created_at = datetime(2026, 6, 6, 12, 0, tzinfo=UTC)
+
+    written = sink.append(
+        ShadowPayload(
+            payload_id="payload-1",
+            payload_class="raw",
+            created_at=created_at,
+            payload={"prompt": "design reporter"},
+        )
+    )
+
+    assert written is True
+    records = sink.iter_records("raw")
+    assert records == [
+        {
+            "payload_id": "payload-1",
+            "payload_class": "raw",
+            "created_at": "2026-06-06T12:00:00+00:00",
+            "payload": {"prompt": "design reporter"},
+        }
+    ]
+
+
+def test_shadow_log_sink_applies_class_sampling(tmp_path) -> None:
+    sink = JsonlShadowLogSink(
+        tmp_path,
+        policy=ShadowRetentionPolicy(raw_sample_rate=0.0, redacted_sample_rate=1.0),
+    )
+
+    assert sink.append(ShadowPayload(payload_id="raw-1", payload_class="raw", payload={"secret": "drop"})) is False
+    assert sink.append(ShadowPayload(payload_id="redacted-1", payload_class="redacted", payload={"prompt": "keep"})) is True
+
+    assert sink.iter_records("raw") == []
+    assert [record["payload_id"] for record in sink.iter_records("redacted")] == ["redacted-1"]
+
+
+def test_shadow_log_sink_prunes_expired_payloads_by_class(tmp_path) -> None:
+    now = datetime(2026, 6, 30, tzinfo=UTC)
+    sink = JsonlShadowLogSink(tmp_path)
+    sink.append(ShadowPayload(payload_id="raw-old", payload_class="raw", created_at=now - timedelta(days=8), payload={}))
+    sink.append(ShadowPayload(payload_id="redacted-kept", payload_class="redacted", created_at=now - timedelta(days=20), payload={}))
+    sink.append(ShadowPayload(payload_id="aggregate-kept", payload_class="aggregate", created_at=now - timedelta(days=80), payload={}))
+    sink.append(ShadowPayload(payload_id="aggregate-old", payload_class="aggregate", created_at=now - timedelta(days=91), payload={}))
+
+    result = sink.prune(now=now)
+
+    assert result.removed == 2
+    assert result.kept == 2
+    assert sink.iter_records("raw") == []
+    assert [record["payload_id"] for record in sink.iter_records("redacted")] == ["redacted-kept"]
+    assert [record["payload_id"] for record in sink.iter_records("aggregate")] == ["aggregate-kept"]
+
+
+def test_payload_is_expired_uses_default_phase2_retention_windows() -> None:
+    now = datetime(2026, 6, 30, tzinfo=UTC)
+
+    assert payload_is_expired("raw", now - timedelta(days=8), now=now) is True
+    assert payload_is_expired("redacted", now - timedelta(days=8), now=now) is False
+    assert payload_is_expired("aggregate", now - timedelta(days=80), now=now) is False
+
+
+def test_sampling_is_deterministic_for_fractional_rates() -> None:
+    first = should_sample_payload("payload-42", 0.25)
+
+    assert should_sample_payload("payload-42", 0.25) is first
