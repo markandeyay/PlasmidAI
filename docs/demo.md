@@ -4,6 +4,8 @@ Audience: YC partners, early investors, and scientific collaborators.
 
 Goal: show that the app is not a generic chatbot. It turns a plain-English plasmid request into a retrieval-grounded design session, supports conversational refinement, displays validation evidence, exports handoff files, and later captures wet-lab outcomes for a feedback loop.
 
+This script was checked against the current Next.js workspace, FastAPI session/job/export/outcome endpoints, and `PROGRESS.md` branch status on `demo-readiness`.
+
 ## Pre-Demo Setup
 
 Use a local environment where the web app can reach an API instance backed by the generation/retrieval pipeline or a seeded demo API fixture. The default FastAPI scaffold can queue jobs without completing them unless a generation job handler is wired in, so confirm the design job returns before the meeting.
