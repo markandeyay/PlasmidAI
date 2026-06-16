@@ -1,4 +1,4 @@
-.PHONY: build-training-data derive-training-signal design e2e-test embed-corpus eval-generation eval-retrieval finetune-smoke generate-validation-gold ingest-addgene ingest-all ingest-curated ingest-genbank lint list-models parse-sample quality-report refresh-corpus register-model reprocess serve-api serve-web services-down setup shadow-eval spike-generation test validate-sample
+.PHONY: build-training-data demo derive-training-signal design e2e-test embed-corpus eval-generation eval-retrieval finetune-smoke generate-validation-gold ingest-addgene ingest-all ingest-curated ingest-genbank lint list-models parse-sample quality-report refresh-corpus register-model reprocess serve-api serve-web services-down setup shadow-eval spike-generation test validate-sample
 
 PYTHON ?= python
 MODE ?= dev
@@ -44,6 +44,8 @@ test:
 
 e2e-test:
 	npm --prefix apps/web run test:e2e -- --config=playwright.fullstack.config.ts
+
+demo: e2e-test
 
 lint:
 	@echo "No lint configured yet."

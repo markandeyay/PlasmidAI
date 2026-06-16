@@ -1,107 +1,80 @@
 ﻿# PROGRESS â€” Build State (mutable)
 
 ## AT-A-GLANCE (update every session)
-- **Current Phase:** Consolidated `master`: demo readiness, Phase 4 visual polish, and Phase 4 salvage merged
-- **Next Concrete Task:** Review consolidated demo/application readiness state, then decide whether to merge future demo runner work or address documented dependency/SYSTEM_DESIGN drift items.
+- **Current Phase:** `cleanup-loose-ends` review branch completed locally in `C:\Users\yalam\PMR-opencode`
+- **Next Concrete Task:** Human review of `cleanup-loose-ends`; do not push or merge until authorized. After review, decide whether to merge this documentation/cleanup branch or separately address dependency upgrades, `SYSTEM_DESIGN.md` drift, and live demo-runner policy.
 - **Overall completion estimate:** 23%
-- **Last session date:** 2026-06-14
-- **Codebase known-good?** (tests passing) Yes: consolidation verification passed `342 passed, 1 skipped, 8 warnings`, `npm run build`, `npm run test:e2e` (`3 passed`), and `make e2e-test` (`1 passed`) on 2026-06-14.
+- **Last session date:** 2026-06-16
+- **Codebase known-good?** (tests passing) Yes: cleanup branch verification passed `342 passed, 1 skipped, 8 warnings`, `npm run build`, `npm run test:e2e` (`3 passed`), and `make demo` (`1 passed`) on 2026-06-16.
 
 ## RESUME HERE (only if mid-task)
-RESUME HERE: `master` now contains `demo-readiness`, `phase4-visual-polish`, and `phase4-salvage`. Demo readiness artifacts are landed; frontend visual/a11y/loading polish is landed; salvage added the rollout policy memo, API-backed E2E fixture target, shadow retention policy, rollout policy evaluator, API rate limiting/sanitized job errors, and poll-timeout/evidence UI. Final verification passed `342 passed, 1 skipped, 8 warnings`, `npm run build`, `npm run test:e2e` (`3 passed`), and `make e2e-test` (`1 passed`). Carryovers: real demo jobs still need a worker or explicit demo runner beyond the E2E fixture, Phase 2 fine-tuning remains spend-gated, dependency vulnerabilities are documented but not upgraded, and SYSTEM_DESIGN drift is documented but not edited.
+RESUME HERE: `cleanup-loose-ends` is complete locally in `C:\Users\yalam\PMR-opencode` and ready for human review. The branch inventories stale `PROGRESS.md` loose ends in `research/findings/loose_ends_cleanup_plan.md`, reorganizes active state into current state/external blockers/deferred follow-ups/decisions pending human review, adds `make demo` as an alias for the deterministic API-backed fixture, rewrites `README.md`, and records `research/findings/readme_progress_crosscheck.md`. Final verification passed: `npm run build`; `npm run test:e2e` -> `3 passed`; `C:\Program Files (x86)\GnuWin32\bin\make.exe demo` -> `1 passed`; `C:\Program Files (x86)\GnuWin32\bin\make.exe test` -> `342 passed, 1 skipped, 8 warnings`. No push or merge performed.
 
 ## WORKTREE ASSIGNMENTS
 - **Codex main worktree:** `C:\Users\yalam\PMR`
 - **OpenCode auxiliary worktree:** `C:\Users\yalam\PMR-opencode`
 - Future sessions must be given their assigned worktree path explicitly. Codex should work from the main worktree unless instructed otherwise; OpenCode should work from the auxiliary worktree. Agents must not switch branches inside another agent's worktree.
 
-## KNOWN ISSUES / BLOCKERS
-- `phase0-corpus-expansion`, `phase2-prep`, `phase2-spike`, `phase0-retrieval-robustness`, `phase4-foundation`, `phase2-generation-prep`, `phase4-frontend`, `phase3-validation`, `phase2-real-generation`, `phase3-hardening`, `phase4-polish`, `phase3-gate`, `phase2-finetune-prep`, `phase5-foundation`, and `phase0-corpus-quality` are merged locally into `master`.
-- Phase 3 gate is met under the human-approved curated-quality policy: the operational gold set has 31 defensible known-good and 52 known-bad records, and `data/eval/validation/2026-06-07-033018-validation-baseline.{json,md}` reports accuracy `1.000` with zero misclassifications.
-- Phase 3 performance follow-up: repeat-detection edge-case coverage was added, but profiling showed the 300-record `validate-sample` timeout is dominated by GenBank parsing/reference matching before validation, not by the repeat checker itself. Parser/reference-match optimization is a separate follow-up and should not be treated as a Phase 3 rule-engine defect.
-- `phase2-finetune-prep` is merged locally into `master`; it adds fine-tuning preparation only. Phase 2 actual fine-tuning remains gated on human authorization, model/corpus policy decisions, and compute budget approval.
-- `phase2-finetune-run` preflight found no local provider automation (`runpodctl`, Lambda CLI, or `huggingface-cli` on PATH). This is a spend-safety blocker, not a model-policy blocker. RunPod A100 80 GB is the preferred provider target once account/API access is configured.
-- Phase 2 fine-tuning prep is not a training run. The smoke path uses a tiny local CPU model to verify plumbing; it does not load or train Carbon-3B and makes no quality claim.
-- The `C:\Users\yalam\PMR-opencode` gitignored `.env` uses alternate local service ports (`POSTGRES_PORT=55433`, `REDIS_PORT=6380`, `OBJECT_STORE_PORT=9002`, `OBJECT_STORE_CONSOLE_PORT=9003`) so it can coexist with Codex's main worktree services.
-- Carbon-500M CPU generation is a real-model plumbing spike only. It is not fine-tuned, not GPU-benchmarked, not biologically validated, and not Phase 2 gate-eligible.
-- DNABERT-2 fallback smoke is blocked by missing `einops`; no dependency was installed without approval.
-- The expanded-corpus `pACYC184` retrieval regression is fixed; the diagnostic remains at `data/eval/retrieval/2026-06-02-102439-pacyc184-regression-diagnostic.md` for review.
-- Phase 4 still intentionally omits AuthN/AuthZ, rate limiting, usage metering, streaming job updates, primer-design output, synthesis handoff, deployed hosting, and a backend-persisted `design_id` guarantee for real export jobs.
-- Phase 4 polish is merged locally: UX audit and API robustness audit are documented, API error handling is structured, frontend design workflow refinements are in place, and application observability scaffolding exists.
-- Frontend verification note: run `npm run build` and `npm run test:e2e` sequentially, not in parallel, because Next's build output and Playwright's dev server both use `.next`.
-- `phase4-outcome-ui` remains a frontend-only branch. It intentionally uses local browser storage for the My outcomes list until a backend list endpoint exists, and it uses `web-demo-user` for the current local/demo `X-User-ID` requirement.
-- Phase 4 visual polish is merged. It intentionally avoided broader design-system primitives, navigation restructure, a dedicated outcome route, and a full graphical screen-reader model for SeqViz; those decisions are logged as human questions.
-- OpenCode coordination: API integration tests were accidentally committed once on `phase0-retrieval-robustness`; the content is identical to the `phase4-foundation` cherry-pick and was handled during merge consolidation.
-- Phase 0 scale gate remains unmet: the expanded corpus has 256 total records and 141 complete annotations, not >=50,000 fully parsed component-annotated plasmids.
-- Phase 2 gate is not met. `phase2-real-generation` loads Carbon-500M for short CPU inference behind `SequenceGenerator`, and the default spike path now uses the deterministic Phase 3 `ConstraintEngine`, but there is still no fine-tuned generation baseline or biological validation of model-generated sequences. Human policy now authorizes one Phase 2 fine-tuning run up to USD 300 on Lambda Labs or RunPod, using standard Carbon-3B, the existing 117/15/8 public NCBI-derived triplets, and no FNS variant.
-- Phase 0 corpus quality hardening is merged: current corpus remains 256 records with a documented unknown-record audit; engineered-vector-lane filters and stale/corrupt GenBank refresh tooling are available, but the formal Phase 0 scale gate remains unmet.
-- Phase 5 foundation is merged: outcome capture, training-signal derivation, and feedback flywheel documentation exist, but Phase 5 gate remains open until a captured outcome flows into scheduled fine-tuning and model promotion.
-- Phase 1 retrieval gate passed on 2026-05-31: `data/eval/retrieval/2026-05-31-221057-retrieval-baseline.{md,json}` scores 20 retrieval queries plus 1 clarification-only case with top-1 `0.700`, top-5 `1.000`, MRR `0.825`, and clarification pass rate `1.000`. Retrieval robustness rerun on 2026-06-02 scores top-1 `0.950`, top-5 `1.000`, MRR `0.975`, clarification pass rate `1.000`.
-- Phase 1 retrieval cleanup is implemented: exact named-record queries use a lexical lane before semantic ranking, while structured source and DOI provenance filters remain enforced. `depositing_lab` is not available in the current schema or corpus.
-- The expanded corpus still has no classified lentiviral or CRISPR vectors. `data/eval/corpus/2026-06-01-174026-lentiviral-crispr-gap.md` found no parser defect and no safe canonical NCBI-backed seed. Adding exact Addgene or reviewed GenBank-derivative seeds is blocked pending human provenance/legal policy.
-- Phase 1 is authorized and active as of 2026-05-31. Phase 0 remains below its final scale gate while Addgene partner access is pending; current Phase 1 work uses the verified local corpus foundation.
-- The GNU Make directory was added to the user PATH on 2026-05-29, but the current Codex host process has not inherited that PATH refresh. Use `C:\Program Files (x86)\GnuWin32\bin\make.exe` directly in this process if plain `make` is still unresolved; new user shells should pick up the user PATH.
-- Addgene dev-mode ingestion is blocked pending Addgene partner-program response on API access, terms, and commercial licensing. This is not a quick local credential/config unblock; keep the existing ingester parked until the partner access path is resolved.
-- Local gitignored `.env` uses `POSTGRES_PORT=55432` because a native Windows `postgres` process owns port `5432`; committed Docker defaults still use local-dev defaults and were not changed.
-- NCBI GenBank dev-mode ingestion is verified on 10 real records after excluding `CON` division constructed records and adding post-fetch ORIGIN validation.
-- Historical parser N=50 sample remains useful context for the original broad GenBank query: it returned complete natural plasmids with many CDS/marker annotations but almost no source-labeled or reference-matched synthetic regulatory elements. The expansion branch improves engineered-vector coverage but still remains far below the Phase 0 scale gate.
-- Profile-aware curated seed sample is substantially improved: 12 NCBI-backed seed records loaded; `annotation_complete=11/12`; profile breakdown `bacterial_cloning_vector:5/6`, `bacterial_expression_vector:1/1`, `mammalian_reporter_vector:3/3`, `yeast_shuttle_vector:2/2`; report saved at `data/eval/parser/2026-05-29-223417-profile-aware-curated-sample.txt`.
-- The stale marker metadata cohort from pre-fix database rows was repaired offline from cached blobs. Short aliases such as `cat` now use token-boundary matching, and the post-reprocess quality baseline is `data/eval/quality/2026-05-31-165742-quality-report.{json,md}`.
-- Refined GenBank query dev verification succeeded on 2026-05-30: ingestion run `4` saw and upserted `20/20` engineered-vector-titled records with `0` errors. Observation note: `data/eval/genbank/2026-05-30-refined-query-dev-observation.md`.
-- Classifier hardening fixed the reviewed run `3` issues: `ltr` no longer matches inside transferase names, viral classification requires corroboration, SP6/T3/lone-T7 do not establish expression purpose, parser text checks use token boundaries, and marker-family aliases use an allowlist.
-- Host-aware shuttle classification fixed the run `4` pOR262 issue. General shuttle admission now requires host-diverse autonomous ORIs or trusted exact `shuttle vector` metadata; `f1`, `oriT`, and conditional SV40 origin signals do not independently establish cross-host support.
-- Human approved run `5` metadata-lane shuttle completeness changes on 2026-05-31. Run `6` verified idempotence with 82 examined, 0 updates, 0 missing caches, and 0 errors.
+## CURRENT STATE
+- Phase R, Phase 1, and Phase 3 gates are met. Phase 3 uses the human-approved curated-quality policy with 31 known-good and 52 known-bad records; `data/eval/validation/2026-06-07-033018-validation-baseline.{json,md}` reports accuracy `1.000`.
+- Phase 0 has strong local foundations but remains below its formal scale gate: the current corpus is 256 records with 141 complete annotations, not >=50,000 fully parsed component-annotated plasmids.
+- Phase 2 has scaffolding, Carbon-500M CPU plumbing, training-data formatting, registry/shadow/canary scaffolding, and rollout policy evaluation. It is not gate-complete because real Carbon-3B fine-tuning and biological validation remain deferred pending GPU spend authorization and cloud-account setup.
+- Phase 4 local application foundations are merged: FastAPI sessions/jobs/design/export/outcome endpoints, Next.js design workspace, seqviz map, validation and retrieval evidence UI, outcome prompts/history, visual/a11y/loading polish, sanitized API errors, local rate limiting, and deterministic API-backed E2E fixture.
+- Phase 5 foundation is merged: outcome capture, pending prompts, consent-gated training-signal derivation, and feedback-flywheel documentation exist. Full Phase 5 remains open until captured outcomes feed scheduled fine-tuning and model promotion.
+- Verification note: run `npm run build` and `npm run test:e2e` sequentially, not in parallel, because Next's build output and Playwright's dev server both use `.next`.
 
-## QUESTIONS FOR THE HUMAN
-- Should broad natural RefSeq/GenBank plasmids beyond the current 117/15/8 triplet snapshot be allowed in generation pretraining, restricted to retrieval/evaluation only, or filtered out of training artifacts?
-- Should SEVA, iGEM Registry, DNASU, SGD-derived context, or Addgene direct downloads remain excluded until explicit training/commercial-use terms are approved?
-- For the expanded corpus, should the chloramphenicol low-copy retrieval gold case keep only `pACYC184`, admit newly added GenBank chloramphenicol vectors, or add copy-number/origin-aware retrieval before changing the gold set?
-- Which synthesis provider profile should be the default for "synthesis-ready" when no provider is selected: conservative cross-provider, Twist, IDT, GenScript, or user-selected only?
-- Should the first product only score codon usage, or may it automatically rewrite coding sequences after explicit user consent?
-- For commercial use, can Addgene-derived records be used for model training under the eventual approved data access license, or only for retrieval/display?
-- Are Apache-2.0 Carbon weights acceptable for this project pending legal review, and should `Carbon-500M` be pinned to a specific revision before any shared benchmark?
-- Should `einops` be installed to unblock a DNABERT-2 fallback smoke test, or should DNABERT-2 remain parked?
-- What offline rollout threshold should promote a fine-tuned model from `shadow` to `canary`: strictly better on every gate metric, or non-inferior core metrics plus improvement on at least one metric?
-- What canary traffic percentages, sample sizes, rollback thresholds, and Phase 3 warning tolerances should replace the conservative defaults in `research/findings/model_rollout.md`?
-- What retention/access policy should apply to restricted candidate sequence payloads captured during shadow comparison?
-- Should first canary assignment be sticky by design session as recommended, or should a different identity key control assignment?
-- Does first canary require explicit user/tenant consent, or is internal policy approval sufficient for a small controlled slice?
-- Should incumbent shadow generation continue for candidate-assigned canary requests, or should canary requests run only the served candidate plus fallback?
-- Are multiple simultaneous canaries ever allowed, or should one-candidate canary remain a hard product rule?
-- Should one design allow multiple outcome rows for multiple clones, or should the first implementation keep only the latest outcome per design in user-facing views?
-- What minimum sequencing evidence counts as `sequence_validated`: full-plasmid NGS consensus, full Sanger tiling, insert plus junctions, or profile-specific critical regions?
-- Can a successful restriction digest without sequencing ever create a positive training signal, or only a lower-confidence human-reviewed signal?
-- What assay-specific threshold defines `meets_expected_function` for fluorescence, luminescence, western blot, qPCR, growth selection, and phenotype assays?
-- When expression fails with a sequence-correct construct, what controls are required before treating the generated design as a negative rather than an assay/protocol failure?
-- May uploaded chromatograms, gel images, plate-reader files, or blot images be retained for training-derived feature extraction, or only for human audit?
-- What exact consent text and consent-withdrawal retention policy should govern outcomes already included in a released training snapshot?
-- Should the platform operate as a regulated-like biosecurity checkpoint before provider handoff, even where direct legal duties attach primarily to synthesis providers or procurement?
-- What is the current controlling U.S. nucleic-acid screening framework after the May 5, 2025 Executive Order directive to revise or replace the 2024 framework?
-- For circular plasmids, where should canonical base 1 be placed in generated designs: source record origin, ORI start, MCS/cloning site, or synthesis-provider convention?
-- Should the MVP map be read-only, or should browser-side feature/sequence editing be in scope?
-- Which vector types are in the first supported validity profile set: generic mammalian expression, lentiviral, AAV, bacterial expression, CRISPR/shRNA, or another subset?
-- Should the GenBank corpus strategy shift from broad natural plasmid complete sequences toward named synthetic vectors/backbones, or should Phase 0 depend on Addgene/another vector-specific source for promoter/terminator-rich records?
-- Which exact canonical variants should be approved for ambiguous elements not yet added to the reference library: EF1a, SV40 early, U6, tac, trc, araBAD, SV40 polyA, BGH polyA, rabbit beta-globin polyA, rrnB T1/T2, lambda T0, ZeoR, BSD, HygR, NeoR/G418, f1 origin, and 2-micron origin?
-- Pending legal/provenance approval, may Addgene Vector Database free-to-view sequences be used for a small parser-calibration seed set in a commercial product, or should the seed set remain NCBI/manufacturer-only until explicit partner terms are in place?
-- For lentiviral and CRISPR calibration seeds specifically, should the corpus wait for an Addgene intended-use data license, admit reviewed GenBank derivatives, or remain without those profiles for now?
-- After human review/merge of `phase2-spike`, should the next approved slice stay offline with a deterministic Phase 3 checker, or separately authorize a budgeted Carbon-500M load smoke test?
-- Before any Phase 2 gate attempt, should the project build a minimum deterministic Phase 3 checker and define a research-only acquisition milestone below the formal 50,000-record Phase 0 gate?
-- Which managed-GPU provider, hardware ceiling, and budget should apply to any authorized Phase 2 benchmark?
-- Should repeat/instability validation ignore or downgrade biologically expected repeats in natural plasmids, or should synthesis readiness treat those as blocking even when the source plasmid is naturally stable?
-- What auth/session-ownership model should Phase 4 use once authentication is in scope: user-owned sessions, organization-owned sessions, or project/workspace-owned sessions?
-- What retention policy should apply to sessions, turns, jobs, and generated design artifacts?
-- Should long-running design jobs remain polling-only for MVP, or should Phase 4 add server-sent events or WebSocket streaming?
-- Should persisted job results stay as JSON snapshots, be normalized into design/turn tables, or use both with one authoritative source?
-- Should the first required outcome question be framed as "Was this design built or tested?" instead of "Did your construct validate?" to reduce self-reporting bias?
-- Should self-reported positive validation require sequencing evidence before the report is eligible for training-signal derivation?
-- Should outcome labels and training eligibility labels be hidden from users during submission to avoid answer-shaping?
-- Should `apps/web` introduce shared local primitives for buttons, badges, cards, and messages, or should visual polish stay as class normalization inside existing components?
-- Should the app adopt a stronger brand treatment such as rounded cards, larger shadows, or a richer accent palette, or preserve the current sparse scientific-tool aesthetic?
-- Should status colors be formalized as semantic tokens beyond `action` and `warning`, especially for error, neutral, success, and ambiguous states?
-- Should pending outcome prompts be treated long-term as a toast, banner, or right-rail card on desktop?
-- Should the app add a global skip link and explicit two-region layout navigation for the conversation and right-side design panels?
-- Should the plasmid map get a separate accessible detail route or expandable table for long annotations instead of expanding the current side panel?
-- Should outcome reporting remain a modal, or become a dedicated route/page for long-form accessibility and mobile ergonomics?
+## EXTERNAL BLOCKERS
+- Addgene access and commercial-use terms are unresolved. Addgene ingestion beyond parked/dev-mode code must remain disabled until partner/API/licensing approval exists.
+- Phase 0 scale requires a larger lawful corpus source. Current NCBI/curated coverage is enough for local retrieval demos but not the formal 50,000-record gate.
+- Phase 2 fine-tuning execution is spend-gated. Preflight found no local non-interactive provider automation (`runpodctl`, Lambda CLI, or `huggingface-cli` on PATH); RunPod A100 80 GB remains the preferred target once account/API access is configured.
+- Dependency vulnerabilities are documented in `data/audits/dependencies_2026-06-13.md`, but no package upgrades have been applied in the cleanup branch.
+- `SYSTEM_DESIGN.md` drift is documented in `research/findings/system_design_drift.md`; direct edits to the design spec require explicit human authorization.
+
+## DEFERRED FOLLOW-UPS
+- Phase 0 scale-up, literature/context extraction, and Addgene-backed ingestion remain future data-source work.
+- Parser/reference-match performance optimization is deferred; profiling showed the 300-record validation-sample timeout is dominated by parsing/reference matching, not repeat detection correctness.
+- Depositing-lab retrieval filters are deferred because the current schema/corpus does not carry `depositing_lab`.
+- Lentiviral and CRISPR corpus/profile expansion is deferred pending source/provenance policy.
+- Primer-design output, synthesis-provider handoff, production AuthN/AuthZ, usage metering, deployment, and production hosting remain Phase 4 productization work.
+- Streaming job updates are deferred; polling is functional and the frontend now has timeout/partial-result handling.
+- A backend list endpoint for `My outcomes` is deferred; current UI intentionally uses local browser storage plus per-design refresh.
+- Full Phase 5 automation is deferred until fine-tuning and promotion policy are ready.
+- Dependency upgrades and `SYSTEM_DESIGN.md` edits should be handled in dedicated review branches.
+
+## DECISIONS PENDING HUMAN REVIEW
+
+### Data, Corpus, And Licensing
+- **Training source policy:** Decide whether broad natural RefSeq/GenBank plasmids beyond the current triplet snapshot can be used for generation pretraining, retrieval/evaluation only, or not at all. Raised during Phase 2 preparation and corpus expansion.
+- **Non-NCBI source policy:** Decide whether SEVA, iGEM Registry, DNASU, SGD-derived context, Addgene direct downloads, or Addgene Vector Database sequences can be used for parser calibration, retrieval/display, or model training. Raised during Phase 0/2 corpus planning.
+- **Lentiviral/CRISPR seed policy:** Decide whether to wait for Addgene intended-use licensing, admit reviewed GenBank derivatives, or leave these profiles unsupported for now. Raised during Phase 0 corpus expansion.
+- **Canonical reference variants:** Approve canonical variants for ambiguous elements such as EF1a, SV40, U6, tac/trc, araBAD, polyA signals, markers, f1 origin, and 2-micron origin. Raised during parser/reference-library work.
+- **Retrieval gold policy:** Decide whether the low-copy chloramphenicol gold case should stay pinned to `pACYC184`, admit newer GenBank chloramphenicol vectors, or require copy-number/origin-aware retrieval logic. Raised during retrieval robustness.
+
+### Validation, Synthesis, And Biosecurity
+- **Synthesis defaults:** Choose default synthesis-readiness profile when no provider is selected: conservative cross-provider, Twist, IDT, GenScript, or user-selected only. Raised during Phase 3/4 validation planning.
+- **Coding-sequence rewriting:** Decide whether the product should only score codon usage or may rewrite coding sequences after explicit user consent. Raised during validation/product planning.
+- **Coordinate convention:** Choose canonical base 1 for circular plasmids: source record origin, ORI start, MCS/cloning site, or synthesis-provider convention. Raised during Phase 4 map/export work.
+- **Supported validation profiles:** Decide first supported profile set: generic mammalian expression, lentiviral, AAV, bacterial expression, CRISPR/shRNA, or another subset. Raised during Phase 3 gate work.
+- **Repeat policy:** Decide whether biologically expected repeats in natural plasmids should be ignored/downgraded or still block synthesis readiness. Raised during Phase 3 hardening.
+- **Therapeutic/biosecurity checks:** Decide whether and when to add optional therapeutic-compliance checks and regulated-like biosecurity screening before provider handoff. Raised during Phase 3/4 policy review.
+
+### Application And Demo Product
+- **Demo execution model:** Decide whether the external demo should use a real worker, fake queue, seeded completed design, or scripted API-backed fixture beyond current `make e2e-test`. Raised during demo-readiness and Phase 4 salvage.
+- **Auth/session ownership:** Choose user-owned, organization-owned, or project/workspace-owned sessions before implementing AuthN/AuthZ. Raised during Phase 4 polish.
+- **Artifact retention:** Define retention for sessions, turns, jobs, generated designs, exports, and shadow candidate payloads. Raised during Phase 4/rollout work.
+- **Job update transport:** Decide whether polling remains the MVP transport or Phase 4 should add SSE/WebSocket streaming. Raised during Phase 4 polish.
+- **Job result persistence:** Choose JSON snapshots, normalized design/turn tables, or both with one authoritative source. Raised during Phase 4 backend work.
+- **Frontend design system:** Decide whether to introduce shared local primitives, stronger branding/rounding/shadows, semantic status tokens, and a long-term notification pattern. Raised during visual polish.
+- **Accessibility structure:** Decide whether to add a skip link/two-region layout, a separate plasmid detail route or expandable annotation table, and whether outcome reporting should remain a modal or become a dedicated page. Raised during a11y polish.
+
+### Outcomes, Feedback, And Rollout
+- **Outcome granularity:** Decide whether one design may have multiple clone/outcome rows or only the latest user-facing outcome. Raised during outcome UI.
+- **Training evidence standards:** Define minimum sequencing evidence, digest-only treatment, assay-specific thresholds, and required controls before positive/negative training-signal derivation. Raised during Phase 5 foundation.
+- **Outcome artifact retention:** Decide whether chromatograms, gel images, plate-reader files, and blot images may be retained for human audit or training-derived feature extraction. Raised during Phase 5 foundation.
+- **Outcome consent:** Approve exact consent text and withdrawal/retention policy for outcomes already included in released training snapshots. Raised during Phase 5 foundation.
+- **Outcome form bias:** Decide whether the first question should be framed as "Was this design built or tested?", whether positive self-reports require sequencing evidence, and whether training labels should be hidden during submission. Raised during outcome UI.
+- **Rollout thresholds:** Define offline promotion thresholds, canary traffic/sample sizes, rollback thresholds, Phase 3 warning tolerances, sticky assignment key, user/tenant consent expectations, incumbent-shadow behavior, and whether multiple simultaneous canaries are allowed. Raised during shadow/canary work.
+- **Model/legal policy:** Confirm Apache-2.0 Carbon weight acceptability and revision pinning; decide whether to install `einops` for DNABERT-2 fallback. Raised during Phase 2 prep.
 
 ## PHASE GATE STATUS
 - [x] Phase R gate met (see SYSTEM_DESIGN 3.05) â€” artifacts reviewed and Phase 0 authorized by the human on 2026-05-29
@@ -192,6 +165,7 @@ RESUME HERE: `master` now contains `demo-readiness`, `phase4-visual-polish`, and
 - [ ] **GATE:** A full loop runs automatically â€” a captured outcome flows into the next scheduled fine-tune, the new model is evaluated offline, and is promoted only if it beats the incumbent on the eval set.
 
 ## BUILD LOG (append-only, newest at top)
+- 2026-06-16 - Completed local `cleanup-loose-ends` in `C:\Users\yalam\PMR-opencode` without push or merge. Added `research/findings/loose_ends_cleanup_plan.md` categorizing active loose ends as tractable, human/external, obsolete, or deferred. Added `research/findings/readme_audit.md`, reorganized `PROGRESS.md` active sections into current state, external blockers, deferred follow-ups, and decisions pending human review, added `make demo` as an alias for the deterministic API-backed E2E fixture, rewrote `README.md` under 250 lines, and added `research/findings/readme_progress_crosscheck.md`. Final verification passed: `npm run build`; `npm run test:e2e` -> 3 passed; `C:\Program Files (x86)\GnuWin32\bin\make.exe demo` -> 1 passed; `C:\Program Files (x86)\GnuWin32\bin\make.exe test` -> 342 passed, 1 skipped, 8 warnings.
 - 2026-06-14 - Consolidated `demo-readiness`, `phase4-visual-polish`, and `phase4-salvage` into `master`. Demo readiness landed the canonical open-decisions list (`research/findings/open_decisions.md`), SYSTEM_DESIGN drift audit, demo script, walkthrough findings, dependency audit, recovery-artifact retirement proposal, and README refresh. Phase 4 visual polish landed visual/a11y/loading-state audits plus high-priority frontend fixes. Phase 4 salvage landed `research/findings/phase2_rollout_policy.md`, `make e2e-test` with deterministic API-backed Playwright fixture, shadow payload retention classes, `packages/generation/rollout_policy.py`, API in-memory rate limiting/queue-unavailable handling/sanitized job errors, and frontend poll-timeout plus partial-result/template-evidence UI. Final verification passed: `C:\Program Files (x86)\GnuWin32\bin\make.exe test` -> `342 passed, 1 skipped, 8 warnings`; `npm run build`; `npm run test:e2e` -> `3 passed`; `make e2e-test` -> `1 passed`.
 - 2026-06-14 - Completed local `phase4-visual-polish` in `C:\Users\yalam\PMR-opencode` without push or merge. Added frontend audits `apps/web/docs/visual_audit.md`, `apps/web/docs/a11y_audit.md`, and `apps/web/docs/loading_empty_states_audit.md`. Implemented high-priority polish: normalized button and badge styling, stronger export feedback, mobile-safe outcome prompt placement, modal `aria-labelledby`/`aria-describedby`, focus-on-open/focus trap/Escape close/focus restoration, app-level status live region, export announcements, plasmid map accessible summary and semantic feature list, stale right-rail notice/disabled actions during active jobs, retrieval and validation empty states, export reset/per-format errors, and pending-prompt fetch error messaging. Commits: `bcbc967`, `20a2570`, `bd59a2f`, `420c294`, `fd26e79`, `2b1c12c`. Final verification passed: `npm run build`; `npm run test:e2e` -> 2 passed; `C:\Program Files (x86)\GnuWin32\bin\make.exe test` -> 328 passed, 1 skipped, 8 warnings.
 - 2026-06-13 - Built `demo-readiness` without pushing. Added a consolidated open-decisions register, SYSTEM_DESIGN drift audit, 5-minute demo script, local demo walkthrough punch list, recovery-artifact retirement proposal, dependency audit, and README refresh. Demo walkthrough verified the workspace loads and queues a design job, but the job stayed in progress under `make serve-api` + `npm run dev`, so an external demo needs a worker/fake queue path or seeded completed design. Dependency audit found Python environment vulnerabilities across 11 packages and Node audit findings in Next 14 / eslint-config-next; no upgrades were applied. Final verification passed `328 passed, 1 skipped, 8 warnings`.
