@@ -1,4 +1,4 @@
-.PHONY: build-training-data demo derive-training-signal design e2e-test embed-corpus eval-generation eval-retrieval finetune-smoke generate-validation-gold ingest-addgene ingest-all ingest-curated ingest-genbank lint list-models parse-sample quality-report refresh-corpus register-model reprocess serve-api serve-web services-down setup shadow-eval spike-generation test validate-sample
+.PHONY: build-training-data demo derive-training-signal design e2e-test embed-corpus eval-all eval-check eval-generation eval-retrieval finetune-smoke generate-validation-gold ingest-addgene ingest-all ingest-curated ingest-genbank lint list-models parse-sample quality-report refresh-corpus register-model reprocess serve-api serve-web services-down setup shadow-eval spike-generation test validate-sample
 
 PYTHON ?= python
 MODE ?= dev
@@ -32,6 +32,12 @@ MODEL_ROLLOUT_STATE ?= registered
 MODEL_ARTIFACT_URI ?=
 MODEL_TRAINING_COST ?=
 PHASE5_TRAINING_OUT ?= data/training/phase5
+EVAL_DASHBOARD_OUT ?= data/eval
+EVAL_RETRIEVAL_TOP5_DROP ?= 0.05
+EVAL_RETRIEVAL_MRR_DROP ?= 0.10
+EVAL_VALIDATION_ACCURACY_DROP ?= 0.02
+EVAL_COMPLETE_ANNOTATION_DROP ?= 10
+EVAL_PARSE_ERROR_INCREASE ?= 0
 
 setup:
 	$(PYTHON) -m pip install -r requirements.txt
@@ -91,6 +97,17 @@ build-training-data:
 
 eval-generation:
 	$(PYTHON) -m packages.generation.eval --gold-path $(GENERATION_GOLD) --output-dir $(GENERATION_OUT) --top-k $(GENERATION_TOP_K) --generator $(GENERATION_GENERATOR) --carbon-max-new-tokens $(CARBON_MAX_NEW_TOKENS) $(if $(filter 1 true TRUE yes YES,$(FAKE)),--fake-embedder,) $(if $(filter offline OFFLINE,$(MODE)),--local-files-only,)
+
+eval-all:
+	$(MAKE) eval-retrieval
+	$(MAKE) eval-generation GENERATION_GENERATOR=fake
+	$(MAKE) validate-sample MODE=gold
+	$(MAKE) quality-report
+	$(PYTHON) -m packages.eval.continuous dashboard --output-dir $(EVAL_DASHBOARD_OUT) --retrieval-top5-drop $(EVAL_RETRIEVAL_TOP5_DROP) --retrieval-mrr-drop $(EVAL_RETRIEVAL_MRR_DROP) --validation-accuracy-drop $(EVAL_VALIDATION_ACCURACY_DROP) --complete-annotation-drop $(EVAL_COMPLETE_ANNOTATION_DROP) --parse-error-increase $(EVAL_PARSE_ERROR_INCREASE)
+
+eval-check:
+	$(MAKE) eval-all
+	$(PYTHON) -m packages.eval.continuous check --output-dir $(EVAL_DASHBOARD_OUT) --retrieval-top5-drop $(EVAL_RETRIEVAL_TOP5_DROP) --retrieval-mrr-drop $(EVAL_RETRIEVAL_MRR_DROP) --validation-accuracy-drop $(EVAL_VALIDATION_ACCURACY_DROP) --complete-annotation-drop $(EVAL_COMPLETE_ANNOTATION_DROP) --parse-error-increase $(EVAL_PARSE_ERROR_INCREASE)
 
 shadow-eval:
 	$(PYTHON) -m packages.generation.rollout_eval --gold data/eval/retrieval_gold.jsonl --limit $(or $(N),20) --output-dir data/eval/shadow
