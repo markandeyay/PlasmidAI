@@ -66,6 +66,8 @@ Useful commands:
 ```bash
 make setup
 make test
+make eval-all
+make eval-check
 make quality-report
 make eval-retrieval
 make validate-sample MODE=gold
@@ -74,6 +76,8 @@ make e2e-test
 make serve-api
 make serve-web
 ```
+
+Use `make eval-all` at review checkpoints to run retrieval, fake-backed generation, curated validation gold, and corpus-quality checks into one dashboard under `data/eval/dashboard_<timestamp>.md`. Use `make eval-check` when you want the same run to fail on configured regression thresholds; it compares the newest dashboard against the previous one.
 
 Run a retrieval-only query:
 
