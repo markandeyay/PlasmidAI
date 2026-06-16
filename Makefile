@@ -125,7 +125,7 @@ derive-training-signal:
 	$(PYTHON) -m packages.feedback.training_signal --registry-path $(MODEL_REGISTRY) --output-dir $(PHASE5_TRAINING_OUT) $(if $(N),--limit $(N),)
 
 validate-sample:
-	$(if $(filter gold GOLD,$(MODE)),$(PYTHON) -m packages.validation.eval --gold-path $(VALIDATION_GOLD) --output-dir $(VALIDATION_OUT),$(PYTHON) -m packages.validation.engine $(if $(N),--limit $(N),))
+	$(if $(filter gold GOLD,$(MODE)),$(PYTHON) -m packages.validation.eval --curated --output-dir $(VALIDATION_OUT),$(PYTHON) -m packages.validation.engine $(if $(N),--limit $(N),))
 
 generate-validation-gold:
 	$(PYTHON) -m packages.validation.gold --gold-path $(VALIDATION_GOLD) --doc-path $(VALIDATION_OUT)/gold_set_construction.md
