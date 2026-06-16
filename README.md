@@ -1,89 +1,67 @@
 # PlasmidAI
 
-PlasmidAI is an AI-assisted plasmid design platform. A researcher describes an experimental goal in plain English, and the system is intended to produce a complete, annotated, synthesis-ready plasmid design: DNA sequence, labeled component map, validation report, primer designs, and export files for synthesis handoff.
+PlasmidAI is a research prototype for AI-assisted plasmid design: a user describes an experimental goal, the system retrieves relevant public/curated plasmid templates, produces or simulates a candidate design through the current generation interface, validates it with deterministic biological checks, renders an annotated map, exports GenBank/FASTA, and captures lab outcome feedback for future training signals.
 
-## Project Status
+## Current Status
 
-The consolidated `master` baseline is known-good at **328 passing tests plus 1 skipped test**. Phase 1 retrieval and Phase 3 validation have met their gates. Phase 4 API/frontend foundations are implemented, including the design workspace, seqviz map, export surface, and outcome-submission UI, but the Phase 4 gate is still open because deployed auth, primer design, complete synthesis handoff, and production hosting are not complete. Phase 5 foundation work is merged: outcome capture and consent-gated training-signal derivation exist, but the full feedback flywheel gate remains open.
+`PROGRESS.md` is the authoritative live state file. At the current consolidated baseline, local verification passes:
 
-See [PROGRESS.md](PROGRESS.md) for the authoritative real-time build state and open questions.
+- `make test`: 342 passed, 1 skipped, 8 warnings
+- `npm run build` in `apps/web`: passing
+- `npm run test:e2e` in `apps/web`: 3 passed
+- `make e2e-test`: 1 API-backed Playwright fixture passed
+
+Current capabilities:
+
+- Local Docker Compose services for Postgres/pgvector, Redis, and object storage.
+- NCBI/curated plasmid ingestion, parsing, reprocessing, and quality reports.
+- Hybrid retrieval from indexed plasmid records with evaluation reports.
+- Deterministic validation for restriction sites, repeats/instability, codon usage, and regulatory compatibility.
+- FastAPI sessions, jobs, design/refine flow, export endpoints, outcome endpoints, rate limiting, and structured errors.
+- Next.js design workspace with chat/refine flow, seqviz map, validation/retrieval evidence, export controls, outcome prompts, local outcome history, and visual/accessibility/loading polish.
+- Phase 2 scaffolding: fake generation, Carbon-500M CPU plumbing, training-data formatting, registry, shadow comparison, rollout policy evaluation, and fake-backed canary support.
+- Phase 5 foundation: outcome capture, consent-gated training-signal derivation, and feedback-flywheel documentation.
 
 ## Phase Status
 
-- **Phase R - Research:** gate met; research findings and synthesis are under [`research/`](research/).
-- **Phase 0 - Foundations and data pipeline:** core schemas, local services, NCBI/curated ingestion, parser, reprocess, and data-quality reports are in place. Gate is **not met**: corpus scale remains far below 50,000 fully parsed component-annotated plasmids, Addgene access is pending, and literature/context extraction is incomplete.
-- **Phase 1 - Retrieval MVP:** gate met. The retrieval layer includes intent parsing, embeddings, hybrid structured/vector retrieval, recommendations, and evaluation. Latest robustness baseline reports top-5 `1.000` with clarification pass rate `1.000`.
-- **Phase 2 - Sequence generation:** scaffolding and real-model plumbing exist, including training-data formatting, deterministic fake generation, Carbon-500M CPU spike support, generation evaluation, model registry, fine-tuning prep, shadow comparison, and fake-backed canary routing. Gate is **not met**: real Carbon-3B fine-tuning is deferred pending cloud account setup and explicit spend authorization, and generated sequences have not been biologically validated.
-- **Phase 3 - Constraint and validation:** gate met under the approved curated-quality policy. The deterministic engine covers restriction sites, repeats/instability, codon usage, regulatory compatibility, and validation reports; curated baseline accuracy is `1.000` on 31 known-good plus 52 known-bad records.
-- **Phase 4 - Application layer:** FastAPI backend, session/refinement/job persistence, export codecs, OpenAPI docs, Next.js frontend, chat workflow, seqviz maps, outcome prompts, and local outcome history are implemented. Gate is **not met**: auth, deployment, primer-design output, complete synthesis handoff, and production readiness remain open.
-- **Phase 5 - Feedback flywheel:** outcome capture, pending prompts, consent-gated training-signal derivation, and rollout documentation are in place. Gate is **not met**: captured outcomes do not yet flow automatically into scheduled fine-tuning and model promotion.
-
-## Repository Orientation
-
-Two files keep the long-running build aligned:
-
-- [SYSTEM_DESIGN.md](SYSTEM_DESIGN.md) is the immutable build specification and source of truth.
-- [PROGRESS.md](PROGRESS.md) is the mutable session state: completed work, current phase, blockers, and the next task.
-
-Phase R research lives under [`research/`](research/). The shareable research report is [`research/phase_r_report.pdf`](research/phase_r_report.pdf), with its LaTeX source beside it.
-
-Demo and review artifacts:
-
-- [`docs/demo.md`](docs/demo.md) - five-minute product demo script.
-- [`data/eval/ui/demo_walkthrough.md`](data/eval/ui/demo_walkthrough.md) - latest local demo walkthrough punch list.
-- [`research/findings/open_decisions.md`](research/findings/open_decisions.md) - consolidated decisions waiting on human review.
-- [`research/findings/system_design_drift.md`](research/findings/system_design_drift.md) - audit of where the original design doc lags current policy/reality.
-- [`data/audits/dependencies_2026-06-13.md`](data/audits/dependencies_2026-06-13.md) - latest dependency vulnerability audit.
-
-The main packages are:
-
-- [`packages/core/`](packages/core/) - shared Pydantic domain schemas and canonical data contracts.
-- [`packages/data_pipeline/`](packages/data_pipeline/) - Phase 0 ingestion, parsing, annotation, and data-quality jobs.
-- [`packages/retrieval/`](packages/retrieval/) - Phase 1 intent parsing, embeddings, indexing, and template retrieval.
-- [`packages/generation/`](packages/generation/) - Phase 2 model loading, training, and sequence generation.
-- [`packages/validation/`](packages/validation/) - Phase 3 deterministic biological and synthesis constraint checks.
-- Export codecs and application-layer design artifacts currently live under [`packages/application/`](packages/application/) and `services/api/`; a separate assembly package has not landed yet.
-- Phase 5 feedback-flywheel implementation is in progress on a separate Codex branch and is not part of the current `master` package set.
-- [`services/api/`](services/api/) - FastAPI application, API stores, jobs, and export endpoints.
-- [`apps/web/`](apps/web/) - Phase 4 Next.js design workspace with chat and plasmid-map UI.
-
-## Architecture
-
-The system is layered around explicit interfaces. The `IntentParser` converts plain-English goals into a structured design specification. The `Retriever` searches the indexed plasmid corpus using hybrid semantic and structured filters. The `SequenceGenerator` interface supports deterministic fake generation and real-model plumbing, but production generation remains gated. The Phase 3 `ConstraintEngine` deterministically validates biological and synthesis constraints. The application layer exposes this flow through FastAPI and a Next.js frontend, with persisted sessions, turns, jobs, designs, and export artifacts.
-
-Local infrastructure uses Docker Compose for Postgres with pgvector, Redis, and object storage. Python packages share canonical schemas through `packages/core`, while the web app is a separate npm workspace under `apps/web`.
-
-## Contributor Worktrees
-
-Multiple agents may work in parallel from separate worktrees. Use the path assigned in the prompt and do not switch branches inside another agent's worktree.
-
-- Codex main worktree: `C:\Users\yalam\PMR`
-- OpenCode auxiliary worktree: `C:\Users\yalam\PMR-opencode`
-
-The OpenCode worktree may use a gitignored `.env` with alternate service ports so its Docker Compose stack can run beside the main worktree. Keep worktree-local `.env` files uncommitted.
+| Phase | Status | Notes |
+| --- | --- | --- |
+| Phase R - Research | Gate met | Findings and synthesis are under `research/`. |
+| Phase 0 - Data foundation | Foundation built, gate open | Corpus is 256 records with 141 complete annotations, far below the formal 50,000-record gate. Addgene/legal access and literature/context extraction remain open. |
+| Phase 1 - Retrieval MVP | Gate met | Retrieval robustness baseline reached top-5 `1.000` and clarification pass `1.000`. |
+| Phase 2 - Sequence generation | Scaffolded, gate open | Real Carbon-3B fine-tuning and biological validation are deferred pending cloud account setup and explicit spend authorization. |
+| Phase 3 - Validation | Gate met | Curated baseline is 31 known-good plus 52 known-bad records with accuracy `1.000`. |
+| Phase 4 - Application | Local foundation built, gate open | API and frontend work locally; production auth, deployment, primer design, complete synthesis handoff, and product hardening remain deferred. |
+| Phase 5 - Feedback flywheel | Foundation built, gate open | Outcome capture and training-signal derivation exist; scheduled retraining and automatic model promotion do not. |
 
 ## Getting Started
 
-Prerequisites: Git, Python, Docker Compose, and GNU Make.
+Prerequisites: Git, Python, Docker Compose, Node/npm, and GNU Make.
 
 ```bash
 git clone https://github.com/markandeyay/PlasmidAI.git
 cd PlasmidAI
 cp .env.example .env
-# Set NCBI_EMAIL in .env to a real contact email before using NCBI Entrez.
+# Set NCBI_EMAIL in .env before using NCBI Entrez ingestion.
 make setup
 make test
 ```
 
-On PowerShell, use `Copy-Item .env.example .env` instead of `cp` if needed.
+On PowerShell, use `Copy-Item .env.example .env` instead of `cp` if needed. If plain `make` is unavailable on Windows, use `C:\Program Files (x86)\GnuWin32\bin\make.exe`.
 
-If plain `make` is unavailable in the current shell on Windows, use `C:\Program Files (x86)\GnuWin32\bin\make.exe`.
+NCBI requires a real contact email for Entrez requests. `NCBI_API_KEY` is optional. Addgene credentials should not be added unless partner-program access and commercial-use terms are approved.
 
-NCBI requires a real contact email for Entrez requests. `NCBI_API_KEY` is optional and increases the supported request rate. Bulk Addgene access is pending partner-program approval and commercial licensing review; do not add credentials or enable it unless that approval is in place.
+## Demo And Verification
 
-## Run Commands
+Run the deterministic API-backed demo fixture:
 
-Common root commands:
+```bash
+make demo
+```
+
+`make demo` currently aliases `make e2e-test`, which runs the full-stack Playwright fixture against the API-backed deterministic path. This is the reliable demo check today. A live external demo using real queued design jobs still needs a worker, fake queue path, seeded completed result, or explicit demo runner decision.
+
+Useful commands:
 
 ```bash
 make setup
@@ -91,34 +69,68 @@ make test
 make quality-report
 make eval-retrieval
 make validate-sample MODE=gold
-make serve-api
 make shadow-eval
+make e2e-test
+make serve-api
+make serve-web
 ```
 
-Run a retrieval-only design query:
+Run a retrieval-only query:
 
 ```bash
 make design MODE=offline TEXT="I need a yeast centromere shuttle plasmid selected by URA3."
 ```
 
-Run the web app:
+Run frontend checks sequentially because Next build output and Playwright dev server both use `.next`:
 
 ```bash
 cd apps/web
 npm ci
-npm run dev
+npm run build
+npm run test:e2e
 ```
 
 The API defaults to `http://127.0.0.1:8000`; the web app defaults to `http://127.0.0.1:3000`. Set `NEXT_PUBLIC_API_URL` if the frontend should target a different API URL.
 
-For frontend verification, run `npm run build` and `npm run test:e2e` sequentially because both use `.next`.
+## Architecture Summary
 
-Demo caveat: `make serve-api` starts the API, but a live design job may remain queued unless the worker/fake demo path is also running or a seeded completed design is available. See [`data/eval/ui/demo_walkthrough.md`](data/eval/ui/demo_walkthrough.md).
+The system follows the phase-gated design in `SYSTEM_DESIGN.md`:
 
-## Current Flow
+- `packages/core/`: shared Pydantic schemas and canonical contracts.
+- `packages/data_pipeline/`: ingestion, parsing, annotation, reprocessing, and corpus-quality jobs.
+- `packages/retrieval/`: intent parsing, embeddings, vector/structured retrieval, recommendation, and retrieval evaluation.
+- `packages/generation/`: sequence-generation interface, fake generator, Carbon CPU plumbing, training-data formatting, fine-tuning smoke path, registry, shadow, canary, and rollout evaluation.
+- `packages/validation/`: deterministic biological and synthesis constraint checks.
+- `packages/application/`: application-layer services and export codecs.
+- `packages/feedback/`: outcome-to-training-signal derivation.
+- `services/api/`: FastAPI application, stores, jobs, design/refine/export/outcome endpoints, and API safeguards.
+- `apps/web/`: Next.js design workspace and Playwright tests.
 
-The `IntentParser` converts a plain-English research goal into a structured design specification. The `Retriever` finds relevant real plasmids and templates from the indexed corpus. The `SequenceGenerator` proposes candidate plasmid sequences from the specification and retrieved templates; current production-safe paths use deterministic fakes and CPU plumbing, while real fine-tuning remains deferred. The deterministic `ConstraintEngine` validates biological structure and synthesis constraints. The application layer persists sessions, jobs, and design artifacts, and the current export codecs produce GenBank/FASTA payloads. Outcome capture feeds a consent-gated training-signal pipeline, but scheduled retraining and promotion are not active.
+`SYSTEM_DESIGN.md` is the original build specification. `PROGRESS.md` is the mutable state file and should be treated as the source of truth for what is actually done, deferred, blocked, or pending human review. Known drift between the two is tracked in `research/findings/system_design_drift.md`.
 
-## Operating Notes
+## Contributor Notes
 
-Development follows the phase gates in [SYSTEM_DESIGN.md](SYSTEM_DESIGN.md). `PROGRESS.md` is the authoritative mutable state file for current branch state, blockers, and gate decisions. Scientific uncertainty is logged for human review rather than resolved by guesswork.
+Two files keep long-running work aligned:
+
+- `SYSTEM_DESIGN.md`: original architecture and phase-gate contract.
+- `PROGRESS.md`: current state, verification, blockers, deferred work, and pending decisions.
+
+Multiple agents may use separate worktrees. Use the path assigned in the prompt and do not switch branches in another agent's worktree.
+
+- Codex main worktree: `C:\Users\yalam\PMR`
+- OpenCode auxiliary worktree: `C:\Users\yalam\PMR-opencode`
+
+Worktree-local `.env` files may use alternate service ports so Docker Compose stacks can coexist. Keep `.env` uncommitted.
+
+## Known Limitations And Deferred Work
+
+- The corpus is small and does not meet the formal Phase 0 scale gate.
+- Addgene and other non-NCBI source use remain blocked on licensing/provenance decisions.
+- Phase 2 real fine-tuning has not run; no generated sequence quality claim is made.
+- Carbon-500M support is CPU plumbing only, not a validated design model.
+- Production auth, authorization, usage metering, deployment, primer design, and synthesis-provider handoff are not complete.
+- Full Phase 5 automation is not active: outcomes do not yet trigger scheduled fine-tuning and model promotion.
+- Dependency vulnerabilities are documented in `data/audits/dependencies_2026-06-13.md`; upgrades are deferred to a dedicated review branch.
+- `SYSTEM_DESIGN.md` has documented drift and should not be edited without explicit human authorization.
+
+For current review state, pending human decisions, and the latest verification results, read `PROGRESS.md` first.
