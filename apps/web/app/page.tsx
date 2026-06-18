@@ -70,6 +70,10 @@ export default function Page() {
     () => [...messages].reverse().find((message) => message.result?.annotated_sequence)?.result,
     [messages]
   );
+  const reportedOutcomeDesignIds = useMemo(
+    () => Array.from(new Set(reportedOutcomes.map((outcome) => outcome.design_id))).sort().join("|"),
+    [reportedOutcomes]
+  );
   const annotatedSequence = latestResult?.annotated_sequence ?? null;
   const designId = latestResult?.design_id ?? latestResult?.design?.design_id ?? null;
   const modelVersion = latestResult?.validation_report?.generated_by_model_version ?? latestResult?.design?.validation_report?.generated_by_model_version ?? null;
@@ -139,7 +143,7 @@ export default function Page() {
 
   useEffect(() => {
     let cancelled = false;
-    const designIds = reportedOutcomes.map((outcome) => outcome.design_id);
+    const designIds = reportedOutcomeDesignIds ? reportedOutcomeDesignIds.split("|") : [];
     if (!designIds.length) {
       return;
     }
@@ -161,7 +165,7 @@ export default function Page() {
     return () => {
       cancelled = true;
     };
-  }, [reportedOutcomes.length]);
+  }, [reportedOutcomeDesignIds]);
 
   useEffect(() => {
     setExportStatus({ ...INITIAL_EXPORT_STATUS });
