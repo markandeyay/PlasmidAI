@@ -47,3 +47,24 @@ def test_regulatory_fails_missing_marker() -> None:
 
     assert report.status == "FAIL"
     assert "selectable marker" in report.message
+    assert report.failure_context == "design_construct_failure"
+
+
+def test_missing_origin_on_source_record_is_labeled_uncertainty() -> None:
+    seq = annotated(BASE, [feature("marker", 60, 120, "AmpR")])
+
+    report = run_regulatory_check(seq, spec(source="genbank"))
+
+    assert report.status == "FAIL"
+    assert "No origin" in report.message
+    assert report.failure_context == "source_record_uncertainty"
+
+
+def test_missing_origin_on_generated_design_is_labeled_construct_failure() -> None:
+    seq = annotated(BASE, [feature("marker", 60, 120, "AmpR")])
+
+    report = run_regulatory_check(seq, spec(source="generated"))
+
+    assert report.status == "FAIL"
+    assert "No origin" in report.message
+    assert report.failure_context == "design_construct_failure"

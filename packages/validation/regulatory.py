@@ -18,11 +18,16 @@ MAMMALIAN_REPLICATION = {"sv40"}
 def run_regulatory_check(sequence: AnnotatedSequence, spec: DesignSpec) -> ValidationCheck:
     context = host_context(spec)
     if not features_of(sequence, "marker"):
-        return fail_check(CHECK_NAME, "No selectable marker is annotated; add an appropriate marker for propagation or selection.")
+        return fail_check(
+            CHECK_NAME,
+            "No selectable marker is annotated; add an appropriate marker for propagation or selection.",
+            failure_context=validation_failure_context(spec),
+        )
     if not compatible_origin_present(sequence, context.host_class):
         return fail_check(
             CHECK_NAME,
             f"No origin or maintenance element compatible with {context.host_class or 'requested'} host context was detected.",
+            failure_context=validation_failure_context(spec),
         )
     incompatible_promoter = first_incompatible_promoter(sequence, context.host_class)
     if incompatible_promoter is not None:
@@ -30,6 +35,7 @@ def run_regulatory_check(sequence: AnnotatedSequence, spec: DesignSpec) -> Valid
             CHECK_NAME,
             f"Promoter '{incompatible_promoter.name}' is not compatible with the requested {context.host_class} host context.",
             region(incompatible_promoter.start, incompatible_promoter.end, len(sequence.sequence)),
+            failure_context="design_construct_failure",
         )
     terminator_issue = downstream_terminator_issue(sequence)
     if terminator_issue is not None:
@@ -39,6 +45,12 @@ def run_regulatory_check(sequence: AnnotatedSequence, spec: DesignSpec) -> Valid
             return fail_check(CHECK_NAME, message, check_region)
         return warn_check(CHECK_NAME, message, check_region)
     return pass_check(CHECK_NAME, "Regulatory elements are compatible with the requested host context.")
+
+
+def validation_failure_context(spec: DesignSpec) -> str:
+    if spec.source is not None and str(spec.source) != "generated":
+        return "source_record_uncertainty"
+    return "design_construct_failure"
 
 
 def compatible_origin_present(sequence: AnnotatedSequence, host_class: str) -> bool:

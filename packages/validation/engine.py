@@ -60,6 +60,7 @@ def default_design_spec_for_plasmid(plasmid: Plasmid) -> DesignSpec:
         vector_type=plasmid.vector_type,
         markers=plasmid.markers,
         promoter_type=plasmid.promoters[0] if plasmid.promoters else None,
+        source=plasmid.source,
         application=plasmid.use_cases[0] if plasmid.use_cases else None,
     )
 
