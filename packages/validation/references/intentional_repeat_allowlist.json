@@ -1,0 +1,47 @@
+{
+  "version": "2026-06-18",
+  "entries": [
+    {
+      "id": "mammalian_expression_sv40_enhancer_promoter_internal_repeat",
+      "vector_profiles": ["mammalian_expression_vector", "mammalian_reporter_vector"],
+      "feature_name_terms": ["sv40 enhancer", "sv40 early promoter", "sv40 enhancer and early promoter"],
+      "repeat_kinds": ["direct"],
+      "disposition": "WARN",
+      "rationale": "SV40 enhancer/promoter modules are intentional regulatory architecture in mammalian expression vectors; internal exact repeats overlapping the annotated regulatory module should be reviewed for synthesis/stability but should not by themselves prove the deposited source vector is invalid.",
+      "citations": [
+        "GenBank U47121.2, Cloning vector pSI, mammalian expression vector, complete sequence: annotated SV40 enhancer and early promoter.",
+        "Banerji J, Rusconi S, Schaffner W. Expression of a beta-globin gene is enhanced by remote SV40 DNA sequences. Cell. 1981;27(2 Pt 1):299-308."
+      ]
+    },
+    {
+      "id": "yeast_shuttle_2micron_stb_ars_region_internal_repeat",
+      "vector_profiles": ["yeast_shuttle_vector"],
+      "feature_name_terms": ["2 micron", "2-micron", "stb", "ars region", "2 micron plasmid stb and ars"],
+      "repeat_kinds": ["direct"],
+      "disposition": "WARN",
+      "rationale": "The Saccharomyces cerevisiae 2-micron plasmid STB/ARS region is an intentional yeast-maintenance module in yeast shuttle vectors; exact repeats internal to the annotated maintenance feature should be reviewed but are not automatically source-vector defects.",
+      "citations": [
+        "GenBank AF041805.1, AF041806.1, and AF041807.1 yGALset records: annotated S. cerevisiae 2 micron plasmid STB and ARS region.",
+        "Broach JR. The yeast plasmid 2 micron circle. Cell. 1981;28(2):203-204."
+      ]
+    }
+  ],
+  "excluded_reviewed_cases": [
+    {
+      "record": "AF058756.1",
+      "reason": "The first detected direct repeat did not overlap parsed annotated features in the local candidate inspection, so it does not satisfy the two-part allowlist rule."
+    },
+    {
+      "record": "AY219701.1",
+      "reason": "The first detected inverted repeat overlaps lacZ-alpha screening context on only one copy and lacks a reviewed paired-feature allowlist entry."
+    },
+    {
+      "record": "U07168.1",
+      "reason": "The first detected inverted repeat does not overlap parsed annotated features on both copies."
+    },
+    {
+      "record": "U26464.1",
+      "reason": "The first detected direct repeat does not overlap parsed annotated features on either copy."
+    }
+  ]
+}

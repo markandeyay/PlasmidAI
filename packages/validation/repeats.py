@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path
+from typing import Any
 
-from packages.core.schemas import AnnotatedSequence, DesignSpec, ValidationCheck
+from packages.core.schemas import AnnotatedFeature, AnnotatedSequence, DesignSpec, ValidationCheck
 from packages.validation.common import fail_check, gc_fraction, pass_check, region, reverse_complement, warn_check
 
 
@@ -67,10 +71,8 @@ PROVIDER_PROFILES = {
     ),
 }
 
-BIOLOGICAL_REPEAT_NOTE = (
-    " Biological context note: annotated required viral repeats such as LTRs or ITRs may be intentional, "
-    "but still need synthesis and stable-propagation review."
-)
+BIOLOGICAL_REPEAT_NOTE = " Biological context note: this repeat overlaps reviewed intentional vector architecture but still needs synthesis and stable-propagation review."
+ALLOWLIST_PATH = Path(__file__).with_name("references") / "intentional_repeat_allowlist.json"
 
 
 def run_repeat_instability_check(sequence: AnnotatedSequence, spec: DesignSpec) -> ValidationCheck:
@@ -108,7 +110,7 @@ def run_repeat_instability_check(sequence: AnnotatedSequence, spec: DesignSpec) 
                 f"{profile.name} {repeat.kind} repeat of at least {profile.direct_fail} bp may promote recombination "
                 "or synthesis instability."
             )
-        if profile.idt_warn_repeats_only or is_required_viral_repeat(sequence, spec, repeat):
+        if profile.idt_warn_repeats_only or is_required_viral_repeat(sequence, spec, repeat) or is_allowed_intentional_repeat(sequence, repeat):
             return warn_check(CHECK_NAME, message + BIOLOGICAL_REPEAT_NOTE, region(repeat.start, repeat.end, len(dna)))
         return fail_check(
             CHECK_NAME,
@@ -187,6 +189,40 @@ def is_required_viral_repeat(sequence: AnnotatedSequence, spec: DesignSpec, repe
     first_overlaps = any(repeat_overlaps_viral_feature(first, feature.name, feature.start, feature.end) for feature in sequence.features)
     second_overlaps = any(repeat_overlaps_viral_feature(second, feature.name, feature.start, feature.end) for feature in sequence.features)
     return first_overlaps and second_overlaps
+
+
+def is_allowed_intentional_repeat(sequence: AnnotatedSequence, repeat: RepeatHit) -> bool:
+    first = (repeat.start, repeat.end)
+    second = (repeat.other_start, repeat.other_start + (repeat.end - repeat.start))
+    first_features = [feature for feature in sequence.features if overlaps(first[0], first[1], feature.start, feature.end)]
+    second_features = [feature for feature in sequence.features if overlaps(second[0], second[1], feature.start, feature.end)]
+    if not first_features or not second_features:
+        return False
+    for entry in intentional_repeat_allowlist().get("entries", []):
+        profiles = set(entry.get("vector_profiles", []))
+        if profiles and sequence.vector_profile not in profiles:
+            continue
+        kinds = set(entry.get("repeat_kinds", []))
+        if kinds and repeat.kind not in kinds:
+            continue
+        terms = [str(term).lower() for term in entry.get("feature_name_terms", [])]
+        if any(feature_matches_terms(first_feature, terms) for first_feature in first_features) and any(
+            feature_matches_terms(second_feature, terms) for second_feature in second_features
+        ):
+            return True
+    return False
+
+
+@lru_cache(maxsize=1)
+def intentional_repeat_allowlist() -> dict[str, Any]:
+    if not ALLOWLIST_PATH.exists():
+        return {"entries": []}
+    return json.loads(ALLOWLIST_PATH.read_text(encoding="utf-8"))
+
+
+def feature_matches_terms(feature: AnnotatedFeature, terms: list[str]) -> bool:
+    text = feature.name.lower().replace("_", " ").replace("-", " ")
+    return any(term in text for term in terms)
 
 
 def repeat_overlaps_viral_feature(repeat: tuple[int, int], feature_name: str, feature_start: int, feature_end: int) -> bool:
