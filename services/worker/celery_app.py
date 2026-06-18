@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import os
+import time
 from typing import Any, Callable, Mapping
 
+from packages.application.observability import MetricsCollector, reset_correlation_id, set_correlation_id
 from packages.application.jobs import JobHandler, JobRecord, JobStore
 
 
@@ -43,14 +45,32 @@ class CeleryJobQueue:
     def get_job(self, job_id: str) -> JobRecord | None:
         return self.store.get(job_id)
 
+    def snapshot(self) -> dict[str, Any]:
+        return self.store.snapshot()
 
-def create_job_task(*, store: JobStore, handler: JobHandler) -> Callable[..., JobRecord]:
+
+def create_job_task(*, store: JobStore, handler: JobHandler, metrics: MetricsCollector | None = None) -> Callable[..., JobRecord]:
     def run_job(*, job_id: str, session_id: str, action: str, payload: Mapping[str, Any]) -> JobRecord:
         store.mark_running(job_id)
+        started_at = time.perf_counter()
+        token = None
+        correlation_id = payload.get("correlation_id")
+        if isinstance(correlation_id, str) and correlation_id:
+            token = set_correlation_id(correlation_id)
         try:
             result = handler(session_id=session_id, action=action, payload=payload)
         except Exception as exc:
+            if metrics is not None:
+                metrics.record_job_duration(duration_ms=(time.perf_counter() - started_at) * 1000)
+                metrics.record_job_terminal(status="failed", action=action)
+            if token is not None:
+                reset_correlation_id(token)
             return store.mark_failed(job_id, error=str(exc))
+        if metrics is not None:
+            metrics.record_job_duration(duration_ms=(time.perf_counter() - started_at) * 1000)
+            metrics.record_job_terminal(status="succeeded", action=action)
+        if token is not None:
+            reset_correlation_id(token)
         return store.mark_succeeded(job_id, result=result)
 
     return run_job
@@ -61,9 +81,10 @@ def register_job_task(
     *,
     store: JobStore,
     handler: JobHandler,
+    metrics: MetricsCollector | None = None,
     task_name: str = DEFAULT_JOB_TASK_NAME,
 ) -> Callable[..., JobRecord]:
-    task = create_job_task(store=store, handler=handler)
+    task = create_job_task(store=store, handler=handler, metrics=metrics)
     decorator = getattr(celery_app, "task", None)
     if callable(decorator):
         return decorator(name=task_name)(task)

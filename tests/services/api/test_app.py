@@ -127,6 +127,13 @@ class SynchronousJobQueue:
             raise KeyError(job_id)
         return self.jobs[job_id]
 
+    def snapshot(self) -> dict[str, Any]:
+        counts: dict[str, int] = {}
+        for job in self.jobs.values():
+            status = str(job["status"])
+            counts[status] = counts.get(status, 0) + 1
+        return {"backend": "test-memory", "counts_by_status": counts}
+
     def _enqueue(self, job_type: str, *args: Any, **kwargs: Any) -> str:
         session_id = self._extract_session_id(*args, **kwargs)
         if session_id not in self.session_store.sessions:
@@ -216,13 +223,60 @@ def test_create_session_returns_session_id(api_client: tuple[TestClient, InMemor
     assert body["session_id"]
 
 
+def test_health_reports_queue_and_model_registry() -> None:
+    create_app = _load_create_app()
+
+    registry_records = [
+        AttrDict(model_version="candidate-v1", rollout_state="shadow"),
+        AttrDict(model_version="retired-v0", rollout_state="retired"),
+    ]
+
+    class FakeRegistry:
+        def list(self) -> list[AttrDict]:
+            return registry_records
+
+    session_store = InMemorySessionStore()
+    job_queue = SynchronousJobQueue(session_store)
+    client = TestClient(create_app(session_store=session_store, job_queue=job_queue, model_registry=FakeRegistry()))
+
+    response = client.get("/v1/health")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "ok"
+    assert body["queue"]["status"] == "ok"
+    assert body["queue"]["backend"] == "test-memory"
+    assert body["model_registry"]["count"] == 2
+    assert body["model_registry"]["active_versions"] == ["candidate-v1"]
+
+
+def test_metrics_support_json_and_plaintext(api_client: tuple[TestClient, InMemorySessionStore, SynchronousJobQueue]) -> None:
+    client, _, _ = api_client
+
+    client.post("/v1/sessions")
+    json_response = client.get("/v1/metrics")
+    text_response = client.get("/v1/metrics", headers={"accept": "text/plain"})
+
+    assert json_response.status_code == 200
+    body = json_response.json()
+    assert body["requests"]["count"] >= 1
+    assert body["queue"]["status"] == "ok"
+    assert body["model_registry"]["status"] == "ok"
+    assert text_response.status_code == 200
+    assert "pmr_requests_count" in text_response.text
+
+
 def test_design_dispatches_job_and_poll_returns_synchronous_result(
     api_client: tuple[TestClient, InMemorySessionStore, SynchronousJobQueue],
 ) -> None:
     client, _, _ = api_client
     session_id = client.post("/v1/sessions").json()["session_id"]
 
-    design_response = client.post(f"/v1/sessions/{session_id}/design", json={"goal": "build a GFP reporter"})
+    design_response = client.post(
+        f"/v1/sessions/{session_id}/design",
+        json={"goal": "build a GFP reporter"},
+        headers={"X-Correlation-ID": "trace-design-1"},
+    )
 
     assert design_response.status_code in {200, 202}
     design_body = design_response.json()
@@ -236,6 +290,7 @@ def test_design_dispatches_job_and_poll_returns_synchronous_result(
     assert job_body["result"]["session_id"] == session_id
     assert job_body["result"]["turn_count"] == 1
     assert job_body["result"]["latest_turn"]["content"] == "build a GFP reporter"
+    assert job_body["result"]["payload"]["correlation_id"] == "trace-design-1"
     assert "fake result" in job_body["result"]["result_text"]
 
 
@@ -334,6 +389,17 @@ def test_missing_job_returns_404(api_client: tuple[TestClient, InMemorySessionSt
     assert response.status_code == 404
     body = response.json()
     assert body["error"]["code"] == "job_not_found"
+
+
+def test_metrics_include_structured_error_counts(api_client: tuple[TestClient, InMemorySessionStore, SynchronousJobQueue]) -> None:
+    client, _, _ = api_client
+
+    client.get("/v1/jobs/does-not-exist")
+
+    body = client.get("/v1/metrics").json()
+    assert body["requests"]["http_error_rate"] > 0
+    assert body["errors"]["by_code"]["4xx:job_not_found"] == 1
+    assert body["errors"]["by_code"]["path:/v1/jobs/does-not-exist:job_not_found"] == 1
 
 
 def test_job_polling_response_exposes_retry_hint_and_timestamps() -> None:

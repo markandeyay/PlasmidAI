@@ -15,6 +15,7 @@ from packages.application.jobs import (
     InMemoryJobStore,
     PostgresJobStore,
 )
+from packages.application.observability import MetricsCollector, get_correlation_id
 from services.worker import CeleryJobQueue, build_celery_app, create_job_task, register_job_task
 
 
@@ -30,29 +31,42 @@ def test_in_memory_store_tracks_job_state_transitions() -> None:
     assert finished.status == JOB_STATUS_SUCCEEDED
     assert finished.result == {"design_id": "design-1"}
     assert store.get(created.job_id) == finished
+    snapshot = store.snapshot()
+    assert snapshot["counts_by_status"][JOB_STATUS_SUCCEEDED] == 1
+    assert snapshot["counts_by_status"][JOB_STATUS_QUEUED] == 0
 
 
 def test_fake_job_queue_runs_handler_synchronously_and_stores_success() -> None:
     store = InMemoryJobStore()
+    metrics = MetricsCollector()
 
     queue = FakeJobQueue(
         store=store,
+        metrics=metrics,
         handler=lambda *, session_id, action, payload: {
             "session_id": session_id,
             "action": action,
             "goal": payload["goal"],
+            "correlation_id": get_correlation_id(),
         },
     )
 
-    record = queue.enqueue(session_id="session-2", action="design", payload={"goal": "strong bacterial promoter"})
+    record = queue.enqueue(
+        session_id="session-2",
+        action="design",
+        payload={"goal": "strong bacterial promoter", "correlation_id": "trace-job-1"},
+    )
 
     assert record.status == JOB_STATUS_SUCCEEDED
     assert record.result == {
         "session_id": "session-2",
         "action": "design",
         "goal": "strong bacterial promoter",
+        "correlation_id": "trace-job-1",
     }
     assert store.get(record.job_id) == record
+    assert get_correlation_id() is None
+    assert metrics.snapshot()["jobs"]["terminal"]["action:design:status:succeeded"] == 1
 
 
 def test_fake_job_queue_captures_handler_failure() -> None:
@@ -160,7 +174,7 @@ def test_create_job_task_updates_store_for_success_and_failure() -> None:
         job_id=success_record.job_id,
         session_id="session-11",
         action="design",
-        payload={"goal": "vector"},
+        payload={"goal": "vector", "correlation_id": "trace-celery-1"},
     )
 
     failed_record = store.create(session_id="session-12", action="refine", payload={"instruction": "trim payload"})
@@ -180,6 +194,35 @@ def test_create_job_task_updates_store_for_success_and_failure() -> None:
     assert finished.result == "session-11:design:vector"
     assert failed.status == JOB_STATUS_FAILED
     assert failed.error == "worker failed"
+    assert get_correlation_id() is None
+
+
+def test_create_job_task_restores_correlation_id_and_records_metrics() -> None:
+    store = InMemoryJobStore()
+    metrics = MetricsCollector()
+    record = store.create(session_id="session-13", action="design", payload={"goal": "vector"})
+
+    task = create_job_task(
+        store=store,
+        metrics=metrics,
+        handler=lambda *, session_id, action, payload: {
+            "session_id": session_id,
+            "action": action,
+            "correlation_id": get_correlation_id(),
+        },
+    )
+
+    finished = task(
+        job_id=record.job_id,
+        session_id="session-13",
+        action="design",
+        payload={"goal": "vector", "correlation_id": "trace-worker-1"},
+    )
+
+    assert finished.status == JOB_STATUS_SUCCEEDED
+    assert finished.result["correlation_id"] == "trace-worker-1"
+    assert get_correlation_id() is None
+    assert metrics.snapshot()["jobs"]["terminal"]["action:design:status:succeeded"] == 1
 
 
 def test_register_job_task_uses_celery_decorator_and_build_app_reads_redis_url(monkeypatch: pytest.MonkeyPatch) -> None:

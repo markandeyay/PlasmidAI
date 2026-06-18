@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from fastapi import FastAPI, Header, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 
 from packages.application import (
     InMemoryJobQueue,
@@ -38,6 +38,7 @@ from packages.application.observability import (
     set_correlation_id,
 )
 from packages.core.schemas import OutcomeReport
+from packages.generation.registry import ModelRegistry
 
 
 MAX_PROMPT_LENGTH = 2_000
@@ -182,6 +183,7 @@ def create_app(
     job_queue: Any | None = None,
     design_store: DesignStore | None = None,
     outcome_store: OutcomeStore | None = None,
+    model_registry: Any | None = None,
     rate_limiter: InMemoryRateLimiter | None = None,
     rate_limit_config: RateLimitConfig | None = None,
 ) -> FastAPI:
@@ -193,6 +195,7 @@ def create_app(
     queue = job_queue or InMemoryJobQueue()
     designs = design_store or InMemoryDesignStore()
     outcomes = outcome_store or InMemoryOutcomeStore()
+    registry = model_registry or ModelRegistry()
     metrics = MetricsCollector()
     limiter = rate_limiter or InMemoryRateLimiter()
     limits = rate_limit_config or RateLimitConfig()
@@ -201,7 +204,6 @@ def create_app(
 
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
-        del request
         detail = exc.detail
         if isinstance(detail, dict):
             code = str(detail.get("code") or _default_error_code(exc.status_code))
@@ -213,6 +215,14 @@ def create_app(
             message = _friendly_message(str(detail), exc.status_code)
             retryable = False
             details = {}
+        _record_api_error(
+            logger=logger,
+            metrics=metrics,
+            request=request,
+            status_code=exc.status_code,
+            code=code,
+            retryable=retryable,
+        )
         return _error_response(
             status_code=exc.status_code,
             code=code,
@@ -224,7 +234,6 @@ def create_app(
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
-        del request
         field_errors = [
             ApiFieldError(
                 field=".".join(str(part) for part in error.get("loc", []) if part != "body"),
@@ -233,6 +242,15 @@ def create_app(
             )
             for error in exc.errors()
         ]
+        _record_api_error(
+            logger=logger,
+            metrics=metrics,
+            request=request,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            code="validation_error",
+            retryable=False,
+            field_count=len(field_errors),
+        )
         return _error_response(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             code="validation_error",
@@ -242,7 +260,15 @@ def create_app(
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-        del request, exc
+        _record_api_error(
+            logger=logger,
+            metrics=metrics,
+            request=request,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code="internal_error",
+            retryable=True,
+            error_type=type(exc).__name__,
+        )
         return _error_response(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             code="internal_error",
@@ -261,6 +287,7 @@ def create_app(
     app.state.job_queue = queue
     app.state.design_store = designs
     app.state.outcome_store = outcomes
+    app.state.model_registry = registry
     app.state.metrics = metrics
     app.state.rate_limiter = limiter
 
@@ -273,7 +300,13 @@ def create_app(
             response = await call_next(request)
         except Exception:
             duration_ms = (time.perf_counter() - started_at) * 1000
-            metrics.record_request(latency_ms=duration_ms, status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            metrics.record_request(
+                latency_ms=duration_ms,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                method=request.method,
+                path=request.url.path,
+            )
+            metrics.record_error(code="internal_error", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, path=request.url.path)
             log_event(
                 logger,
                 "api_request_failed",
@@ -282,10 +315,16 @@ def create_app(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 duration_ms=round(duration_ms, 3),
             )
+            reset_correlation_id(token)
             raise
         duration_ms = (time.perf_counter() - started_at) * 1000
         response.headers["X-Correlation-ID"] = correlation_id
-        metrics.record_request(latency_ms=duration_ms, status_code=response.status_code)
+        metrics.record_request(
+            latency_ms=duration_ms,
+            status_code=response.status_code,
+            method=request.method,
+            path=request.url.path,
+        )
         log_event(
             logger,
             "api_request_completed",
@@ -308,11 +347,29 @@ def create_app(
         session = _create_session(store, user_id=x_user_id)
         return CreateSessionResponse(session_id=session.session_id)
 
-    @app.get("/v1/metrics")
-    def metrics_snapshot() -> dict[str, Any]:
+    @app.get("/v1/health")
+    def health_snapshot() -> dict[str, Any]:
+        """Return lightweight process, queue, and model-registry health."""
+
+        queue_status = _queue_snapshot(queue)
+        registry_status = _model_registry_snapshot(registry)
+        unhealthy = queue_status.get("status") == "error" or registry_status.get("status") == "error"
+        return {
+            "status": "degraded" if unhealthy else "ok",
+            "queue": queue_status,
+            "model_registry": registry_status,
+        }
+
+    @app.get("/v1/metrics", response_model=None)
+    def metrics_snapshot(request: Request) -> Any:
         """Return lightweight in-process metrics for local observability."""
 
-        return metrics.snapshot()
+        snapshot = metrics.snapshot()
+        snapshot["queue"] = _queue_snapshot(queue)
+        snapshot["model_registry"] = _model_registry_snapshot(registry)
+        if "text/plain" in request.headers.get("accept", ""):
+            return PlainTextResponse(_metrics_to_text(snapshot))
+        return snapshot
 
     @app.post(
         "/v1/sessions/{session_id}/design",
@@ -497,7 +554,7 @@ def _create_session(store: Any, *, user_id: str | None) -> Any:
 
 
 def _enqueue(queue: Any, *, session: Any, action: str, text: str, correlation_id: str | None = None) -> str:
-    if hasattr(queue, "enqueue"):
+    if _has_explicit_callable(queue, "enqueue"):
         context = [turn.user_text if hasattr(turn, "user_text") else turn.get("content", "") for turn in session.turns]
         record = queue.enqueue(
             session_id=session.session_id,
@@ -505,12 +562,19 @@ def _enqueue(queue: Any, *, session: Any, action: str, text: str, correlation_id
             payload={action: text, "text": text, "context": context, "correlation_id": correlation_id},
         )
         return getattr(record, "job_id", str(record))
-    if action == "design" and hasattr(queue, "enqueue_design"):
+    if _has_explicit_callable(queue, "submit"):
+        return queue.submit(session_id=session.session_id, action=action, text=text, correlation_id=correlation_id)
+    if action == "design" and _has_explicit_callable(queue, "enqueue_design"):
         return queue.enqueue_design(session=session, goal=text)
-    if action == "refine" and hasattr(queue, "enqueue_refinement"):
+    if action == "refine" and _has_explicit_callable(queue, "enqueue_refinement"):
         return queue.enqueue_refinement(session=session, instruction=text)
-    submit = getattr(queue, "submit")
-    return submit(session_id=session.session_id, action=action, text=text)
+    raise TypeError("job queue does not expose a supported enqueue method")
+
+
+def _has_explicit_callable(instance: Any, name: str) -> bool:
+    if name in getattr(instance, "__dict__", {}):
+        return callable(getattr(instance, name))
+    return any(name in cls.__dict__ and callable(getattr(instance, name)) for cls in type(instance).__mro__)
 
 
 def _get_job(queue: Any, job_id: str) -> Any | None:
@@ -606,6 +670,90 @@ def _enforce_rate_limit(
         retryable=True,
         headers={"Retry-After": str(retry_seconds)},
     )
+
+
+def _record_api_error(
+    *,
+    logger: logging.Logger,
+    metrics: MetricsCollector,
+    request: Request,
+    status_code: int,
+    code: str,
+    retryable: bool,
+    **fields: Any,
+) -> None:
+    metrics.record_error(code=code, status_code=status_code, path=request.url.path)
+    log_event(
+        logger,
+        "api_error_response",
+        method=request.method,
+        path=request.url.path,
+        status_code=status_code,
+        error_code=code,
+        retryable=retryable,
+        **fields,
+    )
+
+
+def _queue_snapshot(queue: Any) -> dict[str, Any]:
+    snapshot = getattr(queue, "snapshot", None)
+    if not callable(snapshot):
+        return {"status": "unknown", "reason": "queue snapshot is not implemented"}
+    try:
+        payload = snapshot()
+    except Exception as exc:
+        return {"status": "error", "error_type": type(exc).__name__}
+    if not isinstance(payload, dict):
+        return {"status": "unknown", "reason": "queue snapshot returned a non-object payload"}
+    return {"status": "ok", **payload}
+
+
+def _model_registry_snapshot(registry: Any) -> dict[str, Any]:
+    list_records = getattr(registry, "list", None)
+    if not callable(list_records):
+        return {"status": "unknown", "reason": "model registry listing is not implemented"}
+    try:
+        records = list_records()
+    except Exception as exc:
+        return {"status": "error", "error_type": type(exc).__name__}
+    states: dict[str, int] = {}
+    active_versions: list[str] = []
+    for record in records:
+        state = str(getattr(record, "rollout_state", "unknown"))
+        states[state] = states.get(state, 0) + 1
+        if state in {"shadow", "canary", "full"}:
+            active_versions.append(str(getattr(record, "model_version", "unknown")))
+    return {
+        "status": "ok",
+        "count": len(records),
+        "states": dict(sorted(states.items())),
+        "active_versions": sorted(active_versions),
+    }
+
+
+def _metrics_to_text(snapshot: dict[str, Any]) -> str:
+    lines = ["# TYPE pmr_info gauge", "pmr_info 1"]
+    for name, value in _flatten_metric_values("pmr", snapshot):
+        lines.append(f"{name} {value}")
+    return "\n".join(lines) + "\n"
+
+
+def _flatten_metric_values(prefix: str, value: Any) -> list[tuple[str, float]]:
+    if isinstance(value, bool):
+        return [(prefix, 1.0 if value else 0.0)]
+    if isinstance(value, int | float):
+        return [(prefix, float(value))]
+    if not isinstance(value, dict):
+        return []
+    flattened: list[tuple[str, float]] = []
+    for key, nested in value.items():
+        safe_key = _metric_name_part(str(key))
+        flattened.extend(_flatten_metric_values(f"{prefix}_{safe_key}", nested))
+    return flattened
+
+
+def _metric_name_part(value: str) -> str:
+    return "".join(character.lower() if character.isalnum() else "_" for character in value).strip("_") or "unknown"
 
 
 def _error_response(

@@ -2,11 +2,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
+import logging
+import time
 from typing import Any, Mapping, Protocol
 from uuid import uuid4
 
 import psycopg
 from psycopg.types.json import Jsonb
+
+from packages.application.observability import MetricsCollector, log_event, reset_correlation_id, set_correlation_id
 
 
 JOB_STATUS_QUEUED = "queued"
@@ -19,6 +23,7 @@ JOB_STATUSES = {
     JOB_STATUS_SUCCEEDED,
     JOB_STATUS_FAILED,
 }
+LOGGER = logging.getLogger("pmr.worker")
 
 
 @dataclass(frozen=True)
@@ -49,11 +54,15 @@ class JobStore(Protocol):
 
     def mark_failed(self, job_id: str, *, error: str) -> JobRecord: ...
 
+    def snapshot(self) -> dict[str, Any]: ...
+
 
 class JobQueue(Protocol):
     def enqueue(self, *, session_id: str, action: str, payload: Mapping[str, Any]) -> JobRecord: ...
 
     def get_job(self, job_id: str) -> JobRecord | None: ...
+
+    def snapshot(self) -> dict[str, Any]: ...
 
 
 class JobHandler(Protocol):
@@ -149,6 +158,32 @@ class PostgresJobStore:
         self._persist(updated)
         return updated
 
+    def snapshot(self) -> dict[str, Any]:
+        with psycopg.connect(self.database_url) as connection:
+            rows = connection.execute(
+                """
+                SELECT status, COUNT(*), MIN(created_at), MIN(updated_at)
+                FROM jobs
+                GROUP BY status
+                """
+            ).fetchall()
+        now = utc_now()
+        counts: dict[str, int] = {status: 0 for status in sorted(JOB_STATUSES)}
+        oldest_created_age_ms: dict[str, float | None] = {status: None for status in sorted(JOB_STATUSES)}
+        oldest_updated_age_ms: dict[str, float | None] = {status: None for status in sorted(JOB_STATUSES)}
+        for status, count, oldest_created, oldest_updated in rows:
+            counts[str(status)] = int(count)
+            if oldest_created is not None:
+                oldest_created_age_ms[str(status)] = _age_ms(now, oldest_created)
+            if oldest_updated is not None:
+                oldest_updated_age_ms[str(status)] = _age_ms(now, oldest_updated)
+        return {
+            "backend": "postgres",
+            "counts_by_status": counts,
+            "oldest_created_age_ms": oldest_created_age_ms,
+            "oldest_updated_age_ms": oldest_updated_age_ms,
+        }
+
     def _persist(self, record: JobRecord) -> None:
         with psycopg.connect(self.database_url) as connection:
             connection.execute(
@@ -200,6 +235,28 @@ class InMemoryJobStore:
     def mark_failed(self, job_id: str, *, error: str) -> JobRecord:
         return self._replace(job_id, status=JOB_STATUS_FAILED, result=None, error=error, updated_at=utc_now())
 
+    def snapshot(self) -> dict[str, Any]:
+        now = utc_now()
+        counts: dict[str, int] = {status: 0 for status in sorted(JOB_STATUSES)}
+        oldest_created_age_ms: dict[str, float | None] = {status: None for status in sorted(JOB_STATUSES)}
+        oldest_updated_age_ms: dict[str, float | None] = {status: None for status in sorted(JOB_STATUSES)}
+        for record in self.records.values():
+            counts[record.status] += 1
+            if record.created_at is not None:
+                age = _age_ms(now, record.created_at)
+                current = oldest_created_age_ms[record.status]
+                oldest_created_age_ms[record.status] = age if current is None else max(current, age)
+            if record.updated_at is not None:
+                age = _age_ms(now, record.updated_at)
+                current = oldest_updated_age_ms[record.status]
+                oldest_updated_age_ms[record.status] = age if current is None else max(current, age)
+        return {
+            "backend": "memory",
+            "counts_by_status": counts,
+            "oldest_created_age_ms": oldest_created_age_ms,
+            "oldest_updated_age_ms": oldest_updated_age_ms,
+        }
+
     def _replace(self, job_id: str, **changes: Any) -> JobRecord:
         record = self.records.get(job_id)
         if record is None:
@@ -210,21 +267,60 @@ class InMemoryJobStore:
 
 
 class FakeJobQueue:
-    def __init__(self, *, store: JobStore, handler: JobHandler) -> None:
+    def __init__(self, *, store: JobStore, handler: JobHandler, metrics: MetricsCollector | None = None) -> None:
         self.store = store
         self.handler = handler
+        self.metrics = metrics
 
     def enqueue(self, *, session_id: str, action: str, payload: Mapping[str, Any]) -> JobRecord:
         record = self.store.create(session_id=session_id, action=action, payload=payload)
         self.store.mark_running(record.job_id)
+        started_at = time.perf_counter()
+        token = None
+        correlation_id = payload.get("correlation_id")
+        if isinstance(correlation_id, str) and correlation_id:
+            token = set_correlation_id(correlation_id)
+        log_event(LOGGER, "worker_job_started", job_id=record.job_id, session_id=session_id, action=action)
         try:
             result = self.handler(session_id=session_id, action=action, payload=payload)
         except Exception as exc:
+            duration_ms = (time.perf_counter() - started_at) * 1000
+            if self.metrics is not None:
+                self.metrics.record_job_duration(duration_ms=duration_ms)
+                self.metrics.record_job_terminal(status=JOB_STATUS_FAILED, action=action)
+            log_event(
+                LOGGER,
+                "worker_job_failed",
+                job_id=record.job_id,
+                session_id=session_id,
+                action=action,
+                duration_ms=round(duration_ms, 3),
+                error_type=type(exc).__name__,
+            )
+            if token is not None:
+                reset_correlation_id(token)
             return self.store.mark_failed(record.job_id, error=str(exc))
+        duration_ms = (time.perf_counter() - started_at) * 1000
+        if self.metrics is not None:
+            self.metrics.record_job_duration(duration_ms=duration_ms)
+            self.metrics.record_job_terminal(status=JOB_STATUS_SUCCEEDED, action=action)
+        log_event(
+            LOGGER,
+            "worker_job_completed",
+            job_id=record.job_id,
+            session_id=session_id,
+            action=action,
+            duration_ms=round(duration_ms, 3),
+        )
+        if token is not None:
+            reset_correlation_id(token)
         return self.store.mark_succeeded(record.job_id, result=result)
 
     def get_job(self, job_id: str) -> JobRecord | None:
         return self.store.get(job_id)
+
+    def snapshot(self) -> dict[str, Any]:
+        return self.store.snapshot()
 
 
 def new_job_id() -> str:
@@ -233,6 +329,12 @@ def new_job_id() -> str:
 
 def utc_now() -> datetime:
     return datetime.now(UTC)
+
+
+def _age_ms(now: datetime, then: datetime) -> float:
+    if then.tzinfo is None:
+        then = then.replace(tzinfo=UTC)
+    return max(0.0, (now - then).total_seconds() * 1000)
 
 
 def _job_record_from_row(row: Any) -> JobRecord:

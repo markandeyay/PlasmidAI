@@ -121,6 +121,8 @@ class JobQueue(Protocol):
 
     def get_job(self, job_id: str) -> JobRecord | None: ...
 
+    def snapshot(self) -> dict[str, object]: ...
+
 
 @dataclass
 class InMemorySessionStore:
@@ -345,6 +347,7 @@ class PostgresSessionStore:
                 (utc_now(), session_id),
             )
 
+
 @dataclass
 class InMemoryJobQueue:
     """Simple async job queue fake for tests and local API scaffolding."""
@@ -359,6 +362,18 @@ class InMemoryJobQueue:
 
     def get_job(self, job_id: str) -> JobRecord | None:
         return self.jobs.get(job_id)
+
+    def snapshot(self) -> dict[str, object]:
+        now = utc_now()
+        statuses = ["queued", "running", "succeeded", "failed"]
+        counts = {status: 0 for status in statuses}
+        oldest_age_ms: dict[str, float | None] = {status: None for status in statuses}
+        for job in self.jobs.values():
+            counts[job.status] += 1
+            age = max(0.0, (now - job.created_at).total_seconds() * 1000)
+            current = oldest_age_ms[job.status]
+            oldest_age_ms[job.status] = age if current is None else max(current, age)
+        return {"backend": "memory", "counts_by_status": counts, "oldest_created_age_ms": oldest_age_ms}
 
     def mark_running(self, job_id: str) -> None:
         job = self.jobs[job_id]
