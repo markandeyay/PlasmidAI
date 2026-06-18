@@ -39,8 +39,10 @@ def test_collect_suite_reports_and_render_dashboard(tmp_path: Path) -> None:
     assert dashboard["metrics"]["retrieval"]["top5_hit_rate"] == 1.0
     assert dashboard["metrics"]["generation"]["strict_generation_success_rate"] == 0.0
     assert dashboard["metrics"]["validation"]["accuracy"] == 1.0
+    assert dashboard["metrics"]["validation"]["known_good_tiers"]["A"]["total"] == 25
     assert dashboard["metrics"]["quality"]["complete_annotations"] == 141
     assert "## Headline Metrics" in markdown
+    assert "### Known-Good Tiers" in markdown
     assert "No threshold breaches." in markdown
 
 
@@ -120,9 +122,15 @@ def write_fixture_reports(root: Path) -> None:
         root / "validation" / "2026-06-15-000000-validation-baseline.json",
         {
             "accuracy": 1.0,
-            "known_good_count": 31,
+            "known_good_count": 36,
             "known_bad_count": 52,
-            "total": 83,
+            "known_good_tiers": {
+                "A": {"accuracy": 1.0, "correct": 25, "total": 25},
+                "B": {"accuracy": 1.0, "correct": 11, "total": 11},
+            },
+            "tier_a_accuracy": 1.0,
+            "tier_b_accuracy": 1.0,
+            "total": 88,
             "phase3_gate_met": True,
             "per_check_accuracy": {
                 "codon_usage": {"accuracy": 1.0, "correct": 44, "total": 44},

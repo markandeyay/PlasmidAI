@@ -116,6 +116,9 @@ def extract_metrics(suites: dict[str, dict[str, Any]]) -> dict[str, Any]:
             "accuracy": validation["accuracy"],
             "known_good_count": validation.get("known_good_count"),
             "known_bad_count": validation.get("known_bad_count"),
+            "known_good_tiers": validation.get("known_good_tiers", {}),
+            "tier_a_accuracy": validation.get("tier_a_accuracy"),
+            "tier_b_accuracy": validation.get("tier_b_accuracy"),
             "total": validation["total"],
             "phase3_gate_met": validation["phase3_gate_met"],
             "per_check_accuracy": validation.get("per_check_accuracy", {}),
@@ -264,6 +267,19 @@ def render_dashboard_markdown(dashboard: dict[str, Any]) -> str:
             f"- Known-good / known-bad: `{metrics['validation']['known_good_count']} / {metrics['validation']['known_bad_count']}`",
             f"- Total cases: `{metrics['validation']['total']}`",
             f"- Phase 3 gate met: `{metrics['validation']['phase3_gate_met']}`",
+            "",
+            "### Known-Good Tiers",
+            "",
+            "| Tier | Accuracy | Correct | Total |",
+            "| --- | ---: | ---: | ---: |",
+        ]
+    )
+    for tier, stats in metrics["validation"]["known_good_tiers"].items():
+        lines.append(f"| `{tier}` | {stats['accuracy']:.3f} | {stats['correct']} | {stats['total']} |")
+    lines.extend(
+        [
+            "",
+            "### Validation Checks",
             "",
             "| Check | Accuracy | Correct | Total |",
             "| --- | ---: | ---: | ---: |",
