@@ -198,6 +198,7 @@ class ValidationCheck(SchemaModel):
     status: ValidationStatus
     message: str = Field(min_length=1)
     region: FeatureRegion | None = None
+    failure_context: Literal["design_construct_failure", "source_record_uncertainty"] | None = None
 
 
 class ValidationReport(SchemaModel):

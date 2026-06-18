@@ -90,6 +90,57 @@ def test_annotated_ltr_direct_repeat_downgrades_to_warn_with_context_note() -> N
     assert "Biological context note" in report.message
 
 
+def test_sv40_regulatory_repeat_downgrades_to_warn_when_both_copies_overlap_allowlisted_feature() -> None:
+    repeat = seeded_dna(45, 19)
+    spacer = seeded_dna(80, 93)
+    sequence = repeat + spacer + repeat
+    report = run_repeat_instability_check(
+        annotated(
+            sequence,
+            features=[
+                feature("promoter", 0, len(repeat), "SV40 enhancer and early promoter"),
+                feature("promoter", len(repeat) + len(spacer), len(sequence), "SV40 enhancer and early promoter"),
+            ],
+            profile="mammalian_expression_vector",
+        ),
+        spec(organism="human cells", vector_type="mammalian_expression_vector"),
+    )
+
+    assert report.status == "WARN"
+    assert "Biological context note" in report.message
+
+
+def test_yeast_2micron_repeat_downgrades_to_warn_when_both_copies_overlap_allowlisted_feature() -> None:
+    repeat = seeded_dna(45, 23)
+    spacer = seeded_dna(80, 97)
+    sequence = repeat + spacer + repeat
+    report = run_repeat_instability_check(
+        annotated(
+            sequence,
+            features=[
+                feature("ORI", 0, len(repeat), "S. cerevisiae 2 micron plasmid STB and ARS region"),
+                feature("ORI", len(repeat) + len(spacer), len(sequence), "S. cerevisiae 2 micron plasmid STB and ARS region"),
+            ],
+            profile="yeast_shuttle_vector",
+        ),
+        spec(organism="Saccharomyces cerevisiae", vector_type="yeast_shuttle_vector"),
+    )
+
+    assert report.status == "WARN"
+    assert "Biological context note" in report.message
+
+
+def test_allowlist_does_not_downgrade_unannotated_direct_repeat() -> None:
+    repeat = seeded_dna(45, 19)
+    spacer = seeded_dna(80, 93)
+    report = run_repeat_instability_check(
+        annotated(repeat + spacer + repeat, profile="mammalian_expression_vector"),
+        spec(organism="human cells", vector_type="mammalian_expression_vector"),
+    )
+
+    assert report.status == "FAIL"
+
+
 def test_inverted_repeat_failure() -> None:
     repeat = seeded_dna(45, 17)
     spacer = seeded_dna(80, 91)

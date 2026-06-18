@@ -24,8 +24,13 @@ def warn_check(name: str, message: str, region: FeatureRegion | None = None) -> 
     return ValidationCheck(name=name, status="WARN", message=message, region=region)
 
 
-def fail_check(name: str, message: str, region: FeatureRegion | None = None) -> ValidationCheck:
-    return ValidationCheck(name=name, status="FAIL", message=message, region=region)
+def fail_check(
+    name: str,
+    message: str,
+    region: FeatureRegion | None = None,
+    failure_context: str | None = None,
+) -> ValidationCheck:
+    return ValidationCheck(name=name, status="FAIL", message=message, region=region, failure_context=failure_context)
 
 
 def region(start: int, end: int, sequence_length: int) -> FeatureRegion:
