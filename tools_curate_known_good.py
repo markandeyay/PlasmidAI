@@ -20,7 +20,13 @@ from packages.validation.engine import ConstraintEngine
 OUT_PATH = Path("data/eval/validation/curated_known_good.jsonl")
 BLOCKER_PATH = Path("data/eval/validation/curated_known_good_blocker.json")
 MANIFEST_PATH = Path("packages/data_pipeline/ingest/curated_seed_manifest.yaml")
-TARGET_COUNT = 50
+APPROVED_CANDIDATE_IDS = (
+    "genbank:AF013597.1",
+    "genbank:U47121.2",
+    "genbank:AF041805.1",
+    "genbank:AF041806.1",
+    "genbank:AF041807.1",
+)
 
 
 def load_env() -> dict[str, str]:
@@ -132,6 +138,51 @@ def warn_justifications(report: ValidationReport) -> list[str]:
     return justifications
 
 
+def expected_warnings(report: ValidationReport) -> list[dict[str, str]]:
+    warnings = []
+    for check in report.checks:
+        if check.status != "WARN":
+            continue
+        warnings.append(
+            {
+                "check": check.name,
+                "status": "WARN",
+                "rationale": expected_warning_rationale(check.name, check.message),
+            }
+        )
+    return warnings
+
+
+def expected_warning_rationale(check_name: str, message: str) -> str:
+    if check_name == "repeat_and_instability" and "reviewed intentional vector architecture" in message:
+        return (
+            "Intentional reviewed vector architecture; the warning should remain visible for synthesis "
+            "and stable-propagation review."
+        )
+    if check_name == "repeat_and_instability":
+        return "Non-blocking repeat warning retained as a documented caveat for a complete public source vector."
+    if check_name == "regulatory_compatibility":
+        return "Non-blocking regulatory-context warning retained as a documented source-record caveat."
+    if check_name == "codon_usage":
+        return "Non-blocking codon-usage warning retained for source-vector coding context, not de novo GOI optimization."
+    return f"Expected non-blocking WARN from {check_name}: {message}"
+
+
+def tier_metadata(report: ValidationReport) -> dict[str, Any]:
+    warnings = expected_warnings(report)
+    if warnings:
+        return {
+            "tier": "B",
+            "tier_label": "accepted-with-caveats",
+            "expected_warnings": warnings,
+        }
+    return {
+        "tier": "A",
+        "tier_label": "strict-clean",
+        "expected_warnings": [],
+    }
+
+
 def defensible(report: ValidationReport) -> bool:
     if report.overall == "PASS":
         return True
@@ -170,7 +221,7 @@ def build_entry(
     accession = manifest_record.get("accession") if manifest_record else metadata.get("accession")
     if accession and not any(str(accession) in citation for citation in citations):
         citations.append(f"https://www.ncbi.nlm.nih.gov/nuccore/{accession}")
-    return {
+    entry = {
         "plasmid_id": plasmid.id,
         "source": plasmid.source,
         "name": plasmid.name,
@@ -197,6 +248,8 @@ def build_entry(
         "annotated_sequence": annotated.model_dump(mode="json"),
         "expected_validation_report": report.model_dump(mode="json"),
     }
+    entry.update(tier_metadata(report))
+    return entry
 
 
 def main() -> None:
@@ -204,8 +257,14 @@ def main() -> None:
     curated_manifest = load_curated_manifest()
     client = raw_store(env)
     engine = ConstraintEngine()
-    entries = []
     screened = Counter()
+    if not OUT_PATH.exists():
+        raise FileNotFoundError(f"{OUT_PATH} must exist before approved candidate admission")
+    existing_entries = [json.loads(line) for line in OUT_PATH.read_text(encoding="utf-8").splitlines() if line.strip()]
+    target_ids = [entry["plasmid_id"] for entry in existing_entries]
+    for candidate_id in APPROVED_CANDIDATE_IDS:
+        if candidate_id not in target_ids:
+            target_ids.append(candidate_id)
 
     with psycopg.connect(env["DATABASE_URL"]) as conn:
         with conn.cursor() as cur:
@@ -213,44 +272,41 @@ def main() -> None:
                 """
                 select payload
                 from plasmids
-                where (payload->>'annotation_complete')::boolean
-                order by
-                  case when payload->>'source' = 'curated' then 0 else 1 end,
-                  (payload->>'length')::int,
-                  payload->>'id'
+                where payload->>'id' = any(%s)
                 """
+                ,
+                (target_ids,),
             )
             rows = cur.fetchall()
 
-    for (payload,) in rows:
-        plasmid = Plasmid.model_validate(payload)
+    plasmids = {Plasmid.model_validate(payload).id: Plasmid.model_validate(payload) for (payload,) in rows}
+    missing = sorted(set(target_ids) - set(plasmids))
+    if missing:
+        raise RuntimeError(f"known-good target records missing from Postgres: {missing}")
+
+    entries = []
+    approved_set = set(APPROVED_CANDIDATE_IDS)
+    for plasmid_id in target_ids:
+        plasmid = plasmids[plasmid_id]
         screened["complete_payload"] += 1
-        print(f"screening {screened['complete_payload']}: {plasmid.id} length={plasmid.length}", flush=True)
+        action = "admitting approved candidate" if plasmid.id in approved_set else "refreshing existing known-good"
+        print(f"{action} {plasmid.id} length={plasmid.length}", flush=True)
         raw_text = get_raw_text(client, env, plasmid.raw_ref)
         if raw_text is None:
-            screened["missing_raw"] += 1
-            continue
+            raise RuntimeError(f"missing raw cache for known-good target {plasmid.id}: {plasmid.raw_ref}")
         try:
             annotated = parse_genbank_text(raw_text)
             metadata = genbank_metadata(raw_text)
-        except Exception:
-            screened["parse_error"] += 1
-            continue
-        if not annotated.annotation_complete:
-            screened["parsed_incomplete"] += 1
-            continue
+        except Exception as exc:
+            raise RuntimeError(f"failed to parse known-good target {plasmid.id}") from exc
         if annotated.vector_profile == "unknown":
-            screened["unknown_profile"] += 1
-            continue
+            raise RuntimeError(f"known-good target parsed unknown profile: {plasmid.id}")
         spec = design_spec(plasmid, annotated)
         report = engine.validate(annotated, spec)
         screened[f"validation_{report.overall}"] += 1
         if not defensible(report):
-            continue
+            raise RuntimeError(f"known-good target is no longer defensible: {plasmid.id} -> {report.overall}")
         entries.append(build_entry(plasmid, annotated, spec, report, metadata, curated_manifest))
-        if len(entries) >= TARGET_COUNT:
-            screened["stopped_after_target_count"] += 1
-            break
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     OUT_PATH.write_text(
@@ -258,25 +314,23 @@ def main() -> None:
         encoding="utf-8",
     )
 
-    if len(entries) < 50:
-        BLOCKER_PATH.write_text(
-            json.dumps(
-                {
-                    "status": "blocked_shortfall",
-                    "output_path": str(OUT_PATH),
-                    "defensible_known_good_count": len(entries),
-                    "required_count": 50,
-                    "reason": "Fewer than 50 complete annotated local corpus records produced PASS or only justified WARN under the Phase 3 ConstraintEngine.",
-                    "screened": dict(screened),
-                },
-                indent=2,
-                sort_keys=True,
-            )
-            + "\n",
-            encoding="utf-8",
+    BLOCKER_PATH.write_text(
+        json.dumps(
+            {
+                "status": "quality_over_arbitrary_count_policy",
+                "output_path": str(OUT_PATH),
+                "defensible_known_good_count": len(entries),
+                "required_count": None,
+                "reason": "Human policy accepts a profile-diverse curated gold set whose size is determined by source quality; tiering preserves strict-clean versus accepted-with-caveats semantics.",
+                "approved_candidate_ids": list(APPROVED_CANDIDATE_IDS),
+                "screened": dict(screened),
+            },
+            indent=2,
+            sort_keys=True,
         )
-    elif BLOCKER_PATH.exists():
-        BLOCKER_PATH.unlink()
+        + "\n",
+        encoding="utf-8",
+    )
 
     profile_counts = Counter(entry["vector_profile"] for entry in entries)
     status_counts = Counter(entry["expected_validation_report"]["overall"] for entry in entries)

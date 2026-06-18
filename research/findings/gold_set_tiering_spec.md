@@ -65,4 +65,6 @@ The human approved admission of all five defensible post-refinement candidates:
 - `AF041806.1`: tier B, expected `repeat_and_instability` WARN for reviewed intentional yeast shuttle vector architecture.
 - `AF041807.1`: tier B, expected `repeat_and_instability` WARN for reviewed intentional yeast shuttle vector architecture.
 
+After refreshing the prior 31 known-good records against the current validator, 7 pre-existing records also classify as tier B because their current validation reports contain documented WARN checks. The expanded known-good set therefore contains 25 tier-A records and 11 tier-B records. This is intentional: tiering reflects the validator's current report shape, not the historical expectation embedded when a row was first curated.
+
 Future tier-B admissions should be conservative: WARN type matters, and every WARN must be acknowledged by metadata. Multiple WARN entries are allowed only when every warning is expected and explicitly documented; otherwise the record should remain a candidate rather than enter the gold set.
