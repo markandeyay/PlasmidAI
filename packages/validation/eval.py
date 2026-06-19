@@ -61,6 +61,10 @@ def evaluate_curated_gold(good_path: Path, bad_path: Path) -> dict[str, Any]:
     bad_cases = load_gold(bad_path)
     results: list[dict[str, Any]] = []
     per_check: dict[str, dict[str, int]] = {}
+    tier_buckets: dict[str, dict[str, int]] = {
+        "A": {"total": 0, "correct": 0},
+        "B": {"total": 0, "correct": 0},
+    }
     correct = 0
 
     def record_check(name: str, is_correct: bool) -> None:
@@ -68,12 +72,26 @@ def evaluate_curated_gold(good_path: Path, bad_path: Path) -> dict[str, Any]:
         bucket["total"] += 1
         bucket["correct"] += int(is_correct)
 
+    def good_case_correct(case: dict[str, Any], check_statuses: dict[str, str], overall: str) -> bool:
+        tier = case.get("tier", "A")
+        warning_checks = {name for name, status in check_statuses.items() if status == "WARN"}
+        failing_checks = {name for name, status in check_statuses.items() if status == "FAIL"}
+        if tier == "A":
+            return overall == "PASS" and not warning_checks and not failing_checks
+        expected_warning_checks = {warning["check"] for warning in case.get("expected_warnings", [])}
+        return not failing_checks and warning_checks == expected_warning_checks
+
     for case in good_cases:
         spec = DesignSpec.model_validate(case["design_spec"])
         annotated = AnnotatedSequence.model_validate(case["annotated_sequence"])
         report = engine.validate(annotated, spec)
         check_statuses = {check.name: check.status for check in report.checks}
-        is_correct = report.overall != "FAIL"
+        tier = case.get("tier", "A")
+        if tier not in tier_buckets:
+            raise ValueError(f"unknown known-good tier {tier!r} for {case['plasmid_id']}")
+        is_correct = good_case_correct(case, check_statuses, str(report.overall))
+        tier_buckets[tier]["total"] += 1
+        tier_buckets[tier]["correct"] += int(is_correct)
         correct += int(is_correct)
         for check_name, status in check_statuses.items():
             record_check(check_name, status != "FAIL")
@@ -81,13 +99,16 @@ def evaluate_curated_gold(good_path: Path, bad_path: Path) -> dict[str, Any]:
             {
                 "id": case["plasmid_id"],
                 "set": "known_good",
+                "tier": tier,
+                "tier_label": case.get("tier_label"),
                 "name": case.get("name"),
                 "vector_profile": case.get("vector_profile"),
-                "expected": "PASS_OR_WARN",
+                "expected": "PASS" if tier == "A" else "DOCUMENTED_WARN",
                 "predicted": "FAIL" if report.overall == "FAIL" else "PASS_OR_WARN",
                 "overall": report.overall,
                 "correct": is_correct,
                 "checks": [check.model_dump(mode="json") for check in report.checks],
+                "expected_warnings": case.get("expected_warnings", []),
                 "warn_justifications": case.get("warn_justifications", []),
             }
         )
@@ -132,13 +153,25 @@ def evaluate_curated_gold(good_path: Path, bad_path: Path) -> dict[str, Any]:
         }
         for name, bucket in sorted(per_check.items())
     }
+    tier_accuracy = {
+        tier: {
+            "total": bucket["total"],
+            "correct": bucket["correct"],
+            "accuracy": bucket["correct"] / bucket["total"] if bucket["total"] else 0.0,
+        }
+        for tier, bucket in sorted(tier_buckets.items())
+        if bucket["total"] > 0
+    }
     return {
-        "gold_policy": "curated_profile_diverse_quality_over_arbitrary_count",
+        "gold_policy": "curated_profile_diverse_tiered_quality_over_arbitrary_count",
         "known_good_path": str(good_path),
         "known_bad_path": str(bad_path),
         "engine_version": CHECK_VERSION,
         "known_good_count": len(good_cases),
         "known_bad_count": len(bad_cases),
+        "known_good_tiers": tier_accuracy,
+        "tier_a_accuracy": tier_accuracy.get("A", {}).get("accuracy"),
+        "tier_b_accuracy": tier_accuracy.get("B", {}).get("accuracy"),
         "total": total,
         "correct": correct,
         "accuracy": accuracy,
@@ -156,6 +189,19 @@ def write_report(report: dict[str, Any], output_dir: Path) -> tuple[Path, Path]:
     json_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     failures = [item for item in report["results"] if not item["correct"]]
     per_check_lines = []
+    tier_lines = []
+    if "known_good_tiers" in report:
+        tier_lines = [
+            "",
+            "## Known-Good Tier Accuracy",
+            "",
+            "| Tier | Correct | Total | Accuracy |",
+            "| --- | ---: | ---: | ---: |",
+            *(
+                f"| `{tier}` | {stats['correct']} | {stats['total']} | {stats['accuracy']:.3f} |"
+                for tier, stats in report["known_good_tiers"].items()
+            ),
+        ]
     if "per_check_accuracy" in report:
         per_check_lines = [
             "",
@@ -179,8 +225,11 @@ def write_report(report: dict[str, Any], output_dir: Path) -> tuple[Path, Path]:
                 *( [f"- Known-bad cases: `{report['known_bad_count']}`"] if "known_bad_count" in report else [] ),
                 f"- Gold cases: `{report['total']}`",
                 f"- Accuracy: `{report['accuracy']:.3f}`",
+                *( [f"- Tier A accuracy: `{report['tier_a_accuracy']:.3f}`"] if report.get("tier_a_accuracy") is not None else [] ),
+                *( [f"- Tier B accuracy: `{report['tier_b_accuracy']:.3f}`"] if report.get("tier_b_accuracy") is not None else [] ),
                 f"- Phase 3 gate met: `{report['phase3_gate_met']}`",
                 f"- Misclassified cases: `{len(failures)}`",
+                *tier_lines,
                 *per_check_lines,
                 "",
                 "## Misclassifications",

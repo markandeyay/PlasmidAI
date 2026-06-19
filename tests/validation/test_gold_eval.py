@@ -25,8 +25,10 @@ def test_curated_validation_gold_set_meets_operational_gate() -> None:
         Path("data/eval/validation/curated_known_bad.jsonl"),
     )
 
-    assert report["known_good_count"] == 31
+    assert report["known_good_count"] == 36
     assert report["known_bad_count"] == 52
     assert report["accuracy"] >= 0.95
     assert report["phase3_gate_met"] is True
+    assert report["known_good_tiers"]["A"]["accuracy"] >= 0.95
+    assert report["known_good_tiers"]["B"]["accuracy"] >= 0.95
     assert report["per_check_accuracy"]
