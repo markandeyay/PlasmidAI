@@ -62,43 +62,26 @@ const interpretationOptions = [
   "Not built or not tested"
 ];
 
-export function OutcomeReportModal({ open, designId, modelVersion, onClose, onSubmitted, initialReport, provenanceContext }: OutcomeReportModalProps) {
-  const [testedMaterial, setTestedMaterial] = useState("");
-  const [sequencingResult, setSequencingResult] = useState("");
-  const [expressionResult, setExpressionResult] = useState("");
-  const [functionalResult, setFunctionalResult] = useState("");
-  const [interpretation, setInterpretation] = useState("");
-  const [notes, setNotes] = useState("");
-  const [trainingConsent, setTrainingConsent] = useState(false);
-  const [consentReviewed, setConsentReviewed] = useState(false);
+export function OutcomeReportModal({ open, ...props }: OutcomeReportModalProps) {
+  if (!open) {
+    return null;
+  }
+
+  return <OutcomeReportForm key={`${props.designId ?? "missing"}:${props.initialReport?.reported_at ?? "new"}`} {...props} />;
+}
+
+function OutcomeReportForm({ designId, modelVersion, onClose, onSubmitted, initialReport, provenanceContext }: Omit<OutcomeReportModalProps, "open">) {
+  const [testedMaterial, setTestedMaterial] = useState(() => readStringProvenance(initialReport, "tested_material"));
+  const [sequencingResult, setSequencingResult] = useState(() => initialReport?.sequencing_result ?? "");
+  const [expressionResult, setExpressionResult] = useState(() => initialReport?.expression_result ?? "");
+  const [functionalResult, setFunctionalResult] = useState(() => initialReport?.functional_result ?? "");
+  const [interpretation, setInterpretation] = useState(() => interpretationFromReport(initialReport));
+  const [notes, setNotes] = useState(() => initialReport?.notes ?? "");
+  const [trainingConsent, setTrainingConsent] = useState(() => initialReport?.training_consent ?? false);
+  const [consentReviewed, setConsentReviewed] = useState(() => Boolean(initialReport));
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [submittedReport, setSubmittedReport] = useState<OutcomeReport | null>(null);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    setApiError(null);
-  }, [open]);
-
-  useEffect(() => {
-    setSubmittedReport(null);
-  }, [designId]);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    setTestedMaterial(readStringProvenance(initialReport, "tested_material"));
-    setSequencingResult(initialReport?.sequencing_result ?? "");
-    setExpressionResult(initialReport?.expression_result ?? "");
-    setFunctionalResult(initialReport?.functional_result ?? "");
-    setInterpretation(interpretationFromReport(initialReport));
-    setNotes(initialReport?.notes ?? "");
-    setTrainingConsent(initialReport?.training_consent ?? false);
-    setConsentReviewed(Boolean(initialReport));
-  }, [open, designId, initialReport]);
 
   const constructValidated = useMemo(() => {
     if (interpretation === "Accepted for intended use") {
@@ -153,10 +136,6 @@ export function OutcomeReportModal({ open, designId, modelVersion, onClose, onSu
     }
     return items;
   }, [functionalResult, interpretation, notes, sequencingResult, testedMaterial]);
-
-  if (!open) {
-    return null;
-  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

@@ -36,7 +36,7 @@ Current capabilities:
 
 ## Getting Started
 
-Prerequisites: Git, Python, Docker Compose, Node/npm, and GNU Make.
+Prerequisites: Git, Python, Docker Compose, Node.js `20.9.0` or newer with npm, and GNU Make. The Node.js floor is required by the Next.js 16 frontend under `apps/web`.
 
 ```bash
 git clone https://github.com/markandeyay/PlasmidAI.git
