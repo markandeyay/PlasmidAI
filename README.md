@@ -36,7 +36,7 @@ Current capabilities:
 
 ## Getting Started
 
-Prerequisites: Git, Python, Docker Compose, Node.js `20.9.0` or newer with npm, and GNU Make. The Node.js floor is required by the Next.js 16 frontend under `apps/web`.
+Prerequisites: Git, Python, Docker Compose, Node.js `20.9.0` or newer with npm, and GNU Make. The Node.js floor is required by the Next.js 16 frontend under `apps/web`. The backend API stack is pinned through `requirements.txt` to FastAPI `>=0.138` and Starlette `>=1.3.1,<2` so deployments avoid the Starlette 0.51.0 malformed Host-header URL reconstruction vulnerability.
 
 ```bash
 git clone https://github.com/markandeyay/PlasmidAI.git
@@ -134,7 +134,7 @@ Worktree-local `.env` files may use alternate service ports so Docker Compose st
 - Carbon-500M support is CPU plumbing only, not a validated design model.
 - Production auth, authorization, usage metering, deployment, primer design, and synthesis-provider handoff are not complete.
 - Full Phase 5 automation is not active: outcomes do not yet trigger scheduled fine-tuning and model promotion.
-- Dependency vulnerabilities are documented in `data/audits/dependencies_2026-06-13.md`; upgrades are deferred to a dedicated review branch.
+- Dependency vulnerabilities are documented in `data/audits/dependencies_2026-06-13.md`; the FastAPI/Starlette backend remediation is complete, while other dependency upgrades remain deferred to dedicated review branches.
 - `SYSTEM_DESIGN.md` has documented drift and should not be edited without explicit human authorization.
 
 For current review state, pending human decisions, and the latest verification results, read `PROGRESS.md` first.
