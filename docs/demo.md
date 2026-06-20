@@ -4,27 +4,27 @@ Audience: YC partners, early investors, and scientific collaborators.
 
 Goal: show that the app is not a generic chatbot. It turns a plain-English plasmid request into a retrieval-grounded design session, supports conversational refinement, displays validation evidence, exports handoff files, and later captures wet-lab outcomes for a feedback loop.
 
-This script was checked against the current Next.js workspace, FastAPI session/job/export/outcome endpoints, and `PROGRESS.md` branch status on `demo-readiness`.
+This script was checked against the current Next.js workspace, the `Makefile` targets, and the `apps/web` UI on branch `demo-punch-list`.
 
 ## Pre-Demo Setup
 
-Use a local environment where the web app can reach an API instance backed by the generation/retrieval pipeline or a seeded demo API fixture. The default FastAPI scaffold can queue jobs without completing them unless a generation job handler is wired in, so confirm the design job returns before the meeting.
-
-Run services:
+Run the demo with `make demo`. This is the canonical, self-contained, demo-safe path: it starts the deterministic API fixture (`services.api.e2e_app`) and the web app together and drives the full-stack Playwright flow through a design job that completes, a plasmid map that renders, and a GenBank export that downloads. Run it before the meeting to confirm the demo path works end-to-end.
 
 ```powershell
-make serve-api
-cd apps/web
-npm run dev
+make demo
 ```
 
-Open `http://127.0.0.1:3000`.
+Under the hood, `make demo` runs `make e2e-test`, which invokes the full-stack Playwright config (`apps/web/playwright.fullstack.config.ts`). That config brings up the deterministic fixture API on `127.0.0.1:8000` and the web app on `127.0.0.1:3000`, then exercises the design, retrieval, map, and GenBank export flow against `services.api.e2e_app` rather than the live scaffold.
+
+Do NOT demo the live API path. `make serve-api` runs the default FastAPI scaffold (`services.api.app`), which can queue design jobs without completing them unless a generation worker is wired in. A demo against `make serve-api` plus `npm run dev` (or `make serve-web`) can stall in `Designing and validating plasmid` before the map or export ever appears. Those targets are for development only, not for demos.
+
+To walk through the script steps interactively in the browser, start the same deterministic fixture `make demo` uses (the full-stack Playwright config runs `python -m uvicorn services.api.e2e_app:app --host 127.0.0.1 --port 8000` for the API and `npm run dev` in `apps/web` for the web app), then open `http://127.0.0.1:3000`. Do not substitute `make serve-api` here — that is the live scaffold, not the deterministic fixture.
 
 Before starting:
 
 - Clear old downloads so the GenBank export is easy to find.
 - Keep browser zoom at 100%.
-- If using seeded demo data, make sure at least one completed design has a stable `design_id`, and optionally seed one pending outcome prompt so the bottom-right "Outcome follow-up" toast appears.
+- If you want to show the outcome follow-up toast path, seed a pending outcome prompt for a stable `design_id` so the bottom-right "Outcome follow-up" toast appears; otherwise use the in-session "Report outcome" path in the right rail.
 - Do not claim full Phase 4/5 production readiness. Auth, primer output, synthesis-provider handoff, deployed hosting, and automated fine-tune promotion are still open.
 
 ## Demo Flow
@@ -159,7 +159,7 @@ Expected screen:
 
 - The button may briefly show `Preparing...`.
 - Browser download starts with a filename like `<design_id>.gb`.
-- The panel shows `Download started.` or `GenBank ready`.
+- The panel shows `GenBank download started.` and the button becomes `GenBank ready`.
 
 Say:
 
