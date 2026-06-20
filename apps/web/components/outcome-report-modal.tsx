@@ -82,6 +82,7 @@ function OutcomeReportForm({ designId, modelVersion, onClose, onSubmitted, initi
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [submittedReport, setSubmittedReport] = useState<OutcomeReport | null>(null);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const constructValidated = useMemo(() => {
     if (interpretation === "Accepted for intended use") {
@@ -120,6 +121,8 @@ function OutcomeReportForm({ designId, modelVersion, onClose, onSubmitted, initi
     return issues;
   }, [consentReviewed, designId, expressionResult, functionalResult, interpretation, modelVersion, sequencingResult]);
 
+  const evidenceMissing = !interpretation && !sequencingResult && !expressionResult && !functionalResult;
+
   const warnings = useMemo(() => {
     const items: string[] = [];
     if (interpretation === "Accepted for intended use" && sequencingResult && sequencingResult !== "Matches expected regions") {
@@ -139,6 +142,7 @@ function OutcomeReportForm({ designId, modelVersion, onClose, onSubmitted, initi
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSubmitAttempted(true);
     setApiError(null);
     if (validationIssues.length || !designId || !modelVersion) {
       return;
@@ -231,10 +235,11 @@ function OutcomeReportForm({ designId, modelVersion, onClose, onSubmitted, initi
         </section>
 
         <SelectField label="What did you test?" value={testedMaterial} options={testedMaterialOptions} onChange={setTestedMaterial} />
-        <SelectField label="What sequence evidence do you have?" value={sequencingResult} options={sequencingOptions} onChange={setSequencingResult} />
-        <SelectField label="What happened in expression testing?" value={expressionResult} options={expressionOptions} onChange={setExpressionResult} />
-        <SelectField label="What happened in functional testing?" value={functionalResult} options={functionalOptions} onChange={setFunctionalResult} />
-        <SelectField label="Based on the evidence above, what is your interpretation?" value={interpretation} options={interpretationOptions} onChange={setInterpretation} />
+        <p id="outcome-evidence-help" className="sr-only">Add at least one observed result (sequencing, expression, or functional) or an overall interpretation.</p>
+        <SelectField id="outcome-sequencing" label="What sequence evidence do you have?" value={sequencingResult} options={sequencingOptions} onChange={setSequencingResult} ariaDescribedby="outcome-evidence-help" ariaInvalid={submitAttempted && evidenceMissing} />
+        <SelectField id="outcome-expression" label="What happened in expression testing?" value={expressionResult} options={expressionOptions} onChange={setExpressionResult} ariaDescribedby="outcome-evidence-help" ariaInvalid={submitAttempted && evidenceMissing} />
+        <SelectField id="outcome-functional" label="What happened in functional testing?" value={functionalResult} options={functionalOptions} onChange={setFunctionalResult} ariaDescribedby="outcome-evidence-help" ariaInvalid={submitAttempted && evidenceMissing} />
+        <SelectField id="outcome-interpretation" label="Based on the evidence above, what is your interpretation?" value={interpretation} options={interpretationOptions} onChange={setInterpretation} ariaDescribedby="outcome-evidence-help" ariaInvalid={submitAttempted && evidenceMissing} />
 
         <label className="block text-sm font-medium text-slate-800">
           Notes
@@ -242,12 +247,12 @@ function OutcomeReportForm({ designId, modelVersion, onClose, onSubmitted, initi
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
             rows={4}
-            className="mt-2 w-full resize-none border border-line px-3 py-2 text-sm outline-none focus:border-action"
+            className="mt-2 w-full resize-none border border-line px-3 py-2 text-sm outline-none focus:border-action focus:ring-2 focus:ring-action/20"
             placeholder="Protocol deviations, vendor issues, changed sequence, weak controls, or clone-specific details..."
           />
         </label>
 
-        <section className="border border-line p-4">
+        <section className="border border-line p-4" aria-describedby="outcome-consent-help">
           <label className="flex gap-3 text-sm text-slate-800">
             <input
               type="checkbox"
@@ -256,6 +261,8 @@ function OutcomeReportForm({ designId, modelVersion, onClose, onSubmitted, initi
                 setTrainingConsent(event.target.checked);
                 setConsentReviewed(true);
               }}
+              aria-invalid={submitAttempted && !consentReviewed || undefined}
+              aria-describedby="outcome-consent-help"
               className="mt-1 h-4 w-4"
             />
             <span>I consent to this outcome report and non-sensitive linked design metadata being used to improve future design models.</span>
@@ -263,7 +270,7 @@ function OutcomeReportForm({ designId, modelVersion, onClose, onSubmitted, initi
           <button type="button" onClick={() => setConsentReviewed(true)} className="mt-3 text-xs font-semibold text-action hover:text-action/80 focus:outline-none focus:ring-2 focus:ring-action/20">
             {consentReviewed ? "Consent choice reviewed" : "Submit without training consent"}
           </button>
-          <p className="mt-2 text-xs leading-5 text-slate-500">Submitting an outcome does not require this consent. If unchecked, your report can still be saved, but it must not be used for model training or preference optimization.</p>
+          <p id="outcome-consent-help" className="mt-2 text-xs leading-5 text-slate-500">Submitting an outcome does not require this consent. If unchecked, your report can still be saved, but it must not be used for model training or preference optimization.</p>
         </section>
 
         <section className="border border-line bg-panel p-4 text-sm">
@@ -271,7 +278,7 @@ function OutcomeReportForm({ designId, modelVersion, onClose, onSubmitted, initi
           <p className="mt-1 text-slate-600">{labelText(outcomeLabel, trainingConsent)}</p>
         </section>
 
-        {validationIssues.length ? <MessageList tone="error" items={validationIssues} /> : null}
+        {validationIssues.length ? <MessageList id="outcome-validation-errors" tone="error" items={validationIssues} ariaLive={submitAttempted ? "polite" : undefined} /> : null}
         {warnings.length ? <MessageList tone="warning" items={warnings} /> : null}
         {apiError ? <p className="border border-red-200 bg-red-50 p-3 text-sm text-red-700">{apiError}</p> : null}
 
@@ -364,11 +371,11 @@ function ModalFrame({ children, onClose, titleId, descriptionId }: { children: R
   );
 }
 
-function SelectField({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
+function SelectField({ label, value, options, onChange, id, ariaDescribedby, ariaInvalid }: { label: string; value: string; options: string[]; onChange: (value: string) => void; id?: string; ariaDescribedby?: string; ariaInvalid?: boolean }) {
   return (
-    <label className="block text-sm font-medium text-slate-800">
+    <label className="block text-sm font-medium text-slate-800" htmlFor={id}>
       {label}
-      <select value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full border border-line bg-white px-3 py-2 text-sm outline-none focus:border-action">
+      <select id={id} value={value} onChange={(event) => onChange(event.target.value)} aria-describedby={ariaDescribedby} aria-invalid={ariaInvalid || undefined} className="mt-2 w-full border border-line bg-white px-3 py-2 text-sm outline-none focus:border-action focus:ring-2 focus:ring-action/20">
         <option value="">Select closest status</option>
         {options.map((option) => (
           <option key={option} value={option}>{option}</option>
@@ -378,10 +385,10 @@ function SelectField({ label, value, options, onChange }: { label: string; value
   );
 }
 
-function MessageList({ tone, items }: { tone: "error" | "warning"; items: string[] }) {
+function MessageList({ tone, items, id, ariaLive }: { tone: "error" | "warning"; items: string[]; id?: string; ariaLive?: "polite" }) {
   const className = tone === "error" ? "border-red-200 bg-red-50 text-red-700" : "border-warning/40 bg-amber-50 text-warning";
   return (
-    <ul className={`space-y-1 border p-3 text-sm ${className}`}>
+    <ul id={id} aria-live={ariaLive} className={`space-y-1 border p-3 text-sm ${className}`}>
       {items.map((item) => <li key={item}>{item}</li>)}
     </ul>
   );

@@ -19,8 +19,9 @@ export function PlasmidMapView({ annotatedSequence }: PlasmidMapViewProps) {
     return (
       <section id="plasmid-map" className="border border-line bg-white p-4 shadow-subtle" aria-labelledby="plasmid-map-title-empty">
         <h2 id="plasmid-map-title-empty" className="text-sm font-semibold">Plasmid map</h2>
-        <div className="mt-4 flex h-64 items-center justify-center border border-dashed border-line bg-panel px-6 text-center text-sm text-slate-500 sm:h-80 lg:h-96">
-          Submit a design to render the annotated plasmid.
+        <div className="mt-4 flex h-64 flex-col items-center justify-center gap-2 border border-dashed border-line bg-panel px-6 text-center sm:h-80 lg:h-96">
+          <p className="text-sm font-semibold text-slate-700">No construct loaded</p>
+          <p className="text-xs leading-5 text-slate-500">Submit a design to render the annotated plasmid.</p>
         </div>
       </section>
     );

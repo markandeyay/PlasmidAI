@@ -65,6 +65,7 @@ export default function Page() {
   const [pendingPromptStatus, setPendingPromptStatus] = useState<PendingPromptStatus>("loading");
   const [dismissedPromptKeys, setDismissedPromptKeys] = useState<string[]>([]);
   const [appStatus, setAppStatus] = useState("");
+  const [outcomeRefreshStatus, setOutcomeRefreshStatus] = useState<"idle" | "refreshing" | "error">("idle");
 
   const latestResult = useMemo(
     () => [...messages].reverse().find((message) => message.result?.annotated_sequence)?.result,
@@ -146,8 +147,10 @@ export default function Page() {
     let cancelled = false;
     const designIds = reportedOutcomeDesignIds ? reportedOutcomeDesignIds.split("|") : [];
     if (!designIds.length) {
+      setOutcomeRefreshStatus("idle");
       return;
     }
+    setOutcomeRefreshStatus("refreshing");
     Promise.all(
       designIds.map((knownDesignId) =>
         getOutcome(knownDesignId)
@@ -161,6 +164,9 @@ export default function Page() {
       const outcomes = refreshed.filter((outcome): outcome is OutcomeReport => Boolean(outcome));
       if (outcomes.length) {
         setReportedOutcomes((current) => persistReportedOutcomes(mergeReportedOutcomes(current, outcomes)));
+        setOutcomeRefreshStatus("idle");
+      } else {
+        setOutcomeRefreshStatus("error");
       }
     });
     return () => {
@@ -412,10 +418,10 @@ export default function Page() {
         <PendingOutcomeToast prompt={visiblePendingPrompt} onOpen={openPromptOutcomeModal} onDismiss={dismissPrompt} />
       ) : null}
       <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[minmax(0,1fr)_520px]">
-        <section className="flex min-h-[70vh] flex-col border-r border-line bg-white lg:min-h-screen">
+        <section className="flex min-h-[70vh] flex-col border-r border-line bg-white lg:min-h-screen" aria-labelledby="design-workspace-title">
           <header className="border-b border-line px-4 py-5 sm:px-6">
             <p className="text-sm font-semibold uppercase text-action">PlasmidAI</p>
-            <h1 className="mt-1 text-2xl font-semibold">Design workspace</h1>
+            <h1 id="design-workspace-title" className="mt-1 text-2xl font-semibold">Design workspace</h1>
           </header>
 
           <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-6">
@@ -527,14 +533,15 @@ export default function Page() {
           </form>
         </section>
 
-        <aside className="min-h-0 bg-panel px-4 py-4 sm:px-5 sm:py-5 lg:min-h-screen">
+        <aside className="min-h-0 bg-panel px-4 py-4 sm:px-5 sm:py-5 lg:min-h-screen" aria-labelledby="right-rail-title">
+          <h2 id="right-rail-title" className="sr-only">Workspace panels</h2>
           <div className="space-y-4 lg:sticky lg:top-5">
             {isBusy ? <RightRailJobNotice jobId={activeJobId} hasPreviousDesign={Boolean(designId)} /> : null}
             {pendingPromptStatus === "error" ? <PendingPromptFetchMessage /> : null}
             <PlasmidMapView annotatedSequence={annotatedSequence as AnnotatedSequence | null} />
             <ExportActions designId={designId} status={exportStatus} error={exportError} disabledReason={isBusy ? "A new design job is running. Exports stay disabled to avoid downloading the previous design by mistake." : null} onExport={handleExport} />
             <OutcomePanel designId={designId} latestOutcome={latestOutcome} disabledReason={isBusy ? "A new design job is running. Outcome reporting is disabled until the current result is ready." : null} onOpen={openCurrentOutcomeModal} />
-            <MyOutcomesPanel outcomes={reportedOutcomes} onOpen={openReportedOutcomeModal} />
+            <MyOutcomesPanel outcomes={reportedOutcomes} onOpen={openReportedOutcomeModal} refreshStatus={outcomeRefreshStatus} />
           </div>
         </aside>
       </div>
@@ -551,7 +558,7 @@ export default function Page() {
   );
 }
 
-function MyOutcomesPanel({ outcomes, onOpen }: { outcomes: OutcomeReport[]; onOpen: (outcome: OutcomeReport) => void }) {
+function MyOutcomesPanel({ outcomes, onOpen, refreshStatus }: { outcomes: OutcomeReport[]; onOpen: (outcome: OutcomeReport) => void; refreshStatus: "idle" | "refreshing" | "error" }) {
   const sortedOutcomes = [...outcomes].sort((a, b) => new Date(b.reported_at).getTime() - new Date(a.reported_at).getTime());
   return (
     <section className="border border-line bg-white p-4 shadow-subtle" aria-label="My reported outcomes">
@@ -564,6 +571,12 @@ function MyOutcomesPanel({ outcomes, onOpen }: { outcomes: OutcomeReport[]; onOp
         </div>
         <span className="border border-line bg-panel px-2 py-1 text-xs font-semibold text-slate-600">{outcomes.length}</span>
       </div>
+      {refreshStatus === "refreshing" ? (
+        <p className="mt-3 text-xs text-slate-500" role="status">Refreshing outcomes...</p>
+      ) : null}
+      {refreshStatus === "error" && sortedOutcomes.length ? (
+        <p className="mt-3 border border-line bg-panel p-3 text-xs leading-5 text-slate-600">Could not refresh saved outcomes. The list below shows the most recent reports saved in this browser.</p>
+      ) : null}
       {sortedOutcomes.length ? (
         <div className="mt-3 space-y-2">
           {sortedOutcomes.map((outcome) => (
