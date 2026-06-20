@@ -65,6 +65,7 @@ export default function Page() {
   const [pendingPromptStatus, setPendingPromptStatus] = useState<PendingPromptStatus>("loading");
   const [dismissedPromptKeys, setDismissedPromptKeys] = useState<string[]>([]);
   const [appStatus, setAppStatus] = useState("");
+  const [outcomeRefreshStatus, setOutcomeRefreshStatus] = useState<"idle" | "refreshing" | "error">("idle");
 
   const latestResult = useMemo(
     () => [...messages].reverse().find((message) => message.result?.annotated_sequence)?.result,
@@ -78,6 +79,7 @@ export default function Page() {
   const designId = latestResult?.design_id ?? latestResult?.design?.design_id ?? null;
   const modelVersion = latestResult?.validation_report?.generated_by_model_version ?? latestResult?.design?.validation_report?.generated_by_model_version ?? null;
   const isBusy = state === "submitting" || state === "polling";
+  const isPollTimeoutRecovery = state === "poll_timeout" && Boolean(activeJobId);
   const activeClarification = useMemo(
     () => [...messages].reverse().find((message) => message.kind === "clarification")?.text ?? null,
     [messages]
@@ -145,8 +147,10 @@ export default function Page() {
     let cancelled = false;
     const designIds = reportedOutcomeDesignIds ? reportedOutcomeDesignIds.split("|") : [];
     if (!designIds.length) {
+      setOutcomeRefreshStatus("idle");
       return;
     }
+    setOutcomeRefreshStatus("refreshing");
     Promise.all(
       designIds.map((knownDesignId) =>
         getOutcome(knownDesignId)
@@ -160,6 +164,9 @@ export default function Page() {
       const outcomes = refreshed.filter((outcome): outcome is OutcomeReport => Boolean(outcome));
       if (outcomes.length) {
         setReportedOutcomes((current) => persistReportedOutcomes(mergeReportedOutcomes(current, outcomes)));
+        setOutcomeRefreshStatus("idle");
+      } else {
+        setOutcomeRefreshStatus("error");
       }
     });
     return () => {
@@ -184,7 +191,7 @@ export default function Page() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = input.trim();
-    if (!text || isBusy) {
+    if (!text || isBusy || isPollTimeoutRecovery) {
       return;
     }
 
@@ -222,11 +229,11 @@ export default function Page() {
             id: crypto.randomUUID(),
             role: "system",
             kind: "status",
-            text: `Job ${jobId} is still running. Keep this page open and use Check status when you want to resume polling.`
+            text: `Job ${jobId} is still queued or running. Keep this page open, confirm the local worker or demo fixture is running, then use Check status to resume polling.`
           }
         ]);
         setState("poll_timeout");
-        setAppStatus(`Job ${jobId} is still running.`);
+        setAppStatus(`Job ${jobId} is still queued or running. Check the local worker or demo fixture before retrying.`);
         return;
       }
       const text = friendlyErrorMessage(error);
@@ -261,11 +268,11 @@ export default function Page() {
             id: crypto.randomUUID(),
             role: "system",
             kind: "status",
-            text: `Job ${activeJobId} is still running. Try again in a moment.`
+            text: `Job ${activeJobId} is still queued or running. Confirm the local worker or demo fixture is running, then try again.`
           }
         ]);
         setState("poll_timeout");
-        setAppStatus(`Job ${activeJobId} is still running.`);
+        setAppStatus(`Job ${activeJobId} is still queued or running. Check the local worker or demo fixture before retrying.`);
         return;
       }
       const text = friendlyErrorMessage(error);
@@ -372,6 +379,26 @@ export default function Page() {
     setDismissedPromptKeys((current) => persistDismissedPromptKey(current, key));
   }
 
+  function handleStartOverAfterTimeout() {
+    const abandonedJobId = activeJobId;
+    setActiveJobId(null);
+    setJobStartedAt(null);
+    setSessionId(null);
+    setState("idle");
+    setMessages((current) => [
+      ...current,
+      {
+        id: crypto.randomUUID(),
+        role: "system",
+        kind: "status",
+        text: abandonedJobId
+          ? `Stopped waiting for job ${abandonedJobId}. Start a new design when the demo fixture or worker is ready.`
+          : "Stopped waiting for the previous job. Start a new design when the demo fixture or worker is ready."
+      }
+    ]);
+    setAppStatus("Timed-out job abandoned. Start a new design when the demo fixture or worker is ready.");
+  }
+
   function handleOutcomeSubmitted(report: OutcomeReport) {
     setReportedOutcomes((current) => persistReportedOutcomes(upsertReportedOutcome(current, report)));
     if (report.design_id === designId) {
@@ -391,10 +418,10 @@ export default function Page() {
         <PendingOutcomeToast prompt={visiblePendingPrompt} onOpen={openPromptOutcomeModal} onDismiss={dismissPrompt} />
       ) : null}
       <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[minmax(0,1fr)_520px]">
-        <section className="flex min-h-[70vh] flex-col border-r border-line bg-white lg:min-h-screen">
+        <section className="flex min-h-[70vh] flex-col border-r border-line bg-white lg:min-h-screen" aria-labelledby="design-workspace-title">
           <header className="border-b border-line px-4 py-5 sm:px-6">
             <p className="text-sm font-semibold uppercase text-action">PlasmidAI</p>
-            <h1 className="mt-1 text-2xl font-semibold">Design workspace</h1>
+            <h1 id="design-workspace-title" className="mt-1 text-2xl font-semibold">Design workspace</h1>
           </header>
 
           <div className="flex-1 space-y-4 overflow-y-auto px-4 py-5 sm:px-6">
@@ -469,7 +496,7 @@ export default function Page() {
                 id="goal"
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
-                disabled={isBusy}
+                disabled={isBusy || isPollTimeoutRecovery}
                 rows={3}
                 className="min-h-24 flex-1 resize-none border border-line bg-white px-4 py-3 text-sm shadow-subtle outline-none focus:border-action focus:ring-2 focus:ring-action/20"
                 placeholder={
@@ -480,7 +507,7 @@ export default function Page() {
               />
               <button
                 type="submit"
-                disabled={!input.trim() || isBusy}
+                disabled={!input.trim() || isBusy || isPollTimeoutRecovery}
                 className="h-12 border border-action bg-action px-5 text-sm font-semibold text-white hover:bg-action/90 focus:border-action focus:outline-none focus:ring-2 focus:ring-action/20 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-300 disabled:hover:bg-slate-300"
               >
                 {state === "submitting" ? "Starting" : state === "polling" ? "Designing" : state === "awaiting_clarification" ? "Answer" : sessionId ? "Refine" : "Design"}
@@ -488,25 +515,33 @@ export default function Page() {
             </div>
             {activeJobId ? (
               <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                <span>Job {activeJobId} is running. You can keep this page open while results are prepared.</span>
+                <span>
+                  Job {activeJobId} is still queued or running. For a local demo, confirm the worker or deterministic demo fixture is running before retrying.
+                </span>
                 {state === "poll_timeout" ? (
-                  <button type="button" className="font-semibold text-action" onClick={() => void handleCheckJob()}>
-                    Check status
-                  </button>
+                  <>
+                    <button type="button" className="font-semibold text-action" onClick={() => void handleCheckJob()}>
+                      Check status
+                    </button>
+                    <button type="button" className="font-semibold text-slate-700 hover:text-action" onClick={handleStartOverAfterTimeout}>
+                      Start over
+                    </button>
+                  </>
                 ) : null}
               </div>
             ) : null}
           </form>
         </section>
 
-        <aside className="min-h-0 bg-panel px-4 py-4 sm:px-5 sm:py-5 lg:min-h-screen">
+        <aside className="min-h-0 bg-panel px-4 py-4 sm:px-5 sm:py-5 lg:min-h-screen" aria-labelledby="right-rail-title">
+          <h2 id="right-rail-title" className="sr-only">Workspace panels</h2>
           <div className="space-y-4 lg:sticky lg:top-5">
             {isBusy ? <RightRailJobNotice jobId={activeJobId} hasPreviousDesign={Boolean(designId)} /> : null}
             {pendingPromptStatus === "error" ? <PendingPromptFetchMessage /> : null}
             <PlasmidMapView annotatedSequence={annotatedSequence as AnnotatedSequence | null} />
             <ExportActions designId={designId} status={exportStatus} error={exportError} disabledReason={isBusy ? "A new design job is running. Exports stay disabled to avoid downloading the previous design by mistake." : null} onExport={handleExport} />
             <OutcomePanel designId={designId} latestOutcome={latestOutcome} disabledReason={isBusy ? "A new design job is running. Outcome reporting is disabled until the current result is ready." : null} onOpen={openCurrentOutcomeModal} />
-            <MyOutcomesPanel outcomes={reportedOutcomes} onOpen={openReportedOutcomeModal} />
+            <MyOutcomesPanel outcomes={reportedOutcomes} onOpen={openReportedOutcomeModal} refreshStatus={outcomeRefreshStatus} />
           </div>
         </aside>
       </div>
@@ -523,7 +558,7 @@ export default function Page() {
   );
 }
 
-function MyOutcomesPanel({ outcomes, onOpen }: { outcomes: OutcomeReport[]; onOpen: (outcome: OutcomeReport) => void }) {
+function MyOutcomesPanel({ outcomes, onOpen, refreshStatus }: { outcomes: OutcomeReport[]; onOpen: (outcome: OutcomeReport) => void; refreshStatus: "idle" | "refreshing" | "error" }) {
   const sortedOutcomes = [...outcomes].sort((a, b) => new Date(b.reported_at).getTime() - new Date(a.reported_at).getTime());
   return (
     <section className="border border-line bg-white p-4 shadow-subtle" aria-label="My reported outcomes">
@@ -536,6 +571,12 @@ function MyOutcomesPanel({ outcomes, onOpen }: { outcomes: OutcomeReport[]; onOp
         </div>
         <span className="border border-line bg-panel px-2 py-1 text-xs font-semibold text-slate-600">{outcomes.length}</span>
       </div>
+      {refreshStatus === "refreshing" ? (
+        <p className="mt-3 text-xs text-slate-500" role="status">Refreshing outcomes...</p>
+      ) : null}
+      {refreshStatus === "error" && sortedOutcomes.length ? (
+        <p className="mt-3 border border-line bg-panel p-3 text-xs leading-5 text-slate-600">Could not refresh saved outcomes. The list below shows the most recent reports saved in this browser.</p>
+      ) : null}
       {sortedOutcomes.length ? (
         <div className="mt-3 space-y-2">
           {sortedOutcomes.map((outcome) => (

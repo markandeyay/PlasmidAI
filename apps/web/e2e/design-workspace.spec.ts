@@ -83,7 +83,10 @@ test("researcher can design, refine, view map, and export files", async ({ page 
   await expect(page.getByText("Retrieved template evidence")).toBeVisible();
   await expect(page.getByText("curated:pEGFP-N1")).toBeVisible();
   await expect(page.getByTestId("seqviz-map")).toBeVisible();
-  await expect(page.getByText("CMV promoter")).toBeVisible();
+  await expect(page.getByText("Accessible map summary")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Feature list" })).toBeVisible();
+  await expect(page.getByText("Map could not render")).toBeHidden();
+  await expect(page.getByRole("region", { name: "Feature list" }).getByText("CMV promoter", { exact: true })).toBeVisible();
 
   await page.getByLabel("Experimental goal").fill("switch the backbone to pLenti-CMV");
   await page.getByRole("button", { name: "Refine" }).click();
@@ -103,6 +106,57 @@ test("researcher can design, refine, view map, and export files", async ({ page 
   expect(jobPolls).toBeGreaterThanOrEqual(2);
   expect(requests).toContain("GET /v1/designs/design-1/export?format=genbank");
   expect(requests).toContain("GET /v1/designs/design-1/export?format=fasta");
+});
+
+test("small viewport keeps map, export, and outcome actions reachable", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+
+  await page.route("http://127.0.0.1:8000/v1/users/me/pending-outcome-prompts", async (route) => {
+    await route.fulfill({ json: { prompts: [] } });
+  });
+
+  await page.route("http://127.0.0.1:8000/v1/sessions", async (route) => {
+    await route.fulfill({ json: { session_id: "session-mobile" } });
+  });
+
+  await page.route("http://127.0.0.1:8000/v1/sessions/session-mobile/design", async (route) => {
+    await route.fulfill({ json: { job_id: "job-mobile" } });
+  });
+
+  await page.route("http://127.0.0.1:8000/v1/jobs/job-mobile", async (route) => {
+    await route.fulfill({
+      json: {
+        job_id: "job-mobile",
+        status: "completed",
+        result: {
+          design_id: "design-mobile",
+          recommendation_text: "Generated mobile-friendly annotated reporter plasmid.",
+          annotated_sequence: annotatedSequence,
+          retrieved_templates: [{ source_id: "curated:pEGFP-N1", name: "pEGFP-N1", score: 0.97 }]
+        }
+      }
+    });
+  });
+
+  await page.route("http://127.0.0.1:8000/v1/designs/design-mobile/outcome", async (route) => {
+    await route.fulfill({ status: 404, json: { error: { message: "Outcome not found" } } });
+  });
+
+  await page.goto("/");
+  await page.getByLabel("Experimental goal").fill("build a compact GFP reporter");
+  await page.getByRole("button", { name: "Design" }).click();
+  await expect(page.getByText("Generated mobile-friendly annotated reporter plasmid.")).toBeVisible();
+
+  await page.getByRole("link", { name: "View plasmid map" }).click();
+  await expect(page.getByRole("heading", { name: "Plasmid map" })).toBeVisible();
+  await expect(page.getByText("Accessible map summary")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Feature list" })).toBeVisible();
+  await expect(page.getByText("Map could not render")).toBeHidden();
+  await expect(page.getByRole("region", { name: "Export actions" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "GenBank" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Report outcome" }).click();
+  await expect(page.getByRole("dialog").getByRole("heading", { name: "What happened in the lab?" })).toBeVisible();
 });
 
 test("completed job without sequence shows partial result evidence", async ({ page }) => {
