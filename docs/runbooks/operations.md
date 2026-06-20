@@ -18,6 +18,8 @@ python scripts/check_services.py
 
 3. Use `MODE=offline` for retrieval commands when the embedding model is already cached and network access should not be used.
 
+4. For API deployment or dependency refreshes, keep the backend on FastAPI `>=0.138` and Starlette `>=1.3.1,<2`. This explicit Starlette floor avoids the Starlette 0.51.0 malformed Host-header URL reconstruction vulnerability while keeping the API on the tested FastAPI/Starlette 1.x stack.
+
 ## Run Ingestion
 
 Use the Makefile targets rather than calling implementation modules directly.
