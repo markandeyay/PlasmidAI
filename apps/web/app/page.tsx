@@ -78,6 +78,7 @@ export default function Page() {
   const designId = latestResult?.design_id ?? latestResult?.design?.design_id ?? null;
   const modelVersion = latestResult?.validation_report?.generated_by_model_version ?? latestResult?.design?.validation_report?.generated_by_model_version ?? null;
   const isBusy = state === "submitting" || state === "polling";
+  const isPollTimeoutRecovery = state === "poll_timeout" && Boolean(activeJobId);
   const activeClarification = useMemo(
     () => [...messages].reverse().find((message) => message.kind === "clarification")?.text ?? null,
     [messages]
@@ -184,7 +185,7 @@ export default function Page() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = input.trim();
-    if (!text || isBusy) {
+    if (!text || isBusy || isPollTimeoutRecovery) {
       return;
     }
 
@@ -222,11 +223,11 @@ export default function Page() {
             id: crypto.randomUUID(),
             role: "system",
             kind: "status",
-            text: `Job ${jobId} is still running. Keep this page open and use Check status when you want to resume polling.`
+            text: `Job ${jobId} is still queued or running. Keep this page open, confirm the local worker or demo fixture is running, then use Check status to resume polling.`
           }
         ]);
         setState("poll_timeout");
-        setAppStatus(`Job ${jobId} is still running.`);
+        setAppStatus(`Job ${jobId} is still queued or running. Check the local worker or demo fixture before retrying.`);
         return;
       }
       const text = friendlyErrorMessage(error);
@@ -261,11 +262,11 @@ export default function Page() {
             id: crypto.randomUUID(),
             role: "system",
             kind: "status",
-            text: `Job ${activeJobId} is still running. Try again in a moment.`
+            text: `Job ${activeJobId} is still queued or running. Confirm the local worker or demo fixture is running, then try again.`
           }
         ]);
         setState("poll_timeout");
-        setAppStatus(`Job ${activeJobId} is still running.`);
+        setAppStatus(`Job ${activeJobId} is still queued or running. Check the local worker or demo fixture before retrying.`);
         return;
       }
       const text = friendlyErrorMessage(error);
@@ -372,6 +373,26 @@ export default function Page() {
     setDismissedPromptKeys((current) => persistDismissedPromptKey(current, key));
   }
 
+  function handleStartOverAfterTimeout() {
+    const abandonedJobId = activeJobId;
+    setActiveJobId(null);
+    setJobStartedAt(null);
+    setSessionId(null);
+    setState("idle");
+    setMessages((current) => [
+      ...current,
+      {
+        id: crypto.randomUUID(),
+        role: "system",
+        kind: "status",
+        text: abandonedJobId
+          ? `Stopped waiting for job ${abandonedJobId}. Start a new design when the demo fixture or worker is ready.`
+          : "Stopped waiting for the previous job. Start a new design when the demo fixture or worker is ready."
+      }
+    ]);
+    setAppStatus("Timed-out job abandoned. Start a new design when the demo fixture or worker is ready.");
+  }
+
   function handleOutcomeSubmitted(report: OutcomeReport) {
     setReportedOutcomes((current) => persistReportedOutcomes(upsertReportedOutcome(current, report)));
     if (report.design_id === designId) {
@@ -469,7 +490,7 @@ export default function Page() {
                 id="goal"
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
-                disabled={isBusy}
+                disabled={isBusy || isPollTimeoutRecovery}
                 rows={3}
                 className="min-h-24 flex-1 resize-none border border-line bg-white px-4 py-3 text-sm shadow-subtle outline-none focus:border-action focus:ring-2 focus:ring-action/20"
                 placeholder={
@@ -480,7 +501,7 @@ export default function Page() {
               />
               <button
                 type="submit"
-                disabled={!input.trim() || isBusy}
+                disabled={!input.trim() || isBusy || isPollTimeoutRecovery}
                 className="h-12 border border-action bg-action px-5 text-sm font-semibold text-white hover:bg-action/90 focus:border-action focus:outline-none focus:ring-2 focus:ring-action/20 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-300 disabled:hover:bg-slate-300"
               >
                 {state === "submitting" ? "Starting" : state === "polling" ? "Designing" : state === "awaiting_clarification" ? "Answer" : sessionId ? "Refine" : "Design"}
@@ -488,11 +509,18 @@ export default function Page() {
             </div>
             {activeJobId ? (
               <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                <span>Job {activeJobId} is running. You can keep this page open while results are prepared.</span>
+                <span>
+                  Job {activeJobId} is still queued or running. For a local demo, confirm the worker or deterministic demo fixture is running before retrying.
+                </span>
                 {state === "poll_timeout" ? (
-                  <button type="button" className="font-semibold text-action" onClick={() => void handleCheckJob()}>
-                    Check status
-                  </button>
+                  <>
+                    <button type="button" className="font-semibold text-action" onClick={() => void handleCheckJob()}>
+                      Check status
+                    </button>
+                    <button type="button" className="font-semibold text-slate-700 hover:text-action" onClick={handleStartOverAfterTimeout}>
+                      Start over
+                    </button>
+                  </>
                 ) : null}
               </div>
             ) : null}
