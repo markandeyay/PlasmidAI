@@ -86,7 +86,7 @@ test("researcher can design, refine, view map, and export files", async ({ page 
   await expect(page.getByText("Accessible map summary")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Feature list" })).toBeVisible();
   await expect(page.getByText("Map could not render")).toBeHidden();
-  await expect(page.getByText("CMV promoter")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Feature list" }).getByText("CMV promoter", { exact: true })).toBeVisible();
 
   await page.getByLabel("Experimental goal").fill("switch the backbone to pLenti-CMV");
   await page.getByRole("button", { name: "Refine" }).click();
