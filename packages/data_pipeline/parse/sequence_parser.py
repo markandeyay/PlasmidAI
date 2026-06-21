@@ -6,7 +6,8 @@ from io import StringIO
 from pathlib import Path
 from typing import Any, Iterable
 
-from Bio import SeqIO, pairwise2
+from Bio import SeqIO
+from Bio.Align import PairwiseAligner
 from Bio.SeqFeature import SeqFeature
 from Bio.SeqRecord import SeqRecord
 
@@ -307,23 +308,30 @@ def align_reference_window(
     strand: int,
     config: ParserConfig,
 ) -> tuple[int, int, int, float, float] | None:
-    alignments = pairwise2.align.localms(sequence, ref, 2, -1, -5, -1, one_alignment_only=True)
-    if not alignments:
+    aligner = PairwiseAligner(mode="local")
+    aligner.match_score = 2
+    aligner.mismatch_score = -1
+    aligner.open_gap_score = -5
+    aligner.extend_gap_score = -1
+    try:
+        alignment = aligner.align(sequence, ref)[0]
+    except IndexError:
         return None
-    alignment = alignments[0]
-    aligned_seq, aligned_ref, score, start, end = alignment[:5]
-    ref_aligned_bases = sum(1 for base in aligned_ref if base != "-")
+    target_blocks, query_blocks = alignment.aligned
+    ref_aligned_bases = sum(query_end - query_start for query_start, query_end in query_blocks)
     if ref_aligned_bases == 0:
         return None
-    identities = sum(
-        1
-        for seq_base, ref_base in zip(aligned_seq, aligned_ref)
-        if seq_base == ref_base and seq_base != "-" and ref_base != "-"
-    )
+    identities = 0
+    for (target_start, target_end), (query_start, query_end) in zip(target_blocks, query_blocks):
+        target_segment = sequence[target_start:target_end]
+        query_segment = ref[query_start:query_end]
+        identities += sum(1 for seq_base, ref_base in zip(target_segment, query_segment) if seq_base == ref_base)
     identity = identities / ref_aligned_bases
     coverage = ref_aligned_bases / len(ref)
     if identity < config.reference_identity_threshold or coverage < config.reference_coverage_threshold:
         return None
+    start = min(int(block[0]) for block in target_blocks)
+    end = max(int(block[1]) for block in target_blocks)
     return int(start), int(end), strand, identity, coverage
 
 

@@ -62,7 +62,7 @@ def plasmid(plasmid_id: str, raw_ref: str, *, use_cases: list[str] | None = None
 
 
 def test_embed_corpus_parses_cached_genbank_and_skips_unchanged_records() -> None:
-    genbank_blob = """LOCUS       PUC19                     400 bp    DNA     circular SYN 01-JAN-2000
+    genbank_blob = """LOCUS       PUC19                     240 bp    DNA     circular SYN 01-JAN-2000
 DEFINITION  High-copy cloning vector with lac promoter and AmpR.
 ACCESSION   TEST0001
 VERSION     TEST0001.1
