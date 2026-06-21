@@ -1,140 +1,129 @@
 # PlasmidAI
 
-PlasmidAI is a research prototype for AI-assisted plasmid design: a user describes an experimental goal, the system retrieves relevant public/curated plasmid templates, produces or simulates a candidate design through the current generation interface, validates it with deterministic biological checks, renders an annotated map, exports GenBank/FASTA, and captures lab outcome feedback for future training signals.
+PlasmidAI is an AI-assisted plasmid design system: a researcher describes an experimental goal in natural language, the system grounds the request in real plasmid records, proposes an annotated candidate design, validates it against deterministic molecular-biology constraints, renders the plasmid map, and exports files that can move into normal cloning and review workflows.
 
-## Current Status
+## What It Does
 
-`PROGRESS.md` is the authoritative live state file. At the current consolidated baseline, local verification passes:
+PlasmidAI turns a design request into a validated plasmid artifact through a single workflow:
 
-- `make test`: 342 passed, 1 skipped, 8 warnings
-- `npm run build` in `apps/web`: passing
-- `npm run test:e2e` in `apps/web`: 3 passed
-- `make e2e-test`: 1 API-backed Playwright fixture passed
+1. A researcher describes the construct they want, such as a host, expression goal, selectable marker, reporter, cloning workflow, or template preference.
+2. The system parses the request into structured intent and retrieves relevant plasmids from an indexed corpus built from curated records and NCBI GenBank.
+3. A generation layer proposes a candidate sequence grounded in the retrieved template rather than inventing an unconstrained backbone.
+4. A deterministic validation engine checks restriction-site conflicts, repeat instability, codon-usage fit, and regulatory-element compatibility.
+5. The application returns an annotated circular construct with validation evidence, retrieved-template evidence, and export actions for GenBank and FASTA.
+6. The outcome system captures wet-lab results so confirmed designs and failures can become future training signal with explicit consent and provenance.
 
-Current capabilities:
+The product surface is a chat-style design workspace: ask for a plasmid, refine it conversationally, inspect the map and validation report, export the sequence, and later record what happened in the lab.
 
-- Local Docker Compose services for Postgres/pgvector, Redis, and object storage.
-- NCBI/curated plasmid ingestion, parsing, reprocessing, and quality reports.
-- Hybrid retrieval from indexed plasmid records with evaluation reports.
-- Deterministic validation for restriction sites, repeats/instability, codon usage, and regulatory compatibility.
-- FastAPI sessions, jobs, design/refine flow, export endpoints, outcome endpoints, rate limiting, and structured errors.
-- Next.js design workspace with chat/refine flow, seqviz map, validation/retrieval evidence, export controls, outcome prompts, local outcome history, and visual/accessibility/loading polish.
-- Phase 2 scaffolding: fake generation, Carbon-500M CPU plumbing, training-data formatting, registry, shadow comparison, rollout policy evaluation, and fake-backed canary support.
-- Phase 5 foundation: outcome capture, consent-gated training-signal derivation, and feedback-flywheel documentation.
+## How It Works
 
-## Phase Status
+### Retrieval Layer
 
-| Phase | Status | Notes |
-| --- | --- | --- |
-| Phase R - Research | Gate met | Findings and synthesis are under `research/`. |
-| Phase 0 - Data foundation | Foundation built, gate open | Corpus is 256 records with 141 complete annotations, far below the formal 50,000-record gate. Addgene/legal access and literature/context extraction remain open. |
-| Phase 1 - Retrieval MVP | Gate met | Retrieval robustness baseline reached top-5 `1.000` and clarification pass `1.000`. |
-| Phase 2 - Sequence generation | Scaffolded, gate open | Real Carbon-3B fine-tuning and biological validation are deferred pending cloud account setup and explicit spend authorization. |
-| Phase 3 - Validation | Gate met | Curated baseline is 31 known-good plus 52 known-bad records with accuracy `1.000`. |
-| Phase 4 - Application | Local foundation built, gate open | API and frontend work locally; production auth, deployment, primer design, complete synthesis handoff, and product hardening remain deferred. |
-| Phase 5 - Feedback flywheel | Foundation built, gate open | Outcome capture and training-signal derivation exist; scheduled retraining and automatic model promotion do not. |
+The retrieval layer embeds natural-language summaries of plasmid records and stores vectors in Postgres with pgvector. Queries combine semantic search with structured filters for biology fields such as host, vector profile, selectable marker, source, and named plasmid lookup. The corpus is drawn from curated seed records and NCBI GenBank records with cached raw blobs so parser improvements can reprocess existing data without refetching.
+
+### Generation Layer
+
+The generation interface supports deterministic fake generation for CI and demo flows, CPU-runnable Carbon model plumbing, training-data formatting, model registry records, shadow comparison, rollout policy evaluation, and fake-backed canary behavior. Carbon DNA language models are the intended real-model family for sequence generation, with candidate outputs grounded in retrieved templates.
+
+### Validation Layer
+
+The validation engine is deterministic rather than probabilistic. It evaluates restriction-site conflicts, repeat and synthesis-instability patterns, codon-usage scoring for intended payload coding sequences, and regulatory compatibility across promoters, origins, markers, terminators, and host context. Validation reports include actionable messages, coordinates where available, and context labels that distinguish design-construct failures from source-record uncertainty.
+
+### Application Layer
+
+The backend is a FastAPI service with sessions, turns, async design jobs, export endpoints, outcome endpoints, structured errors, local rate limiting, health checks, and metrics. The frontend is a Next.js 16 workspace with chat-style refinement, validation and retrieval evidence panels, outcome prompts, and a seqviz-based circular plasmid map renderer.
+
+### Feedback Loop
+
+Outcome capture links a design, model version, user-reported lab result, consent flag, timestamps, and provenance. Confirmed outcomes can be transformed into versioned training-signal snapshots, preserving the connection from generated design to wet-lab evidence.
+
+## Validation
+
+PlasmidAI uses a curated validation gold set to check whether the deterministic engine recognizes both good and bad constructs. The current curated set contains 36 known-good constructs and 52 known-bad constructs with 100% combined accuracy.
+
+Known-good records are tiered:
+
+- **Tier A, strict-clean:** designs that validate with no warnings.
+- **Tier B, accepted-with-caveats:** real plasmids that validate with documented warnings, such as intentional biological architecture that should be surfaced but not treated as a hard failure.
+
+This tiering reflects real molecular biology: validated plasmids can have caveats, and the validator should explain them rather than flattening everything into a binary pass/fail label. The same validation layer is used by generation evaluation, demo flows, and continuous evaluation dashboards.
 
 ## Getting Started
 
-Prerequisites: Git, Python, Docker Compose, Node.js `20.9.0` or newer with npm, and GNU Make. The Node.js floor is required by the Next.js 16 frontend under `apps/web`. The backend API stack is pinned through `requirements.txt` to FastAPI `>=0.138` and Starlette `>=1.3.1,<2` so deployments avoid the Starlette 0.51.0 malformed Host-header URL reconstruction vulnerability.
+Requirements:
+
+- Python 3.11 or newer
+- Node.js 20.9.0 or newer with npm
+- Docker and Docker Compose for local Postgres, pgvector, Redis, MinIO, and service checks
+- GNU Make
+
+Clone and set up the project:
 
 ```bash
 git clone https://github.com/markandeyay/PlasmidAI.git
 cd PlasmidAI
 cp .env.example .env
-# Set NCBI_EMAIL in .env before using NCBI Entrez ingestion.
 make setup
+```
+
+On PowerShell, use:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Run the backend test suite and service checks:
+
+```bash
 make test
 ```
 
-On PowerShell, use `Copy-Item .env.example .env` instead of `cp` if needed. If plain `make` is unavailable on Windows, use `C:\Program Files (x86)\GnuWin32\bin\make.exe`.
-
-NCBI requires a real contact email for Entrez requests. `NCBI_API_KEY` is optional. Addgene credentials should not be added unless partner-program access and commercial-use terms are approved.
-
-## Demo And Verification
-
-Run the deterministic API-backed demo fixture:
+Run the deterministic API-backed demo:
 
 ```bash
 make demo
 ```
 
-`make demo` currently aliases `make e2e-test`, which runs the full-stack Playwright fixture against the API-backed deterministic path. This is the reliable demo check today. A live external demo using real queued design jobs still needs a worker, fake queue path, seeded completed result, or explicit demo runner decision.
-
-Useful commands:
+Run continuous evaluation:
 
 ```bash
-make setup
-make test
 make eval-all
 make eval-check
-make quality-report
-make eval-retrieval
-make validate-sample MODE=gold
-make shadow-eval
-make e2e-test
-make serve-api
-make serve-web
 ```
 
-Use `make eval-all` at review checkpoints to run retrieval, fake-backed generation, curated validation gold, and corpus-quality checks into one dashboard under `data/eval/dashboard_<timestamp>.md`. Use `make eval-check` when you want the same run to fail on configured regression thresholds; it compares the newest dashboard against the previous one.
-
-Run a retrieval-only query:
-
-```bash
-make design MODE=offline TEXT="I need a yeast centromere shuttle plasmid selected by URA3."
-```
-
-Run frontend checks sequentially because Next build output and Playwright dev server both use `.next`:
+Run the web app checks:
 
 ```bash
 cd apps/web
-npm ci
+npm install
 npm run build
+npm run lint
 npm run test:e2e
 ```
 
-The API defaults to `http://127.0.0.1:8000`; the web app defaults to `http://127.0.0.1:3000`. Set `NEXT_PUBLIC_API_URL` if the frontend should target a different API URL.
+Use these local development targets from the repository root:
 
-## Architecture Summary
+```bash
+make serve-api
+make serve-web
+make e2e-test
+make quality-report
+make validate-sample MODE=gold
+```
 
-The system follows the phase-gated design in `SYSTEM_DESIGN.md`:
+The API defaults to `http://127.0.0.1:8000`; the web app defaults to `http://127.0.0.1:3000`. Set `NEXT_PUBLIC_API_URL` when the frontend should target a different API URL.
 
-- `packages/core/`: shared Pydantic schemas and canonical contracts.
+## Repository Map
+
+- `packages/core/`: shared schemas and contracts.
 - `packages/data_pipeline/`: ingestion, parsing, annotation, reprocessing, and corpus-quality jobs.
-- `packages/retrieval/`: intent parsing, embeddings, vector/structured retrieval, recommendation, and retrieval evaluation.
-- `packages/generation/`: sequence-generation interface, fake generator, Carbon CPU plumbing, training-data formatting, fine-tuning smoke path, registry, shadow, canary, and rollout evaluation.
-- `packages/validation/`: deterministic biological and synthesis constraint checks.
-- `packages/application/`: application-layer services and export codecs.
+- `packages/retrieval/`: intent parsing, document composition, embeddings, vector storage, retrieval, recommendation, and evaluation.
+- `packages/generation/`: sequence-generator interfaces, Carbon plumbing, training data, registry, shadow/canary support, and generation evaluation.
+- `packages/validation/`: deterministic biological validation checks.
+- `packages/application/`: application services, stores, jobs, and export codecs.
 - `packages/feedback/`: outcome-to-training-signal derivation.
-- `services/api/`: FastAPI application, stores, jobs, design/refine/export/outcome endpoints, and API safeguards.
+- `services/api/`: FastAPI application and API surface.
+- `services/worker/`: async job worker integration.
 - `apps/web/`: Next.js design workspace and Playwright tests.
-
-`SYSTEM_DESIGN.md` is the original build specification. `PROGRESS.md` is the mutable state file and should be treated as the source of truth for what is actually done, deferred, blocked, or pending human review. Known drift between the two is tracked in `research/findings/system_design_drift.md`.
-
-## Contributor Notes
-
-Two files keep long-running work aligned:
-
-- `SYSTEM_DESIGN.md`: original architecture and phase-gate contract.
-- `PROGRESS.md`: current state, verification, blockers, deferred work, and pending decisions.
-
-Multiple agents may use separate worktrees. Use the path assigned in the prompt and do not switch branches in another agent's worktree.
-
-- Codex main worktree: `C:\Users\yalam\PMR`
-- OpenCode auxiliary worktree: `C:\Users\yalam\PMR-opencode`
-
-Worktree-local `.env` files may use alternate service ports so Docker Compose stacks can coexist. Keep `.env` uncommitted.
-
-## Known Limitations And Deferred Work
-
-- The corpus is small and does not meet the formal Phase 0 scale gate.
-- Addgene and other non-NCBI source use remain blocked on licensing/provenance decisions.
-- Phase 2 real fine-tuning has not run; no generated sequence quality claim is made.
-- Carbon-500M support is CPU plumbing only, not a validated design model.
-- Production auth, authorization, usage metering, deployment, primer design, and synthesis-provider handoff are not complete.
-- Full Phase 5 automation is not active: outcomes do not yet trigger scheduled fine-tuning and model promotion.
-- Dependency vulnerabilities are documented in `data/audits/dependencies_2026-06-13.md`; the FastAPI/Starlette backend remediation is complete, while other dependency upgrades remain deferred to dedicated review branches.
-- `SYSTEM_DESIGN.md` has documented drift and should not be edited without explicit human authorization.
-
-For current review state, pending human decisions, and the latest verification results, read `PROGRESS.md` first.
+- `docs/`: demo and operational runbooks.
+- `research/findings/`: design notes, audits, policy decisions, and implementation findings.

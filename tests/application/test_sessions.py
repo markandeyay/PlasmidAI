@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-from fastapi.testclient import TestClient
+from starlette.testclient import TestClient
 
 from packages.application import InMemoryJobQueue, InMemoryOutcomeStore, InMemorySessionStore, SessionJobResult
 from packages.core.schemas import (
