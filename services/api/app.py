@@ -246,13 +246,13 @@ def create_app(
             logger=logger,
             metrics=metrics,
             request=request,
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             code="validation_error",
             retryable=False,
             field_count=len(field_errors),
         )
         return _error_response(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             code="validation_error",
             message="Please fix the highlighted fields and try again.",
             field_errors=field_errors,
@@ -501,7 +501,7 @@ def create_app(
             raise _http_error(status.HTTP_404_NOT_FOUND, "design_not_found", "Design not found.")
         _require_design_owner(store, design.session_id, user_id)
         if report.design_id != design_id:
-            raise _http_error(status.HTTP_422_UNPROCESSABLE_ENTITY, "design_id_mismatch", "Outcome design_id must match the URL.")
+            raise _http_error(status.HTTP_422_UNPROCESSABLE_CONTENT, "design_id_mismatch", "Outcome design_id must match the URL.")
         outcome = outcomes.create(report=report, user_id=user_id)
         return OutcomeResponse(outcome_id=outcome.outcome_id, report=outcome.report, created_at=outcome.created_at)
 
@@ -781,7 +781,7 @@ def _error_response(
 def _default_error_code(status_code: int) -> str:
     if status_code == status.HTTP_404_NOT_FOUND:
         return "not_found"
-    if status_code == status.HTTP_422_UNPROCESSABLE_ENTITY:
+    if status_code == status.HTTP_422_UNPROCESSABLE_CONTENT:
         return "validation_error"
     return "request_failed"
 

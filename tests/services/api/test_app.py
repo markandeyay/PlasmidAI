@@ -8,7 +8,7 @@ from typing import Any
 import pytest
 
 pytest.importorskip("fastapi")
-from fastapi.testclient import TestClient
+from starlette.testclient import TestClient
 
 
 def _load_create_app() -> Callable[..., Any]:
