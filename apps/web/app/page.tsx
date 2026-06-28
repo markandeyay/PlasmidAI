@@ -441,7 +441,7 @@ return (
       ) : null}
 
       <header className="flex h-14 items-center gap-sm border-b border-line bg-paper px-md md:h-12" role="banner">
-        <span className="font-serif text-h3 text-ink">PlasmidAI</span>
+        <span className="font-serif text-h2 tracking-tight text-ink">Plasmid<span className="text-coral">AI</span></span>
         <span className="mx-2xs hidden h-6 w-px bg-line-strong sm:block" aria-hidden />
         <h1 id="design-workspace-title" className="font-serif text-h3 text-ink">Design workspace</h1>
         <div className="ml-auto flex items-center gap-xs">
@@ -499,6 +499,7 @@ return (
               <OutcomePanel designId={designId} latestOutcome={latestOutcome} disabledReason={isBusy ? "A new design job is running. Outcome reporting is disabled until the current result is ready." : null} onOpen={openCurrentOutcomeModal} />
               <MyOutcomesPanel outcomes={reportedOutcomes} onOpen={openReportedOutcomeModal} refreshStatus={outcomeRefreshStatus} />
             </div>
+            <BrandAttribution />
           </aside>
         </div>
 
@@ -532,6 +533,7 @@ return (
               <OutcomePanel designId={designId} latestOutcome={latestOutcome} disabledReason={isBusy ? "A new design job is running. Outcome reporting is disabled until the current result is ready." : null} onOpen={openCurrentOutcomeModal} />
               <MyOutcomesPanel outcomes={reportedOutcomes} onOpen={openReportedOutcomeModal} refreshStatus={outcomeRefreshStatus} />
             </div>
+            <BrandAttribution />
           </div>
         </div>
 
@@ -638,6 +640,7 @@ return (
                 <OutcomePanel designId={designId} latestOutcome={latestOutcome} disabledReason={isBusy ? "A new design job is running. Outcome reporting is disabled until the current result is ready." : null} onOpen={openCurrentOutcomeModal} />
                 <MyOutcomesPanel outcomes={reportedOutcomes} onOpen={openReportedOutcomeModal} refreshStatus={outcomeRefreshStatus} />
               </div>
+              <BrandAttribution />
             </aside>
           </div>
         ) : null}
@@ -818,6 +821,14 @@ function PendingPromptFetchMessage() {
     <section className="rounded-md border border-line bg-paper p-sm text-small leading-5 text-slate shadow-rest" aria-label="Outcome prompt status">
       Outcome follow-ups could not be checked. You can continue designing; prompts will be checked again on reload.
     </section>
+  );
+}
+
+function BrandAttribution() {
+  return (
+    <footer className="mt-md border-t border-line px-2xs py-sm" aria-label="Attribution">
+      <p className="text-caption text-slate">by PMR Labs</p>
+    </footer>
   );
 }
 
