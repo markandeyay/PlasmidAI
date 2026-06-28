@@ -579,6 +579,7 @@ return (
               pendingPromptStatus={pendingPromptStatus}
               outcomesCollapsed={outcomesCollapsed}
               onToggleOutcomes={() => setOutcomesCollapsed((open) => !open)}
+              hasDesign={Boolean(designId)}
             />
 
             <div className="flex min-h-0 min-w-0 flex-col bg-cream p-sm md:p-md">
@@ -617,7 +618,6 @@ return (
                 isPollTimeoutRecovery={isPollTimeoutRecovery}
                 onCheckJob={() => void handleCheckJob()}
                 onStartOver={handleStartOverAfterTimeout}
-                onClear={handleNewDesign}
                 onViewMap={() => undefined}
               />
             </aside>
@@ -703,11 +703,10 @@ return (
                   onSubmit={handleSubmit}
                   activeClarification={activeClarification}
                   isPollTimeoutRecovery={isPollTimeoutRecovery}
-                  onCheckJob={() => void handleCheckJob()}
-                  onStartOver={handleStartOverAfterTimeout}
-                  onClear={handleNewDesign}
-                  onViewMap={() => setMobileTab("map")}
-                />
+                onCheckJob={() => void handleCheckJob()}
+                onStartOver={handleStartOverAfterTimeout}
+                onViewMap={() => setMobileTab("map")}
+              />
               </div>
             )}
           </div>
@@ -728,6 +727,7 @@ return (
                   pendingPromptStatus={pendingPromptStatus}
                   outcomesCollapsed={false}
                   onToggleOutcomes={() => undefined}
+                  hasDesign={Boolean(designId)}
                 />
               </aside>
             </div>
@@ -807,7 +807,7 @@ function MyOutcomesPanel({ outcomes, onOpen, refreshStatus }: { outcomes: Outcom
                 <OutcomeStatusBadge label={outcome.outcome_label} />
               </div>
               <p className="mt-2 text-small text-slate">Training consent: {outcome.training_consent ? "granted" : "not granted"}</p>
-              <button type="button" onClick={() => onOpen(outcome)} className="mt-sm w-full rounded-md border border-coral bg-coral px-md py-sm text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-line disabled:text-slate disabled:shadow-none">
+              <button type="button" onClick={() => onOpen(outcome)} className="mt-sm w-full rounded-md border border-line-strong bg-paper px-md py-sm text-sm font-semibold text-ink hover:bg-mist focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40">
                 Review or edit outcome
               </button>
             </article>
@@ -1023,7 +1023,8 @@ function SidebarContent({
   outcomeRefreshStatus,
   pendingPromptStatus,
   outcomesCollapsed,
-  onToggleOutcomes
+  onToggleOutcomes,
+  hasDesign
 }: {
   variant: "desktop" | "sheet";
   designHistory: DesignHistoryRow[];
@@ -1036,6 +1037,7 @@ function SidebarContent({
   pendingPromptStatus: PendingPromptStatus;
   outcomesCollapsed: boolean;
   onToggleOutcomes: () => void;
+  hasDesign: boolean;
 }) {
   if (variant === "desktop") {
     return (
@@ -1076,16 +1078,18 @@ function SidebarContent({
               <p className="text-small leading-5 text-slate">Designs you complete in this session will list here.</p>
             )}
           </div>
-          <div className="mt-md px-sm">
-            <div className="flex items-center justify-between">
-              <button type="button" onClick={onToggleOutcomes} aria-expanded={!outcomesCollapsed} className="text-xs font-semibold text-ink hover:text-coral focus:outline-none focus:ring-2 focus:ring-coral/40">
-                My reported outcomes
-              </button>
+          {reportedOutcomes.length === 0 && !hasDesign ? null : (
+            <div className="mt-md px-sm">
+              <div className="flex items-center justify-between">
+                <button type="button" onClick={onToggleOutcomes} aria-expanded={!outcomesCollapsed} className="text-xs font-semibold text-ink hover:text-coral focus:outline-none focus:ring-2 focus:ring-coral/40">
+                  My reported outcomes
+                </button>
+              </div>
+              <div className={outcomesCollapsed ? "hidden" : "mt-2xs"}>
+                <MyOutcomesPanel outcomes={reportedOutcomes} onOpen={onOpenReportedOutcome} refreshStatus={outcomeRefreshStatus} />
+              </div>
             </div>
-            <div className={outcomesCollapsed ? "hidden" : "mt-2xs"}>
-              <MyOutcomesPanel outcomes={reportedOutcomes} onOpen={onOpenReportedOutcome} refreshStatus={outcomeRefreshStatus} />
-            </div>
-          </div>
+          )}
           <BrandAttribution />
         </div>
 
@@ -1157,12 +1161,14 @@ function SidebarContent({
           <p className="text-small leading-5 text-slate">Designs you complete in this session will list here.</p>
         )}
       </div>
-      <div className="mt-md">
-        <h2 className="text-xs font-semibold text-ink">My reported outcomes</h2>
-        <div className="mt-2xs">
-          <MyOutcomesPanel outcomes={reportedOutcomes} onOpen={onOpenReportedOutcome} refreshStatus={outcomeRefreshStatus} />
+      {reportedOutcomes.length === 0 && !hasDesign ? null : (
+        <div className="mt-md">
+          <h2 className="text-xs font-semibold text-ink">My reported outcomes</h2>
+          <div className="mt-2xs">
+            <MyOutcomesPanel outcomes={reportedOutcomes} onOpen={onOpenReportedOutcome} refreshStatus={outcomeRefreshStatus} />
+          </div>
         </div>
-      </div>
+      )}
       <BrandAttribution />
     </div>
   );
@@ -1266,7 +1272,6 @@ function ChatPanel({
   isPollTimeoutRecovery,
   onCheckJob,
   onStartOver,
-  onClear,
   onViewMap
 }: {
   messages: ChatMessage[];
@@ -1283,12 +1288,11 @@ function ChatPanel({
   isPollTimeoutRecovery: boolean;
   onCheckJob: () => void;
   onStartOver: () => void;
-  onClear: () => void;
   onViewMap: () => void;
 }) {
   return (
     <>
-      <div className="flex h-10 shrink-0 items-center justify-between border-b border-line px-md">
+      <div className="flex h-10 shrink-0 items-center border-b border-line px-md">
         <div className="flex items-center gap-xs">
           <h2 className="font-serif text-h3 text-ink">Conversation</h2>
           {isBusy ? (
@@ -1298,13 +1302,6 @@ function ChatPanel({
             </span>
           ) : null}
         </div>
-        <button
-          type="button"
-          onClick={onClear}
-          className="rounded-md border border-line bg-paper px-sm py-2xs text-xs font-semibold text-ink hover:border-line-strong focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
-        >
-          Clear
-        </button>
       </div>
 
       <div className="flex-1 space-y-sm overflow-y-auto px-md py-md">
@@ -1342,7 +1339,7 @@ function ChatPanel({
               <a
                 href="#plasmid-map"
                 onClick={onViewMap}
-                className="mt-3 inline-flex rounded-sm text-xs font-semibold text-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
+                className="mt-3 inline-flex rounded-sm px-xs py-2xs text-xs font-semibold text-coral hover:underline focus:outline-none focus:ring-2 focus:ring-coral/40"
               >
                 View plasmid map
               </a>
@@ -1368,7 +1365,7 @@ function ChatPanel({
                 key={prompt}
                 type="button"
                 onClick={() => setInput(prompt)}
-                className="rounded-md border border-line bg-paper px-sm py-xs text-left text-xs text-ink hover:bg-mist focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
+                className="rounded-md border border-line bg-paper px-sm py-xs text-left text-xs text-ink hover:text-coral focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
               >
                 {prompt}
               </button>
@@ -1405,10 +1402,10 @@ function ChatPanel({
             </span>
             {state === "poll_timeout" ? (
               <>
-                <button type="button" className="rounded-sm font-semibold text-coral focus:outline-none focus:ring-2 focus:ring-coral/40" onClick={onCheckJob}>
+                <button type="button" className="rounded-md border border-line-strong bg-paper px-sm py-2xs text-xs font-semibold text-ink hover:bg-mist focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40" onClick={onCheckJob}>
                   Check status
                 </button>
-                <button type="button" className="rounded-sm font-semibold text-ink hover:text-coral focus:outline-none focus:ring-2 focus:ring-coral/40" onClick={onStartOver}>
+                <button type="button" className="rounded-sm px-xs py-2xs font-semibold text-ink hover:text-coral focus:outline-none focus:ring-2 focus:ring-coral/40" onClick={onStartOver}>
                   Start over
                 </button>
               </>

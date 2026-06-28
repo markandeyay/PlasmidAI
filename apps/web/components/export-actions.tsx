@@ -23,10 +23,12 @@ export function ExportActions({ designId, status, error, disabledReason, onExpor
           </p>
         </div>
       </div>
-      <div className="mt-md grid grid-cols-2 gap-sm">
-        <ExportButton designId={designId} disabled={Boolean(disabledReason)} format="genbank" label="GenBank" status={status.genbank} onExport={onExport} />
-        <ExportButton designId={designId} disabled={Boolean(disabledReason)} format="fasta" label="FASTA" status={status.fasta} onExport={onExport} />
-      </div>
+      {designId ? (
+        <div className="mt-md grid grid-cols-2 gap-sm">
+          <ExportButton designId={designId} disabled={Boolean(disabledReason)} format="genbank" label="GenBank" status={status.genbank} onExport={onExport} />
+          <ExportButton designId={designId} disabled={Boolean(disabledReason)} format="fasta" label="FASTA" status={status.fasta} onExport={onExport} />
+        </div>
+      ) : null}
       {loading ? <p className="sr-only" role="status" aria-live="polite">Preparing export.</p> : null}
       {disabledReason ? <p className="mt-sm rounded-md border border-line bg-mist p-sm text-small text-slate">{disabledReason}</p> : null}
       {error.genbank ? <p className="mt-sm rounded-md border border-clay/40 bg-clay/10 p-sm text-small font-medium text-clay" role="alert">{error.genbank}</p> : null}

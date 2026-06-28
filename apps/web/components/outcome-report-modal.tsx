@@ -269,7 +269,7 @@ function OutcomeReportForm({ designId, modelVersion, onClose, onSubmitted, initi
             />
             <span>I consent to this outcome report and non-sensitive linked design metadata being used to improve future design models.</span>
           </label>
-          <button type="button" onClick={() => setConsentReviewed(true)} className="mt-sm text-xs font-semibold text-coral hover:text-coral/80 focus:outline-none focus:ring-2 focus:ring-coral/40">
+          <button type="button" onClick={() => setConsentReviewed(true)} className="mt-sm px-xs py-2xs text-xs font-semibold text-coral hover:underline focus:outline-none focus:ring-2 focus:ring-coral/40">
             {consentReviewed ? "Consent choice reviewed" : "Submit without training consent"}
           </button>
           <p id="outcome-consent-help" className="mt-sm text-xs leading-5 text-slate">Submitting an outcome does not require this consent. If unchecked, your report can still be saved, but it must not be used for model training or preference optimization.</p>
@@ -362,11 +362,6 @@ function ModalFrame({ children, onClose, titleId, descriptionId }: { children: R
       onKeyDown={handleKeyDown}
     >
       <div className="mx-auto max-w-3xl rounded-lg border border-line bg-paper p-lg shadow-floating">
-        <div className="mb-md flex justify-end">
-          <button type="button" onClick={onClose} className="text-sm font-semibold text-slate hover:text-ink focus:outline-none focus:ring-2 focus:ring-coral/40">
-            Close
-          </button>
-        </div>
         {children}
       </div>
     </div>
