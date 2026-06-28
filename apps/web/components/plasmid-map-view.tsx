@@ -24,7 +24,7 @@ type PlasmidMapViewProps = {
 export function PlasmidMapView({ annotatedSequence }: PlasmidMapViewProps) {
   if (!annotatedSequence) {
     return (
-      <section id="plasmid-map" className="flex h-full min-h-0 flex-col rounded-md border border-line bg-paper p-md shadow-raised" aria-labelledby="plasmid-map-title-empty">
+      <section id="plasmid-map" className="flex h-full min-h-0 flex-col rounded-md border border-line bg-paper p-lg shadow-raised" aria-labelledby="plasmid-map-title-empty">
         <h2 id="plasmid-map-title-empty" className="font-serif text-h3 text-ink">Plasmid map</h2>
         <div className="mt-md flex h-full min-h-0 flex-1 flex-col items-center justify-center gap-sm rounded-md border border-dashed border-line-strong bg-mist px-lg text-center">
           <p className="font-serif text-h3 text-ink">No construct loaded</p>
@@ -44,12 +44,12 @@ export function PlasmidMapView({ annotatedSequence }: PlasmidMapViewProps) {
   }));
 
   return (
-    <section id="plasmid-map" className="flex h-full min-h-0 flex-col rounded-md border border-line bg-paper p-md shadow-raised" aria-labelledby="plasmid-map-title">
+    <section id="plasmid-map" className="flex h-full min-h-0 flex-col rounded-md border border-line bg-paper p-lg shadow-raised" aria-labelledby="plasmid-map-title">
       <div className="flex items-start justify-between gap-md">
         <div>
           <h2 id="plasmid-map-title" className="font-serif text-h3 text-ink">Plasmid map</h2>
-          <p className="mt-2xs text-small text-slate">
-            {annotatedSequence.sequence.length.toLocaleString()} bp {annotatedSequence.topology} sequence
+          <p className="mt-2xs text-caption uppercase tracking-[0.06em] text-slate">
+            {annotatedSequence.sequence.length.toLocaleString()} bp · {annotatedSequence.topology} sequence
           </p>
         </div>
         <span
@@ -64,7 +64,7 @@ export function PlasmidMapView({ annotatedSequence }: PlasmidMapViewProps) {
       </div>
 
       <div className="mt-md rounded-md border border-line bg-mist p-md text-small leading-5 text-slate">
-        <p className="font-semibold text-ink">Accessible map summary</p>
+        <p className="text-caption font-semibold uppercase tracking-[0.06em] text-slate">Accessible map summary</p>
         <dl className="mt-sm grid gap-2xs sm:grid-cols-2">
           <div><dt className="inline font-semibold text-ink">Name: </dt><dd className="inline">{annotatedSequence.vector_profile ?? "Plasmid design"}</dd></div>
           <div><dt className="inline font-semibold text-ink">Topology: </dt><dd className="inline">{annotatedSequence.topology}</dd></div>
@@ -76,8 +76,11 @@ export function PlasmidMapView({ annotatedSequence }: PlasmidMapViewProps) {
       </div>
 
       <MapErrorBoundary fallback={<MapFallback annotatedSequence={annotatedSequence} />}>
-        <div className="mt-md flex min-h-0 flex-1 flex-col overflow-auto rounded-md border border-line" aria-label="Visual interactive plasmid map">
-          <div data-testid="seqviz-map" className="h-full min-w-[320px] bg-paper">
+        <div
+          className="mt-md flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-line bg-paper shadow-rest"
+          aria-label="Visual interactive plasmid map"
+        >
+          <div data-testid="seqviz-map" className="h-full min-h-[280px] min-w-[320px] bg-paper p-sm">
             <SeqViz
               name={annotatedSequence.vector_profile ?? "Plasmid design"}
               seq={annotatedSequence.sequence}
@@ -121,7 +124,7 @@ function MapFallback({ annotatedSequence }: { annotatedSequence: AnnotatedSequen
 function FeatureLegend({ features, sequenceLength }: { features: AnnotatedFeature[]; sequenceLength: number }) {
   if (!features.length) {
     return (
-      <section className="mt-md rounded-md border border-line bg-mist p-md" aria-label="Feature list">
+      <section className="mt-md rounded-md border border-line bg-paper p-md" aria-label="Feature list">
         <h3 className="text-caption font-semibold uppercase tracking-[0.06em] text-slate">Feature list</h3>
         <p className="mt-2xs text-small leading-5 text-slate">No annotated features returned.</p>
       </section>
@@ -129,7 +132,7 @@ function FeatureLegend({ features, sequenceLength }: { features: AnnotatedFeatur
   }
 
   return (
-    <section className="mt-md rounded-md border border-line" aria-labelledby="feature-list-title">
+    <section className="mt-md rounded-md border border-line bg-paper" aria-labelledby="feature-list-title">
       <div className="border-b border-line bg-mist px-md py-sm">
         <h3 id="feature-list-title" className="text-caption font-semibold uppercase tracking-[0.06em] text-slate">Feature list</h3>
       </div>
@@ -140,10 +143,10 @@ function FeatureLegend({ features, sequenceLength }: { features: AnnotatedFeatur
           className="grid grid-cols-[12px_minmax(0,1fr)_auto] items-center gap-md border-b border-line px-md py-sm last:border-b-0"
           title={`${feature.name} (${feature.type}) ${feature.start + 1}..${feature.end}`}
         >
-          <span className="h-3 w-3 rounded-pill" style={{ backgroundColor: componentColor(feature.type) }} aria-hidden />
+          <span className="h-3 w-3 rounded-pill border border-line" style={{ backgroundColor: componentColor(feature.type) }} aria-hidden />
           <div className="min-w-0">
             <p className="break-words text-small font-medium text-ink">{feature.name}</p>
-            <p className="text-small text-slate">
+            <p className="text-caption text-slate">
               Type: {feature.type} · Coordinates: {feature.start + 1}..{Math.min(feature.end, sequenceLength)} · Strand: {strandLabel(feature.strand)}
             </p>
           </div>
