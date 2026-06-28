@@ -17,9 +17,9 @@ type PlasmidMapViewProps = {
 export function PlasmidMapView({ annotatedSequence }: PlasmidMapViewProps) {
   if (!annotatedSequence) {
     return (
-      <section id="plasmid-map" className="border border-line bg-white p-4 shadow-subtle" aria-labelledby="plasmid-map-title-empty">
+      <section id="plasmid-map" className="flex h-full min-h-0 flex-col border border-line bg-white p-4 shadow-rest" aria-labelledby="plasmid-map-title-empty">
         <h2 id="plasmid-map-title-empty" className="text-sm font-semibold">Plasmid map</h2>
-        <div className="mt-4 flex h-64 flex-col items-center justify-center gap-2 border border-dashed border-line bg-panel px-6 text-center sm:h-80 lg:h-96">
+        <div className="mt-4 flex h-full min-h-0 flex-1 flex-col items-center justify-center gap-2 border border-dashed border-line bg-mist px-6 text-center">
           <p className="text-sm font-semibold text-slate-700">No construct loaded</p>
           <p className="text-xs leading-5 text-slate-500">Submit a design to render the annotated plasmid.</p>
         </div>
@@ -37,7 +37,7 @@ export function PlasmidMapView({ annotatedSequence }: PlasmidMapViewProps) {
   }));
 
   return (
-    <section id="plasmid-map" className="border border-line bg-white p-4 shadow-subtle" aria-labelledby="plasmid-map-title">
+    <section id="plasmid-map" className="flex h-full min-h-0 flex-col border border-line bg-white p-4 shadow-rest" aria-labelledby="plasmid-map-title">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 id="plasmid-map-title" className="text-sm font-semibold">Plasmid map</h2>
@@ -69,8 +69,8 @@ export function PlasmidMapView({ annotatedSequence }: PlasmidMapViewProps) {
       </div>
 
       <MapErrorBoundary fallback={<MapFallback annotatedSequence={annotatedSequence} />}>
-        <div className="mt-4 overflow-auto border border-line" aria-label="Visual interactive plasmid map">
-          <div data-testid="seqviz-map" className="h-[360px] min-w-[320px] bg-white sm:h-[440px] lg:h-[520px]">
+        <div className="mt-4 flex min-h-0 flex-1 flex-col overflow-auto border border-line" aria-label="Visual interactive plasmid map">
+          <div data-testid="seqviz-map" className="h-full min-w-[320px] bg-white">
             <SeqViz
               name={annotatedSequence.vector_profile ?? "Plasmid design"}
               seq={annotatedSequence.sequence}
