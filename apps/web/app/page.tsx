@@ -66,29 +66,102 @@ export default function Page() {
   const [dismissedPromptKeys, setDismissedPromptKeys] = useState<string[]>([]);
   const [appStatus, setAppStatus] = useState("");
   const [outcomeRefreshStatus, setOutcomeRefreshStatus] = useState<"idle" | "refreshing" | "error">("idle");
-  const [threadOpen, setThreadOpen] = useState(false);
-  const [inspectOpen, setInspectOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true);
+  const [chatOpen, setChatOpen] = useState(true);
+  const [mobileTab, setMobileTab] = useState<"chat" | "map">("chat");
+  const [selectedDesignId, setSelectedDesignId] = useState<string | null>(null);
+  const [sidebarSheetOpen, setSidebarSheetOpen] = useState(false);
+  const [outcomesCollapsed, setOutcomesCollapsed] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     const query = window.matchMedia("(min-width: 768px)");
     const onChange = (event: MediaQueryListEvent) => setIsDesktop(event.matches);
     setIsDesktop(query.matches);
+    if (window.innerWidth < 880) {
+      setChatOpen(false);
+    }
     query.addEventListener("change", onChange);
     return () => query.removeEventListener("change", onChange);
   }, []);
 
-  const latestResult = useMemo(
+  const designHistory = useMemo(() => {
+    const seen = new Set<string>();
+    const rows: { designId: string; recommendation: string; overall: string; bp: number; features: number }[] = [];
+    for (const message of [...messages].reverse()) {
+      const result = message.result;
+      if (!result?.annotated_sequence) {
+        continue;
+      }
+      const id = result.design_id ?? result.design?.design_id;
+      if (!id || seen.has(id)) {
+        continue;
+      }
+      seen.add(id);
+      const seq = result.annotated_sequence;
+      const checks = result.validation_report?.checks ?? [];
+      const overall =
+        result.validation_report?.overall ??
+        (checks.some((check) => normalizeStatus(check.status) === "FAIL")
+          ? "FAIL"
+          : checks.some((check) => normalizeStatus(check.status) === "WARN")
+            ? "WARN"
+            : "PASS");
+      rows.push({
+        designId: id,
+        recommendation: (result.recommendation_text ?? result.design?.recommendation_text ?? "").trim(),
+        overall,
+        bp: seq.sequence.length,
+        features: seq.features.length
+      });
+    }
+    return rows;
+  }, [messages]);
+
+  function handleNewDesign() {
+    setSessionId(null);
+    setMessages([
+      {
+        id: "welcome",
+        role: "assistant",
+        kind: "result",
+        text: "Describe the construct you want. I will retrieve a grounding vector, run the design pipeline, and render the annotated plasmid when the job completes."
+      }
+    ]);
+    setInput("");
+    setState("idle");
+    setActiveJobId(null);
+    setJobStartedAt(null);
+    setSelectedDesignId(null);
+    setAppStatus("");
+    if (!isDesktop) {
+      setMobileTab("chat");
+    }
+  }
+
+const latestResult = useMemo(
     () => [...messages].reverse().find((message) => message.result?.annotated_sequence)?.result,
     [messages]
   );
+  const selectedResult = useMemo(() => {
+    if (selectedDesignId) {
+      const found = [...messages]
+        .reverse()
+        .find((message) => (message.result?.design_id ?? message.result?.design?.design_id) === selectedDesignId);
+      if (found?.result) {
+        return found.result;
+      }
+    }
+    return latestResult;
+  }, [selectedDesignId, messages, latestResult]);
   const reportedOutcomeDesignIds = useMemo(
     () => Array.from(new Set(reportedOutcomes.map((outcome) => outcome.design_id))).sort().join("|"),
     [reportedOutcomes]
   );
-  const annotatedSequence = latestResult?.annotated_sequence ?? null;
-  const designId = latestResult?.design_id ?? latestResult?.design?.design_id ?? null;
-  const modelVersion = latestResult?.validation_report?.generated_by_model_version ?? latestResult?.design?.validation_report?.generated_by_model_version ?? null;
+  const annotatedSequence = selectedResult?.annotated_sequence ?? null;
+  const designId = selectedResult?.design_id ?? selectedResult?.design?.design_id ?? null;
+  const modelVersion = selectedResult?.validation_report?.generated_by_model_version ?? selectedResult?.design?.validation_report?.generated_by_model_version ?? null;
+  const shownValidationReport = selectedResult?.validation_report ?? null;
   const isBusy = state === "submitting" || state === "polling";
   const isPollTimeoutRecovery = state === "poll_timeout" && Boolean(activeJobId);
   const activeClarification = useMemo(
@@ -200,24 +273,27 @@ export default function Page() {
   }, [visiblePendingPromptKey, visiblePendingPrompt]);
 
   useEffect(() => {
-    if (isBusy) {
-      setThreadOpen(true);
+    if (!isDesktop && annotatedSequence) {
+      setMobileTab("map");
     }
-  }, [isBusy]);
+  }, [annotatedSequence, isDesktop]);
 
   useEffect(() => {
-    if (!threadOpen && !inspectOpen) {
-      return;
+    if (!isDesktop && state === "awaiting_clarification") {
+      setMobileTab("chat");
     }
+  }, [state, isDesktop]);
+
+  useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        setThreadOpen(false);
-        setInspectOpen(false);
+        setSidebarSheetOpen(false);
+        setSettingsOpen(false);
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [threadOpen, inspectOpen]);
+  }, []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -449,278 +525,240 @@ return (
         <PendingOutcomeToast prompt={visiblePendingPrompt} onOpen={openPromptOutcomeModal} onDismiss={dismissPrompt} />
       ) : null}
 
-      <header className="flex h-14 items-center gap-sm border-b border-line bg-paper px-md md:h-12" role="banner">
-        <span className="font-serif text-h2 tracking-tight text-ink">Plasmid<span className="text-coral">AI</span></span>
-        <span className="mx-2xs hidden h-6 w-px bg-line-strong sm:block" aria-hidden />
-        <h1 id="design-workspace-title" className="font-serif text-h3 text-ink">Design workspace</h1>
-        <div className="ml-auto flex items-center gap-xs">
-          <button
-            type="button"
-            onClick={() => setInspectOpen(true)}
-            className="hidden rounded-md border border-line bg-paper px-sm py-2xs text-xs font-semibold text-ink hover:border-line-strong focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 md:inline-flex lg:hidden"
-          >
-            Inspect
-          </button>
-          <button
-            type="button"
-            onClick={() => setThreadOpen((open) => !open)}
-            aria-expanded={threadOpen}
-            aria-controls="design-thread"
-            className="rounded-md border border-line bg-paper px-sm py-2xs text-xs font-semibold text-ink hover:border-line-strong focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
-          >
-            {threadOpen ? "Hide conversation" : "Show conversation"}
-          </button>
-        </div>
-      </header>
-
-      <div className="relative min-h-0 flex-1">
-        {isDesktop ? (
-        <div className="hidden h-full md:grid md:grid-cols-1 lg:grid-cols-[56px_minmax(0,1fr)_320px]">
-          <nav className="hidden flex-col items-center gap-sm border-r border-line bg-paper py-md md:flex lg:flex" aria-label="Workspace navigation">
-            <button
-              type="button"
-              onClick={() => setThreadOpen((open) => !open)}
-              aria-expanded={threadOpen}
-              aria-controls="design-thread"
-              aria-label="Toggle conversation"
-              className="flex h-8 w-8 items-center justify-center rounded-md border border-line bg-paper text-ink hover:border-line-strong focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
-            >
-              <svg viewBox="0 0 16 16" className="h-4 w-4" aria-hidden="true">
-                <path fill="currentColor" d="M2 3h12v8H6l-3 3v-3H2V3zm1 1v6h2v1.5L6.5 10H13V4H3z" />
-              </svg>
-            </button>
-            <div className="mt-auto flex w-full flex-col items-center gap-xs px-2xs" aria-hidden>
-              <span className="h-8 w-8 rounded-md border border-dashed border-line" />
-              <span className="h-8 w-8 rounded-md border border-dashed border-line" />
+      {isDesktop ? (
+        <>
+          <header className="hidden h-12 items-center gap-sm border-b border-line bg-paper px-md md:flex" role="banner">
+            <span className="font-serif text-h2 tracking-tight text-ink">Plasmid<span className="text-coral">AI</span></span>
+            <span className="mx-2xs hidden h-6 w-px bg-line-strong md:block" aria-hidden />
+            <h1 id="design-workspace-title" className="font-serif text-h3 text-ink">Design workspace</h1>
+            <div className="mx-auto flex items-center gap-xs" aria-live="polite">
+              {designId ? (
+                <>
+                  <span className="text-small text-slate">{designId.length > 12 ? `${designId.slice(0, 12)}\u2026` : designId}</span>
+                  {shownValidationReport ? (
+                    <span className={`rounded-pill border px-xs py-2xs text-caption font-semibold uppercase tracking-[0.06em] ${overallBadgeClass(shownValidationReport)}`}>{overallLabel(shownValidationReport)}</span>
+                  ) : null}
+                </>
+              ) : (
+                <span className="text-small italic text-slate">no active design</span>
+              )}
             </div>
-          </nav>
-
-          <div className="flex min-h-0 min-w-0 flex-col bg-cream p-sm md:p-md">
-            <PlasmidMapView annotatedSequence={annotatedSequence as AnnotatedSequence | null} />
-          </div>
-
-          <aside className="hidden min-h-0 overflow-y-auto border-l border-line bg-paper px-sm py-md lg:block" aria-labelledby="right-rail-title">
-            <h2 id="right-rail-title" className="sr-only">Workspace panels</h2>
-            <div className="space-y-md">
-              {pendingPromptStatus === "error" ? <PendingPromptFetchMessage /> : null}
-              {isBusy ? <RightRailJobNotice jobId={activeJobId} hasPreviousDesign={Boolean(designId)} /> : null}
-              <ValidationSummary report={latestResult?.validation_report ?? null} onOpenThread={() => setThreadOpen(true)} />
-              <ExportActions designId={designId} status={exportStatus} error={exportError} disabledReason={isBusy ? "A new design job is running. Exports stay disabled to avoid downloading the previous design by mistake." : null} onExport={handleExport} />
-              <OutcomePanel designId={designId} latestOutcome={latestOutcome} disabledReason={isBusy ? "A new design job is running. Outcome reporting is disabled until the current result is ready." : null} onOpen={openCurrentOutcomeModal} />
-              <MyOutcomesPanel outcomes={reportedOutcomes} onOpen={openReportedOutcomeModal} refreshStatus={outcomeRefreshStatus} />
+            <div className="ml-auto flex items-center gap-xs">
+              <button
+                type="button"
+                aria-label="Settings"
+                onClick={() => setSettingsOpen((open) => !open)}
+                className="flex h-8 w-8 items-center justify-center rounded-md border border-line bg-paper text-ink hover:border-line-strong focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
+              >
+                <svg viewBox="0 0 16 16" className="h-4 w-4" aria-hidden="true">
+                  <path fill="currentColor" d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zm5.5 2.5a5.5 5.5 0 0 1-.07.87l1.43 1.12-1.5 2.6-1.74-.7a5.5 5.5 0 0 1-1.5.87l-.26 1.87H6.14l-.26-1.87a5.5 5.5 0 0 1-1.5-.87l-1.74.7-1.5-2.6 1.43-1.12A5.5 5.5 0 0 1 2.5 8c0-.3.03-.58.07-.87L1.14 6.01l1.5-2.6 1.74.7a5.5 5.5 0 0 1 1.5-.87l.26-1.87h3.72l.26 1.87a5.5 5.5 0 0 1 1.5.87l1.74-.7 1.5 2.6-1.43 1.12c.04.29.07.57.07.87z" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => setChatOpen((open) => !open)}
+                aria-expanded={chatOpen}
+                aria-controls="design-thread"
+                className="inline-flex items-center gap-xs rounded-md border border-line bg-paper px-sm py-2xs text-xs font-semibold text-ink hover:border-line-strong focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 md:inline-flex lg:hidden"
+              >
+                Chat
+              </button>
             </div>
-            <BrandAttribution />
-          </aside>
-        </div>
-        ) : (
-        <div className="h-full overflow-y-auto md:hidden">
-          <div className="flex min-h-0 flex-col">
-            <div className="h-[55vh] min-h-0 p-sm">
+          </header>
+
+          <div className={`hidden min-h-0 flex-1 md:grid ${chatOpen ? "md:grid-cols-[56px_minmax(0,1fr)_360px]" : "md:grid-cols-[56px_minmax(0,1fr)]"} lg:grid-cols-[256px_minmax(0,1fr)_400px]`}>
+            <SidebarContent
+              variant="desktop"
+              designHistory={designHistory}
+              selectedDesignId={selectedDesignId ?? designHistory[0]?.designId ?? null}
+              onSelect={setSelectedDesignId}
+              onNewDesign={handleNewDesign}
+              reportedOutcomes={reportedOutcomes}
+              onOpenReportedOutcome={openReportedOutcomeModal}
+              outcomeRefreshStatus={outcomeRefreshStatus}
+              pendingPromptStatus={pendingPromptStatus}
+              outcomesCollapsed={outcomesCollapsed}
+              onToggleOutcomes={() => setOutcomesCollapsed((open) => !open)}
+            />
+
+            <div className="flex min-h-0 min-w-0 flex-col bg-cream p-sm md:p-md">
               <PlasmidMapView annotatedSequence={annotatedSequence as AnnotatedSequence | null} />
+              <ToolsStrip
+                layout="row"
+                designId={designId}
+                isBusy={isBusy}
+                validationReport={shownValidationReport}
+                exportStatus={exportStatus}
+                exportError={exportError}
+                onExport={handleExport}
+                latestOutcome={latestOutcome}
+                onOpenOutcome={openCurrentOutcomeModal}
+                onOpenFullReport={() => setMobileTab("chat")}
+              />
             </div>
-            <section className="flex gap-xs border-t border-line bg-paper p-sm" aria-label="Export actions">
-              <button
-                type="button"
-                disabled={!designId || isBusy}
-                onClick={() => void handleExport("genbank")}
-                className="flex-1 rounded-md border border-line-strong bg-paper px-sm py-2xs text-sm font-semibold text-ink hover:bg-mist focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-paper disabled:text-slate disabled:hover:bg-paper"
-              >
-                GenBank
-              </button>
-              <button
-                type="button"
-                disabled={!designId || isBusy}
-                onClick={() => void handleExport("fasta")}
-                className="flex-1 rounded-md border border-line-strong bg-paper px-sm py-2xs text-sm font-semibold text-ink hover:bg-mist focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-paper disabled:text-slate disabled:hover:bg-paper"
-              >
-                FASTA
-              </button>
-            </section>
-            <div className="space-y-md p-sm">
-              {pendingPromptStatus === "error" ? <PendingPromptFetchMessage /> : null}
-              {isBusy ? <RightRailJobNotice jobId={activeJobId} hasPreviousDesign={Boolean(designId)} /> : null}
-              <ValidationSummary report={latestResult?.validation_report ?? null} onOpenThread={() => setThreadOpen(true)} />
-              <OutcomePanel designId={designId} latestOutcome={latestOutcome} disabledReason={isBusy ? "A new design job is running. Outcome reporting is disabled until the current result is ready." : null} onOpen={openCurrentOutcomeModal} />
-              <MyOutcomesPanel outcomes={reportedOutcomes} onOpen={openReportedOutcomeModal} refreshStatus={outcomeRefreshStatus} />
-            </div>
-            <BrandAttribution />
-          </div>
-        </div>
-        )}
 
-        {threadOpen ? (
-          <>
-            <button
-              type="button"
-              aria-label="Dismiss conversation"
-              tabIndex={-1}
-              onClick={() => setThreadOpen(false)}
-              className="absolute inset-x-0 bottom-0 top-0 z-20 bg-ink/30 lg:left-14 lg:right-[320px]"
-            />
-            <div
+            <aside
               id="design-thread"
-              role="dialog"
               aria-label="Conversation history"
-              className="absolute inset-x-0 bottom-0 z-30 flex max-h-[60vh] flex-col bg-paper shadow-floating lg:left-14 lg:right-[320px]"
+              className={`hidden min-h-0 flex-col border-l border-line bg-paper md:flex lg:flex ${chatOpen ? "md:flex" : "md:hidden"}`}
             >
-              <div className="flex items-center justify-between gap-sm border-b border-line px-md py-sm">
-                <h2 className="font-serif text-h3 text-ink">Conversation</h2>
-                <button
-                  type="button"
-                  onClick={() => setThreadOpen(false)}
-                  className="rounded-md border border-line bg-paper px-sm py-2xs text-xs font-semibold text-ink hover:border-line-strong focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
-                >
-                  Hide
-                </button>
-              </div>
-              <div className="flex-1 space-y-sm overflow-y-auto px-md py-md">
-                {messages.map((message) => (
-                  <article
-                    key={message.id}
-                    className={`max-w-3xl border p-4 shadow-rest ${
-                      message.role === "user"
-                        ? "ml-auto border-coral/30 bg-coral/5"
-                        : message.kind === "error"
-                          ? "border-clay/40 bg-clay/5"
-                          : message.kind === "clarification"
-                            ? "border-honey/40 bg-honey/5"
-                            : "border-line bg-paper"
-                    }`}
-                  >
-                    <div className="mb-2 text-xs font-semibold uppercase text-slate">
-                      {message.role === "user"
-                        ? message.kind === "clarification_answer"
-                          ? "Clarification answer"
-                          : "Researcher"
-                        : message.kind === "clarification"
-                          ? "Clarification"
-                          : message.kind === "status"
-                            ? "Job status"
-                            : "Design agent"}
-                    </div>
-                    <p className="whitespace-pre-wrap text-sm leading-6 text-ink">{message.text}</p>
-                    {message.result ? (
-                      message.result.validation_report ? <ValidationReportPanel report={message.result.validation_report} /> : <MissingValidationReportPanel />
-                    ) : null}
-                    {message.result && !message.result.annotated_sequence ? <PartialResultNotice result={message.result} /> : null}
-                    {message.result ? <RetrievedTemplatesPanel result={message.result} messageId={message.id} /> : null}
-                    {message.result?.annotated_sequence ? (
-                      <a
-                        href="#plasmid-map"
-                        onClick={() => setThreadOpen(false)}
-                        className="mt-3 inline-flex rounded-sm text-xs font-semibold text-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
-                      >
-                        View plasmid map
-                      </a>
-                    ) : null}
-                  </article>
-                ))}
-                {isBusy ? (
-                  <JobProgressCard jobId={activeJobId} state={state} elapsedMs={jobStartedAt ? now - jobStartedAt : 0} />
-                ) : null}
-              </div>
-            </div>
-          </>
-        ) : null}
-
-        {inspectOpen ? (
-          <div className="absolute inset-0 z-30 hidden md:flex lg:hidden">
-            <button
-              type="button"
-              aria-label="Close inspector"
-              tabIndex={-1}
-              onClick={() => setInspectOpen(false)}
-              className="absolute inset-0 bg-ink/30"
-            />
-            <aside className="relative ml-auto h-full w-[320px] overflow-y-auto border-l border-line-strong bg-paper p-md shadow-floating" aria-labelledby="right-rail-title">
-              <div className="mb-sm flex items-center justify-between">
-                <h2 id="right-rail-title" className="sr-only">Workspace panels</h2>
-                <button
-                  type="button"
-                  onClick={() => setInspectOpen(false)}
-                  className="ml-auto rounded-md border border-line bg-paper px-sm py-2xs text-xs font-semibold text-ink hover:border-line-strong focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
-                >
-                  Close
-                </button>
-              </div>
-              <div className="space-y-md">
-                {pendingPromptStatus === "error" ? <PendingPromptFetchMessage /> : null}
-                {isBusy ? <RightRailJobNotice jobId={activeJobId} hasPreviousDesign={Boolean(designId)} /> : null}
-                <ValidationSummary report={latestResult?.validation_report ?? null} onOpenThread={() => { setInspectOpen(false); setThreadOpen(true); }} />
-                <ExportActions designId={designId} status={exportStatus} error={exportError} disabledReason={isBusy ? "A new design job is running. Exports stay disabled to avoid downloading the previous design by mistake." : null} onExport={handleExport} />
-                <OutcomePanel designId={designId} latestOutcome={latestOutcome} disabledReason={isBusy ? "A new design job is running. Outcome reporting is disabled until the current result is ready." : null} onOpen={openCurrentOutcomeModal} />
-                <MyOutcomesPanel outcomes={reportedOutcomes} onOpen={openReportedOutcomeModal} refreshStatus={outcomeRefreshStatus} />
-              </div>
-              <BrandAttribution />
+              <ChatPanel
+                messages={messages}
+                isBusy={isBusy}
+                state={state}
+                activeJobId={activeJobId}
+                jobStartedAt={jobStartedAt}
+                now={now}
+                sessionId={sessionId}
+                input={input}
+                setInput={setInput}
+                onSubmit={handleSubmit}
+                activeClarification={activeClarification}
+                isPollTimeoutRecovery={isPollTimeoutRecovery}
+                onCheckJob={() => void handleCheckJob()}
+                onStartOver={handleStartOverAfterTimeout}
+                onClear={handleNewDesign}
+                onViewMap={() => undefined}
+              />
             </aside>
           </div>
-        ) : null}
-      </div>
 
-      <form onSubmit={handleSubmit} className="border-t border-line bg-paper px-md py-md" aria-label="Design composer">
-        {state === "awaiting_clarification" && activeClarification ? (
-          <div className="mb-3 rounded-md border border-honey/40 bg-honey/10 p-md text-sm text-ink">
-            <span className="font-semibold text-honey">Clarification needed: </span>
-            {activeClarification}
-          </div>
-        ) : null}
-        {!sessionId && state === "idle" ? (
-          <div className="mb-3 flex flex-wrap gap-2">
-            {EXAMPLE_PROMPTS.map((prompt) => (
+          {settingsOpen ? (
+            <div className="fixed inset-0 z-40">
+              <button type="button" tabIndex={-1} aria-label="Close settings" onClick={() => setSettingsOpen(false)} className="absolute inset-0 bg-ink/30" />
+              <div className="absolute right-md top-14 w-64 rounded-md border border-line bg-paper p-md shadow-floating" role="dialog" aria-label="Settings">
+                <BrandAttribution />
+                <p className="mt-sm text-caption text-slate">Connection: <span className="text-sage">Connected</span></p>
+                <p className="mt-2xs text-caption text-slate">Model: {modelVersion ?? "unknown"}</p>
+              </div>
+            </div>
+          ) : null}
+        </>
+      ) : (
+        <>
+          <header className="relative flex h-[52px] items-center gap-sm border-b border-line bg-paper px-md md:hidden" role="banner">
+            <span className="font-serif text-h2 tracking-tight text-ink">Plasmid<span className="text-coral">AI</span></span>
+            <h1 id="design-workspace-title" className="truncate font-serif text-h3 text-ink">Design workspace</h1>
+            <button
+              type="button"
+              onClick={() => setSidebarSheetOpen(true)}
+              aria-label="Open menu"
+              className="ml-auto flex h-8 w-8 items-center justify-center rounded-md border border-line bg-paper text-ink hover:border-line-strong focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
+            >
+              <svg viewBox="0 0 16 16" className="h-4 w-4" aria-hidden="true">
+                <path fill="currentColor" d="M2 3h12v2H2V3zm0 4h12v2H2V7zm0 4h12v2H2v-2z" />
+              </svg>
+            </button>
+            <div role="tablist" aria-label="Workspace tabs" className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-xs rounded-pill bg-mist p-2xs">
               <button
-                key={prompt}
                 type="button"
-                onClick={() => setInput(prompt)}
-                className="rounded-md border border-line bg-paper px-sm py-xs text-left text-xs text-ink hover:bg-mist focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
+                role="tab"
+                aria-selected={mobileTab === "map"}
+                onClick={() => setMobileTab("map")}
+                className={`rounded-pill px-sm py-2xs text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-coral/40 ${mobileTab === "map" ? "bg-paper text-ink shadow-rest" : "text-slate"}`}
               >
-                {prompt}
+                Map
               </button>
-            ))}
+              <button
+                type="button"
+                role="tab"
+                aria-selected={mobileTab === "chat"}
+                onClick={() => setMobileTab("chat")}
+                className={`rounded-pill px-sm py-2xs text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-coral/40 ${mobileTab === "chat" ? "bg-paper text-ink shadow-rest" : "text-slate"}`}
+              >
+                Chat
+              </button>
+            </div>
+          </header>
+
+          <div className="min-h-0 flex-1 md:hidden">
+            {mobileTab === "map" ? (
+              <div className="flex h-full min-h-0 flex-col bg-cream p-sm">
+                <PlasmidMapView annotatedSequence={annotatedSequence as AnnotatedSequence | null} />
+                <ToolsStrip
+                  layout="stack"
+                  designId={designId}
+                  isBusy={isBusy}
+                  validationReport={shownValidationReport}
+                  exportStatus={exportStatus}
+                  exportError={exportError}
+                  onExport={handleExport}
+                  latestOutcome={latestOutcome}
+                  onOpenOutcome={openCurrentOutcomeModal}
+                  onOpenFullReport={() => { setMobileTab("chat"); setSidebarSheetOpen(false); }}
+                />
+              </div>
+            ) : (
+              <div className="flex h-full min-h-0 flex-col bg-paper">
+                <ChatPanel
+                  messages={messages}
+                  isBusy={isBusy}
+                  state={state}
+                  activeJobId={activeJobId}
+                  jobStartedAt={jobStartedAt}
+                  now={now}
+                  sessionId={sessionId}
+                  input={input}
+                  setInput={setInput}
+                  onSubmit={handleSubmit}
+                  activeClarification={activeClarification}
+                  isPollTimeoutRecovery={isPollTimeoutRecovery}
+                  onCheckJob={() => void handleCheckJob()}
+                  onStartOver={handleStartOverAfterTimeout}
+                  onClear={handleNewDesign}
+                  onViewMap={() => setMobileTab("map")}
+                />
+              </div>
+            )}
           </div>
-        ) : null}
-        <label htmlFor="goal" className="sr-only">
-          Experimental goal
-        </label>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <textarea
-            id="goal"
-            value={input}
-            onChange={(event) => setInput(event.target.value)}
-            disabled={isBusy || isPollTimeoutRecovery}
-            rows={3}
-            className="min-h-24 flex-1 resize-none rounded-md border border-line bg-paper px-md py-sm text-sm text-ink shadow-rest outline-none focus:border-coral focus:ring-2 focus:ring-coral/40"
-            placeholder={
-              state === "awaiting_clarification"
-                ? "Answer the clarification question..."
-                : "Describe the host, marker, payload, promoter, and any constraints..."
-            }
-          />
-          <button
-            type="submit"
-            disabled={!input.trim() || isBusy || isPollTimeoutRecovery}
-            className="h-12 rounded-md border border-coral bg-coral px-md text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-line disabled:text-slate disabled:shadow-none"
-          >
-            {state === "submitting" ? "Starting" : state === "polling" ? "Designing" : state === "awaiting_clarification" ? "Answer" : sessionId ? "Refine" : "Design"}
-          </button>
-        </div>
-        {activeJobId ? (
-          <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate">
-            <span>
-              Job {activeJobId} is still queued or running. For a local demo, confirm the worker or deterministic demo fixture is running before retrying.
-            </span>
-            {state === "poll_timeout" ? (
-              <>
-                <button type="button" className="rounded-sm font-semibold text-coral focus:outline-none focus:ring-2 focus:ring-coral/40" onClick={() => void handleCheckJob()}>
-                  Check status
-                </button>
-                <button type="button" className="rounded-sm font-semibold text-ink hover:text-coral focus:outline-none focus:ring-2 focus:ring-coral/40" onClick={handleStartOverAfterTimeout}>
-                  Start over
-                </button>
-              </>
-            ) : null}
-          </div>
-        ) : null}
-      </form>
+
+          {sidebarSheetOpen ? (
+            <div className="fixed inset-0 z-40">
+              <button type="button" tabIndex={-1} aria-label="Close menu" onClick={() => setSidebarSheetOpen(false)} className="absolute inset-0 bg-ink/30" />
+              <aside className="absolute left-0 top-0 h-full w-72 max-w-[85vw] overflow-y-auto border-r border-line bg-paper px-sm py-md shadow-floating" aria-label="Workspace navigation">
+                <SidebarContent
+                  variant="sheet"
+                  designHistory={designHistory}
+                  selectedDesignId={selectedDesignId ?? designHistory[0]?.designId ?? null}
+                  onSelect={(id) => { setSelectedDesignId(id); setSidebarSheetOpen(false); if (designHistory.some((row) => row.designId === id)) { setMobileTab("map"); } }}
+                  onNewDesign={() => { handleNewDesign(); setSidebarSheetOpen(false); }}
+                  reportedOutcomes={reportedOutcomes}
+                  onOpenReportedOutcome={openReportedOutcomeModal}
+                  outcomeRefreshStatus={outcomeRefreshStatus}
+                  pendingPromptStatus={pendingPromptStatus}
+                  outcomesCollapsed={false}
+                  onToggleOutcomes={() => undefined}
+                />
+              </aside>
+            </div>
+          ) : null}
+        </>
+      )}
+
+      <footer className="flex h-6 items-center justify-between border-t border-line bg-paper px-md text-caption text-slate">
+        <span className="flex items-center gap-xs">
+          {isBusy ? (
+            <>
+              <span className="h-2 w-2 animate-pulse rounded-pill bg-coral" aria-hidden="true" />
+              <span>Design running{activeJobId ? ` · ${activeJobId.length > 10 ? `${activeJobId.slice(0, 10)}\u2026` : activeJobId}` : ""}</span>
+            </>
+          ) : state === "poll_timeout" ? (
+            <>
+              <span className="h-2 w-2 rounded-pill bg-honey" aria-hidden="true" />
+              <span>Polling timed out</span>
+            </>
+          ) : designId ? (
+            <span>Design ready · {designId}</span>
+          ) : (
+            <span>Idle</span>
+          )}
+        </span>
+        <span className="hidden items-center gap-xs sm:flex">
+          <span className={`h-2 w-2 rounded-pill ${appStatus ? "bg-clay" : "bg-sage"}`} aria-hidden="true" />
+          {appStatus ? "Offline" : "Connected"}
+        </span>
+        <span className="hidden sm:inline">Model: {modelVersion ?? "unknown"}</span>
+      </footer>
 
       <OutcomeReportModal
         open={outcomeModalOpen}
@@ -810,23 +848,6 @@ function PendingOutcomeToast({ prompt, onOpen, onDismiss }: { prompt: PendingOut
   );
 }
 
-function RightRailJobNotice({ jobId, hasPreviousDesign }: { jobId: string | null; hasPreviousDesign: boolean }) {
-  return (
-    <section className="rounded-md border border-line bg-mist p-md shadow-rest" role="status" aria-live="polite">
-      <p className="flex items-center gap-xs text-caption font-semibold uppercase tracking-[0.06em] text-coral">
-        <span className="h-2 w-2 animate-pulse rounded-pill bg-coral" aria-hidden="true" />
-        Design running
-      </p>
-      <p className="mt-2xs text-sm leading-6 text-slate">
-        {hasPreviousDesign
-          ? "A new design is running. The panels below still show the last completed design until the current result is ready."
-          : "A design is running. The map, export, and outcome panels will update when the result is ready."}
-      </p>
-      {jobId ? <p className="mt-2 text-xs text-slate">Job ID: {jobId}</p> : null}
-    </section>
-  );
-}
-
 function PendingPromptFetchMessage() {
   return (
     <section className="rounded-md border border-line bg-paper p-sm text-small leading-5 text-slate shadow-rest" aria-label="Outcome prompt status">
@@ -840,74 +861,6 @@ function BrandAttribution() {
     <footer className="mt-md border-t border-line px-2xs py-sm" aria-label="Attribution">
       <p className="text-caption text-slate">by PMR Labs</p>
     </footer>
-  );
-}
-
-function ValidationSummary({ report, onOpenThread }: { report: ValidationReport | null; onOpenThread: () => void }) {
-  if (!report) {
-    return (
-      <section className="rounded-md border border-line bg-paper p-md shadow-rest" aria-label="Validation summary">
-        <h2 className="font-serif text-h3 text-ink">Validation</h2>
-        <p className="mt-2xs text-small leading-5 text-slate">No validation report yet. Run a design job to see assembly checks.</p>
-      </section>
-    );
-  }
-  const checks = report.checks ?? [];
-  const overall = report.overall ?? (checks.some((check) => normalizeStatus(check.status) === "FAIL")
-    ? "FAIL"
-    : checks.some((check) => normalizeStatus(check.status) === "WARN")
-      ? "WARN"
-      : "PASS");
-  const badgeClass =
-    overall === "PASS"
-      ? "border-sage/40 bg-sage/10 text-sage"
-      : overall === "WARN"
-        ? "border-honey/40 bg-honey/10 text-honey"
-        : "border-clay/40 bg-clay/10 text-clay";
-  return (
-    <section className="rounded-md border border-line bg-paper p-md shadow-rest" aria-label="Validation summary">
-      <div className="flex items-center justify-between gap-sm">
-        <h2 className="font-serif text-h3 text-ink">Validation</h2>
-        <span className={`rounded-pill border px-xs py-2xs text-caption font-semibold uppercase tracking-[0.06em] ${badgeClass}`}>{overall}</span>
-      </div>
-      <p className="mt-2 text-small leading-5 text-slate">{checks.length} check{checks.length === 1 ? "" : "s"} reported.</p>
-      <button
-        type="button"
-        onClick={onOpenThread}
-        className="mt-2 text-xs font-semibold text-coral hover:underline focus:outline-none focus:ring-2 focus:ring-coral/40"
-      >
-        Open full report
-      </button>
-    </section>
-  );
-}
-
-function OutcomePanel({ designId, latestOutcome, disabledReason, onOpen }: { designId: string | null; latestOutcome: OutcomeReport | null; disabledReason: string | null; onOpen: () => void }) {
-  const disabled = !designId || Boolean(disabledReason);
-  return (
-    <section className="rounded-md border border-line bg-paper p-md shadow-rest" aria-label="Outcome reporting">
-      <h2 className="font-serif text-h3 text-ink">Lab outcome</h2>
-      <p className="mt-2xs text-small leading-5 text-slate">
-        {disabledReason
-          ? disabledReason
-          : designId
-          ? latestOutcome
-            ? `Outcome reported ${new Date(latestOutcome.reported_at).toLocaleDateString()}.`
-            : "Have lab results for this design? Failed and inconclusive results are useful too."
-          : "Complete a design job to report lab results."}
-      </p>
-      {latestOutcome ? (
-        <p className="mt-2 text-xs text-slate">Training consent: {latestOutcome.training_consent ? "granted" : "not granted"}</p>
-      ) : null}
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={onOpen}
-        className="mt-md w-full rounded-md border border-coral bg-coral px-md py-sm text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-line disabled:text-slate disabled:shadow-none"
-      >
-        {latestOutcome ? "Review or edit outcome" : "Report outcome"}
-      </button>
-    </section>
   );
 }
 
@@ -1037,6 +990,434 @@ function StatusBadge({ status }: { status: string }) {
 
 function normalizeStatus(status: string | undefined): string {
   return (status ?? "UNKNOWN").toUpperCase();
+}
+
+function overallLabel(report: ValidationReport): string {
+  const checks = report.checks ?? [];
+  return report.overall ?? (checks.some((check) => normalizeStatus(check.status) === "FAIL")
+    ? "FAIL"
+    : checks.some((check) => normalizeStatus(check.status) === "WARN")
+      ? "WARN"
+      : "PASS");
+}
+
+function overallBadgeClass(report: ValidationReport): string {
+  const overall = overallLabel(report);
+  return overall === "PASS"
+    ? "border-sage/40 bg-sage/10 text-sage"
+    : overall === "WARN"
+      ? "border-honey/40 bg-honey/10 text-honey"
+      : "border-clay/40 bg-clay/10 text-clay";
+}
+
+type DesignHistoryRow = { designId: string; recommendation: string; overall: string; bp: number; features: number };
+
+function SidebarContent({
+  variant,
+  designHistory,
+  selectedDesignId,
+  onSelect,
+  onNewDesign,
+  reportedOutcomes,
+  onOpenReportedOutcome,
+  outcomeRefreshStatus,
+  pendingPromptStatus,
+  outcomesCollapsed,
+  onToggleOutcomes
+}: {
+  variant: "desktop" | "sheet";
+  designHistory: DesignHistoryRow[];
+  selectedDesignId: string | null;
+  onSelect: (id: string | null) => void;
+  onNewDesign: () => void;
+  reportedOutcomes: OutcomeReport[];
+  onOpenReportedOutcome: (outcome: OutcomeReport) => void;
+  outcomeRefreshStatus: "idle" | "refreshing" | "error";
+  pendingPromptStatus: PendingPromptStatus;
+  outcomesCollapsed: boolean;
+  onToggleOutcomes: () => void;
+}) {
+  if (variant === "desktop") {
+    return (
+      <nav aria-label="Workspace navigation" className="flex min-h-0 flex-col border-r border-line bg-paper">
+        <div className="hidden w-[256px] min-h-0 flex-col overflow-y-auto py-md lg:flex">
+          {pendingPromptStatus === "error" ? <div className="px-sm"><PendingPromptFetchMessage /></div> : null}
+          <div className="px-sm">
+            <button
+              type="button"
+              onClick={onNewDesign}
+              className="w-full rounded-md border border-coral bg-coral px-md py-sm text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
+            >
+              New design
+            </button>
+          </div>
+          <div className="mt-md flex-1 overflow-y-auto px-sm">
+            <h2 className="sr-only">Design history</h2>
+            {designHistory.length ? (
+              <ul className="space-y-2xs">
+                {designHistory.map((row) => (
+                  <li key={row.designId}>
+                    <button
+                      type="button"
+                      onClick={() => onSelect(row.designId)}
+                      className={`w-full rounded-sm border border-line bg-paper px-sm py-xs text-left focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 ${selectedDesignId === row.designId ? "border-l-2 border-l-coral bg-mist" : "hover:bg-mist"}`}
+                    >
+                      <p className="truncate text-sm font-semibold text-ink">{truncateId(row.designId)}</p>
+                      <p className="mt-2xs truncate text-xs text-slate">{truncateSnippet(row.recommendation)}</p>
+                      <div className="mt-2xs flex items-center gap-xs">
+                        <span className={`rounded-pill border px-xs py-2xs text-caption font-semibold uppercase tracking-[0.06em] ${row.overall === "PASS" ? "border-sage/40 bg-sage/10 text-sage" : row.overall === "WARN" ? "border-honey/40 bg-honey/10 text-honey" : "border-clay/40 bg-clay/10 text-clay"}`}>{row.overall}</span>
+                        <span className="text-caption text-slate">{row.bp.toLocaleString()} bp · {row.features} features</span>
+                      </div>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-small leading-5 text-slate">Designs you complete in this session will list here.</p>
+            )}
+          </div>
+          <div className="mt-md px-sm">
+            <div className="flex items-center justify-between">
+              <button type="button" onClick={onToggleOutcomes} aria-expanded={!outcomesCollapsed} className="text-xs font-semibold text-ink hover:text-coral focus:outline-none focus:ring-2 focus:ring-coral/40">
+                My reported outcomes
+              </button>
+            </div>
+            <div className={outcomesCollapsed ? "hidden" : "mt-2xs"}>
+              <MyOutcomesPanel outcomes={reportedOutcomes} onOpen={onOpenReportedOutcome} refreshStatus={outcomeRefreshStatus} />
+            </div>
+          </div>
+          <BrandAttribution />
+        </div>
+
+        <div className="flex w-[56px] flex-col items-center gap-sm py-md md:flex lg:hidden">
+          {pendingPromptStatus === "error" ? (
+            <span className="h-2 w-2 rounded-pill bg-clay" aria-label="Outcome prompt status unavailable" role="img" />
+          ) : null}
+          <button
+            type="button"
+            onClick={onNewDesign}
+            aria-label="New design"
+            className="flex h-8 w-8 items-center justify-center rounded-md border border-coral bg-coral text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
+          >
+            +
+          </button>
+          <ul className="flex flex-1 flex-col items-center gap-xs overflow-y-auto px-2xs">
+            {designHistory.map((row) => (
+              <li key={row.designId}>
+                <button
+                  type="button"
+                  onClick={() => onSelect(row.designId)}
+                  aria-label={`Select design ${row.designId}, validation ${row.overall}`}
+                  className={`flex h-6 w-6 items-center justify-center rounded-pill border ${selectedDesignId === row.designId ? "border-l-2 border-l-coral bg-mist" : row.overall === "PASS" ? "border-sage/40 bg-sage/10" : row.overall === "WARN" ? "border-honey/40 bg-honey/10" : "border-clay/40 bg-clay/10"}`}
+                >
+                  <span className={`h-2 w-2 rounded-pill ${row.overall === "PASS" ? "bg-sage" : row.overall === "WARN" ? "bg-honey" : "bg-clay"}`} aria-hidden="true" />
+                </button>
+              </li>
+            ))}
+          </ul>
+          <span className="h-8 w-8 rounded-md" aria-hidden />
+          <BrandAttribution />
+        </div>
+      </nav>
+    );
+  }
+
+  return (
+    <div className="flex min-h-0 flex-col">
+      {pendingPromptStatus === "error" ? <PendingPromptFetchMessage /> : null}
+      <button
+        type="button"
+        onClick={onNewDesign}
+        className="w-full rounded-md border border-coral bg-coral px-md py-sm text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
+      >
+        New design
+      </button>
+      <div className="mt-md flex-1 overflow-y-auto">
+        <h2 className="sr-only">Design history</h2>
+        {designHistory.length ? (
+          <ul className="space-y-2xs">
+            {designHistory.map((row) => (
+              <li key={row.designId}>
+                <button
+                  type="button"
+                  onClick={() => onSelect(row.designId)}
+                  className={`w-full rounded-sm border border-line bg-paper px-sm py-xs text-left focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 ${selectedDesignId === row.designId ? "border-l-2 border-l-coral bg-mist" : "hover:bg-mist"}`}
+                >
+                  <p className="truncate text-sm font-semibold text-ink">{truncateId(row.designId)}</p>
+                  <p className="mt-2xs truncate text-xs text-slate">{truncateSnippet(row.recommendation)}</p>
+                  <div className="mt-2xs flex items-center gap-xs">
+                    <span className={`rounded-pill border px-xs py-2xs text-caption font-semibold uppercase tracking-[0.06em] ${row.overall === "PASS" ? "border-sage/40 bg-sage/10 text-sage" : row.overall === "WARN" ? "border-honey/40 bg-honey/10 text-honey" : "border-clay/40 bg-clay/10 text-clay"}`}>{row.overall}</span>
+                    <span className="text-caption text-slate">{row.bp.toLocaleString()} bp</span>
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-small leading-5 text-slate">Designs you complete in this session will list here.</p>
+        )}
+      </div>
+      <div className="mt-md">
+        <h2 className="text-xs font-semibold text-ink">My reported outcomes</h2>
+        <div className="mt-2xs">
+          <MyOutcomesPanel outcomes={reportedOutcomes} onOpen={onOpenReportedOutcome} refreshStatus={outcomeRefreshStatus} />
+        </div>
+      </div>
+      <BrandAttribution />
+    </div>
+  );
+}
+
+function truncateId(id: string): string {
+  return id.length > 16 ? `${id.slice(0, 16)}\u2026` : id;
+}
+
+function truncateSnippet(text: string): string {
+  if (!text) {
+    return "No recommendation returned.";
+  }
+  return text.length > 40 ? `${text.slice(0, 40)}\u2026` : text;
+}
+
+function ToolsStrip({
+  layout,
+  designId,
+  isBusy,
+  validationReport,
+  exportStatus,
+  exportError,
+  onExport,
+  latestOutcome,
+  onOpenOutcome,
+  onOpenFullReport
+}: {
+  layout: "row" | "stack";
+  designId: string | null;
+  isBusy: boolean;
+  validationReport: ValidationReport | null;
+  exportStatus: Record<ExportFormat, ExportStatus>;
+  exportError: Record<ExportFormat, string | null>;
+  onExport: (format: ExportFormat) => Promise<void>;
+  latestOutcome: OutcomeReport | null;
+  onOpenOutcome: () => void;
+  onOpenFullReport: () => void;
+}) {
+  const candidacy = designId ?? null;
+  const containerClass = layout === "row" ? "mt-md h-14 shrink-0 rounded-md border border-line bg-paper p-0" : "mt-md shrink-0 rounded-md border border-line bg-paper p-sm";
+  const innerClass = layout === "row" ? "grid h-full grid-cols-3 divide-x divide-line" : "flex flex-col gap-sm";
+  const cellClass = layout === "row" ? "flex min-h-0 items-center gap-xs overflow-hidden px-sm py-xs" : "flex flex-col gap-xs";
+  const outcomeHint = candidacy
+    ? latestOutcome
+      ? `Outcome reported ${new Date(latestOutcome.reported_at).toLocaleDateString()}.`
+      : "Have lab results? Record them here."
+    : "Complete a design job to report lab results.";
+
+  return (
+    <section aria-label="Design tools" className={containerClass}>
+      <div className={innerClass}>
+        <div className={cellClass} aria-label="Validation summary">
+          {validationReport ? (
+            <>
+              <span className={`shrink-0 rounded-pill border px-xs py-2xs text-caption font-semibold uppercase tracking-[0.06em] ${overallBadgeClass(validationReport)}`}>{overallLabel(validationReport)}</span>
+              <span className="truncate text-caption text-slate">{validationReport.checks?.length ?? 0} check{(validationReport.checks?.length ?? 0) === 1 ? "" : "s"}</span>
+              <button type="button" onClick={onOpenFullReport} className="ml-auto text-xs font-semibold text-coral hover:underline focus:outline-none focus:ring-2 focus:ring-coral/40">
+                Open full report
+              </button>
+            </>
+          ) : (
+            <span className="text-caption text-slate">No validation report yet.</span>
+          )}
+        </div>
+
+        <div className={cellClass}>
+          <ExportActions designId={candidacy} status={exportStatus} error={exportError} disabledReason={isBusy ? "A new design job is running. Exports stay disabled to avoid downloading the previous design by mistake." : null} onExport={onExport} />
+        </div>
+
+        <div className={cellClass} aria-label="Outcome reporting">
+          {candidacy ? (
+            <button
+              type="button"
+              disabled={isBusy}
+              onClick={onOpenOutcome}
+              className="rounded-md border border-coral bg-coral px-md py-2xs text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-line disabled:text-slate disabled:shadow-none"
+            >
+              {latestOutcome ? "Review or edit outcome" : "Report outcome"}
+            </button>
+          ) : null}
+          <span className="truncate text-caption text-slate">{outcomeHint}</span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ChatPanel({
+  messages,
+  isBusy,
+  state,
+  activeJobId,
+  jobStartedAt,
+  now,
+  sessionId,
+  input,
+  setInput,
+  onSubmit,
+  activeClarification,
+  isPollTimeoutRecovery,
+  onCheckJob,
+  onStartOver,
+  onClear,
+  onViewMap
+}: {
+  messages: ChatMessage[];
+  isBusy: boolean;
+  state: UiState;
+  activeJobId: string | null;
+  jobStartedAt: number | null;
+  now: number;
+  sessionId: string | null;
+  input: string;
+  setInput: (value: string) => void;
+  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+  activeClarification: string | null;
+  isPollTimeoutRecovery: boolean;
+  onCheckJob: () => void;
+  onStartOver: () => void;
+  onClear: () => void;
+  onViewMap: () => void;
+}) {
+  return (
+    <>
+      <div className="flex h-10 shrink-0 items-center justify-between border-b border-line px-md">
+        <div className="flex items-center gap-xs">
+          <h2 className="font-serif text-h3 text-ink">Conversation</h2>
+          {isBusy ? (
+            <span className="flex items-center gap-xs text-caption text-slate" role="status">
+              <span className="h-2 w-2 animate-pulse rounded-pill bg-coral" aria-hidden="true" />
+              Design running
+            </span>
+          ) : null}
+        </div>
+        <button
+          type="button"
+          onClick={onClear}
+          className="rounded-md border border-line bg-paper px-sm py-2xs text-xs font-semibold text-ink hover:border-line-strong focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
+        >
+          Clear
+        </button>
+      </div>
+
+      <div className="flex-1 space-y-sm overflow-y-auto px-md py-md">
+        {messages.map((message) => (
+          <article
+            key={message.id}
+            className={`max-w-3xl border p-4 shadow-rest ${
+              message.role === "user"
+                ? "ml-auto border-coral/30 bg-coral/5"
+                : message.kind === "error"
+                  ? "border-clay/40 bg-clay/5"
+                  : message.kind === "clarification"
+                    ? "border-honey/40 bg-honey/5"
+                    : "border-line bg-paper"
+            }`}
+          >
+            <div className="mb-2 text-xs font-semibold uppercase text-slate">
+              {message.role === "user"
+                ? message.kind === "clarification_answer"
+                  ? "Clarification answer"
+                  : "Researcher"
+                : message.kind === "clarification"
+                  ? "Clarification"
+                  : message.kind === "status"
+                    ? "Job status"
+                    : "Design agent"}
+            </div>
+            <p className="whitespace-pre-wrap text-sm leading-6 text-ink">{message.text}</p>
+            {message.result ? (
+              message.result.validation_report ? <ValidationReportPanel report={message.result.validation_report} /> : <MissingValidationReportPanel />
+            ) : null}
+            {message.result && !message.result.annotated_sequence ? <PartialResultNotice result={message.result} /> : null}
+            {message.result ? <RetrievedTemplatesPanel result={message.result} messageId={message.id} /> : null}
+            {message.result?.annotated_sequence ? (
+              <a
+                href="#plasmid-map"
+                onClick={onViewMap}
+                className="mt-3 inline-flex rounded-sm text-xs font-semibold text-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
+              >
+                View plasmid map
+              </a>
+            ) : null}
+          </article>
+        ))}
+        {isBusy ? (
+          <JobProgressCard jobId={activeJobId} state={state} elapsedMs={jobStartedAt ? now - jobStartedAt : 0} />
+        ) : null}
+      </div>
+
+      <form onSubmit={onSubmit} className="shrink-0 border-t border-line bg-paper px-md py-md" aria-label="Design composer">
+        {state === "awaiting_clarification" && activeClarification ? (
+          <div className="mb-3 rounded-md border border-honey/40 bg-honey/10 p-md text-sm text-ink">
+            <span className="font-semibold text-honey">Clarification needed: </span>
+            {activeClarification}
+          </div>
+        ) : null}
+        {!sessionId && state === "idle" ? (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {EXAMPLE_PROMPTS.map((prompt) => (
+              <button
+                key={prompt}
+                type="button"
+                onClick={() => setInput(prompt)}
+                className="rounded-md border border-line bg-paper px-sm py-xs text-left text-xs text-ink hover:bg-mist focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+        ) : null}
+        <label htmlFor="goal" className="sr-only">
+          Experimental goal
+        </label>
+        <textarea
+          id="goal"
+          value={input}
+          onChange={(event) => setInput(event.target.value)}
+          disabled={isBusy || isPollTimeoutRecovery}
+          rows={3}
+          placeholder={
+            state === "awaiting_clarification"
+              ? "Answer the clarification question..."
+              : "Describe the host, marker, payload, promoter, and any constraints..."
+          }
+          className="min-h-24 w-full resize-none rounded-md border border-line bg-paper px-md py-sm text-sm text-ink shadow-rest outline-none focus:border-coral focus:ring-2 focus:ring-coral/40"
+        />
+        <button
+          type="submit"
+          disabled={!input.trim() || isBusy || isPollTimeoutRecovery}
+          className="mt-2 h-12 w-full rounded-md border border-coral bg-coral px-md text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-line disabled:text-slate disabled:shadow-none"
+        >
+          {state === "submitting" ? "Starting" : state === "polling" ? "Designing" : state === "awaiting_clarification" ? "Answer" : sessionId ? "Refine" : "Design"}
+        </button>
+        {activeJobId ? (
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate">
+            <span>
+              Job {activeJobId} is still queued or running. For a local demo, confirm the worker or deterministic demo fixture is running before retrying.
+            </span>
+            {state === "poll_timeout" ? (
+              <>
+                <button type="button" className="rounded-sm font-semibold text-coral focus:outline-none focus:ring-2 focus:ring-coral/40" onClick={onCheckJob}>
+                  Check status
+                </button>
+                <button type="button" className="rounded-sm font-semibold text-ink hover:text-coral focus:outline-none focus:ring-2 focus:ring-coral/40" onClick={onStartOver}>
+                  Start over
+                </button>
+              </>
+            ) : null}
+          </div>
+        ) : null}
+      </form>
+    </>
+  );
 }
 
 function checkTitle(check: ValidationCheck): string {

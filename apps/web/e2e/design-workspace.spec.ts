@@ -78,7 +78,10 @@ test("researcher can design, refine, view map, and export files", async ({ page 
   await expect(page.getByRole("heading", { name: "Design workspace" })).toBeVisible();
 
   await page.getByLabel("Experimental goal").fill("build a GFP reporter");
-  await page.getByRole("button", { name: "Design" }).click();
+  // Exact match: the left sidebar now exposes a "New design" button whose
+  // accessible name contains the substring "Design", which makes the composer
+  // submit button ambiguous with the default substring match.
+  await page.getByRole("button", { name: "Design", exact: true }).click();
   await expect(page.getByText("Generated annotated circular reporter plasmid.")).toBeVisible();
   await expect(page.getByText("Retrieved template evidence")).toBeVisible();
   await expect(page.getByText("curated:pEGFP-N1")).toBeVisible();
@@ -140,11 +143,17 @@ test("small viewport keeps map, export, and outcome actions reachable", async ({
 
   await page.route("http://127.0.0.1:8000/v1/designs/design-mobile/outcome", async (route) => {
     await route.fulfill({ status: 404, json: { error: { message: "Outcome not found" } } });
-  });
+});
 
   await page.goto("/");
   await page.getByLabel("Experimental goal").fill("build a compact GFP reporter");
   await page.getByRole("button", { name: "Design" }).click();
+
+  // The new mobile layout auto-switches to the Map tab when an annotated
+  // sequence result lands (layout_redesign_v2.md §6). The chat result message
+  // and "View plasmid map" link live on the Chat tab, so switch there to assert
+  // the message and exercise the link's Map-tab hop.
+  await page.getByRole("tab", { name: "Chat" }).click();
   await expect(page.getByText("Generated mobile-friendly annotated reporter plasmid.")).toBeVisible();
 
   await page.getByRole("link", { name: "View plasmid map" }).click();
@@ -194,7 +203,7 @@ test("completed job without sequence shows partial result evidence", async ({ pa
 
   await page.goto("/");
   await page.getByLabel("Experimental goal").fill("find a bacterial reporter template");
-  await page.getByRole("button", { name: "Design" }).click();
+  await page.getByRole("button", { name: "Design", exact: true }).click();
 
   await expect(page.getByText("Found candidate templates, but the request needs another pass before sequence assembly.")).toBeVisible();
   await expect(page.getByText("Partial result")).toBeVisible();
