@@ -448,7 +448,7 @@ return (
           <button
             type="button"
             onClick={() => setInspectOpen(true)}
-            className="hidden rounded-md border border-line bg-white px-sm py-2xs text-xs font-semibold text-ink hover:border-line-strong focus:outline-none focus:ring-2 focus:ring-coral/30 md:inline-flex lg:hidden"
+            className="hidden rounded-md border border-line bg-paper px-sm py-2xs text-xs font-semibold text-ink hover:border-line-strong focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 md:inline-flex lg:hidden"
           >
             Inspect
           </button>
@@ -457,7 +457,7 @@ return (
             onClick={() => setThreadOpen((open) => !open)}
             aria-expanded={threadOpen}
             aria-controls="design-thread"
-            className="rounded-md border border-line bg-white px-sm py-2xs text-xs font-semibold text-ink hover:border-line-strong focus:outline-none focus:ring-2 focus:ring-coral/30"
+            className="rounded-md border border-line bg-paper px-sm py-2xs text-xs font-semibold text-ink hover:border-line-strong focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
           >
             {threadOpen ? "Hide conversation" : "Show conversation"}
           </button>
@@ -473,7 +473,7 @@ return (
               aria-expanded={threadOpen}
               aria-controls="design-thread"
               aria-label="Toggle conversation"
-              className="flex h-8 w-8 items-center justify-center rounded-md border border-line bg-white text-ink hover:border-line-strong focus:outline-none focus:ring-2 focus:ring-coral/30"
+              className="flex h-8 w-8 items-center justify-center rounded-md border border-line bg-paper text-ink hover:border-line-strong focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
             >
               <svg viewBox="0 0 16 16" className="h-4 w-4" aria-hidden="true">
                 <path fill="currentColor" d="M2 3h12v8H6l-3 3v-3H2V3zm1 1v6h2v1.5L6.5 10H13V4H3z" />
@@ -512,7 +512,7 @@ return (
                 type="button"
                 disabled={!designId || isBusy}
                 onClick={() => void handleExport("genbank")}
-                className="flex-1 rounded-md border border-coral bg-white px-sm py-2xs text-sm font-semibold text-coral hover:bg-coral/5 focus:outline-none focus:ring-2 focus:ring-coral/30 disabled:cursor-not-allowed disabled:border-line disabled:text-slate"
+                className="flex-1 rounded-md border border-line-strong bg-paper px-sm py-2xs text-sm font-semibold text-ink hover:bg-mist focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-paper disabled:text-slate disabled:hover:bg-paper"
               >
                 GenBank
               </button>
@@ -520,7 +520,7 @@ return (
                 type="button"
                 disabled={!designId || isBusy}
                 onClick={() => void handleExport("fasta")}
-                className="flex-1 rounded-md border border-coral bg-white px-sm py-2xs text-sm font-semibold text-coral hover:bg-coral/5 focus:outline-none focus:ring-2 focus:ring-coral/30 disabled:cursor-not-allowed disabled:border-line disabled:text-slate"
+                className="flex-1 rounded-md border border-line-strong bg-paper px-sm py-2xs text-sm font-semibold text-ink hover:bg-mist focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-paper disabled:text-slate disabled:hover:bg-paper"
               >
                 FASTA
               </button>
@@ -555,7 +555,7 @@ return (
                 <button
                   type="button"
                   onClick={() => setThreadOpen(false)}
-                  className="rounded-md border border-line bg-white px-sm py-2xs text-xs font-semibold text-ink hover:border-line-strong focus:outline-none focus:ring-2 focus:ring-coral/30"
+                  className="rounded-md border border-line bg-paper px-sm py-2xs text-xs font-semibold text-ink hover:border-line-strong focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
                 >
                   Hide
                 </button>
@@ -571,7 +571,7 @@ return (
                           ? "border-clay/40 bg-clay/5"
                           : message.kind === "clarification"
                             ? "border-honey/40 bg-honey/5"
-                            : "border-line bg-white"
+                            : "border-line bg-paper"
                     }`}
                   >
                     <div className="mb-2 text-xs font-semibold uppercase text-slate">
@@ -595,7 +595,7 @@ return (
                       <a
                         href="#plasmid-map"
                         onClick={() => setThreadOpen(false)}
-                        className="mt-3 inline-flex text-xs font-semibold text-coral"
+                        className="mt-3 inline-flex rounded-sm text-xs font-semibold text-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
                       >
                         View plasmid map
                       </a>
@@ -625,7 +625,7 @@ return (
                 <button
                   type="button"
                   onClick={() => setInspectOpen(false)}
-                  className="ml-auto rounded-md border border-line bg-white px-sm py-2xs text-xs font-semibold text-ink hover:border-line-strong focus:outline-none focus:ring-2 focus:ring-coral/30"
+                  className="ml-auto rounded-md border border-line bg-paper px-sm py-2xs text-xs font-semibold text-ink hover:border-line-strong focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
                 >
                   Close
                 </button>
@@ -645,7 +645,7 @@ return (
 
       <form onSubmit={handleSubmit} className="border-t border-line bg-paper px-md py-md" aria-label="Design composer">
         {state === "awaiting_clarification" && activeClarification ? (
-          <div className="mb-3 border border-honey/40 bg-honey/10 p-3 text-sm text-ink">
+          <div className="mb-3 rounded-md border border-honey/40 bg-honey/10 p-md text-sm text-ink">
             <span className="font-semibold text-honey">Clarification needed: </span>
             {activeClarification}
           </div>
@@ -657,7 +657,7 @@ return (
                 key={prompt}
                 type="button"
                 onClick={() => setInput(prompt)}
-                className="rounded-md border border-line bg-white px-3 py-2 text-left text-xs text-ink hover:border-coral hover:text-coral focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/20"
+                className="rounded-md border border-line bg-paper px-sm py-xs text-left text-xs text-ink hover:bg-mist focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
               >
                 {prompt}
               </button>
@@ -674,7 +674,7 @@ return (
             onChange={(event) => setInput(event.target.value)}
             disabled={isBusy || isPollTimeoutRecovery}
             rows={3}
-            className="min-h-24 flex-1 resize-none rounded-md border border-line bg-white px-4 py-3 text-sm text-ink shadow-rest outline-none focus:border-coral focus:ring-2 focus:ring-coral/20"
+            className="min-h-24 flex-1 resize-none rounded-md border border-line bg-paper px-md py-sm text-sm text-ink shadow-rest outline-none focus:border-coral focus:ring-2 focus:ring-coral/40"
             placeholder={
               state === "awaiting_clarification"
                 ? "Answer the clarification question..."
@@ -684,7 +684,7 @@ return (
           <button
             type="submit"
             disabled={!input.trim() || isBusy || isPollTimeoutRecovery}
-            className="h-12 rounded-md border border-coral bg-coral px-5 text-sm font-semibold text-white hover:bg-coral/90 focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/20 disabled:cursor-not-allowed disabled:border-line disabled:bg-line disabled:hover:bg-line"
+            className="h-12 rounded-md border border-coral bg-coral px-md text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-line disabled:text-slate disabled:shadow-none"
           >
             {state === "submitting" ? "Starting" : state === "polling" ? "Designing" : state === "awaiting_clarification" ? "Answer" : sessionId ? "Refine" : "Design"}
           </button>
@@ -696,10 +696,10 @@ return (
             </span>
             {state === "poll_timeout" ? (
               <>
-                <button type="button" className="font-semibold text-coral" onClick={() => void handleCheckJob()}>
+                <button type="button" className="rounded-sm font-semibold text-coral focus:outline-none focus:ring-2 focus:ring-coral/40" onClick={() => void handleCheckJob()}>
                   Check status
                 </button>
-                <button type="button" className="font-semibold text-ink hover:text-coral" onClick={handleStartOverAfterTimeout}>
+                <button type="button" className="rounded-sm font-semibold text-ink hover:text-coral focus:outline-none focus:ring-2 focus:ring-coral/40" onClick={handleStartOverAfterTimeout}>
                   Start over
                 </button>
               </>
@@ -724,42 +724,45 @@ return (
 function MyOutcomesPanel({ outcomes, onOpen, refreshStatus }: { outcomes: OutcomeReport[]; onOpen: (outcome: OutcomeReport) => void; refreshStatus: "idle" | "refreshing" | "error" }) {
   const sortedOutcomes = [...outcomes].sort((a, b) => new Date(b.reported_at).getTime() - new Date(a.reported_at).getTime());
   return (
-    <section className="border border-line bg-white p-4 shadow-subtle" aria-label="My reported outcomes">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <section className="rounded-md border border-line bg-paper p-md shadow-rest" aria-label="My reported outcomes">
+      <div className="flex flex-wrap items-start justify-between gap-sm">
         <div>
-          <h2 className="text-sm font-semibold">My outcomes</h2>
-          <p className="mt-1 text-xs leading-5 text-slate-600">
+          <h2 className="font-serif text-h3 text-ink">My outcomes</h2>
+          <p className="mt-2xs text-small leading-5 text-slate">
             Shows outcomes reported from this browser until a backend list endpoint is available. Known designs are refreshed individually when possible.
           </p>
         </div>
-        <span className="border border-line bg-panel px-2 py-1 text-xs font-semibold text-slate-600">{outcomes.length}</span>
+        <span className="rounded-sm border border-line bg-mist px-xs py-2xs text-caption font-semibold text-slate">{outcomes.length}</span>
       </div>
       {refreshStatus === "refreshing" ? (
-        <p className="mt-3 text-xs text-slate-500" role="status">Refreshing outcomes...</p>
+        <p className="mt-sm flex items-center gap-xs text-small text-slate" role="status" aria-busy="true">
+          <span className="h-2 w-2 animate-pulse rounded-pill bg-coral" aria-hidden="true" />
+          Refreshing outcomes...
+        </p>
       ) : null}
       {refreshStatus === "error" && sortedOutcomes.length ? (
-        <p className="mt-3 border border-line bg-panel p-3 text-xs leading-5 text-slate-600">Could not refresh saved outcomes. The list below shows the most recent reports saved in this browser.</p>
+        <p className="mt-sm rounded-md border border-line bg-mist p-sm text-small leading-5 text-slate">Could not refresh saved outcomes. The list below shows the most recent reports saved in this browser.</p>
       ) : null}
       {sortedOutcomes.length ? (
-        <div className="mt-3 space-y-2">
+        <div className="mt-sm space-y-sm">
           {sortedOutcomes.map((outcome) => (
-            <article key={outcome.design_id} className="border border-line bg-panel p-3">
+            <article key={outcome.design_id} className="rounded-md border border-line bg-mist p-md">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <p className="break-all text-sm font-semibold text-slate-800">{outcome.design_id}</p>
-                  <p className="mt-1 text-xs text-slate-500">Reported {new Date(outcome.reported_at).toLocaleDateString()}</p>
+                  <p className="break-all text-sm font-semibold text-ink">{outcome.design_id}</p>
+                  <p className="mt-2xs text-xs text-slate">Reported {new Date(outcome.reported_at).toLocaleDateString()}</p>
                 </div>
                 <OutcomeStatusBadge label={outcome.outcome_label} />
               </div>
-              <p className="mt-2 text-xs text-slate-600">Training consent: {outcome.training_consent ? "granted" : "not granted"}</p>
-              <button type="button" onClick={() => onOpen(outcome)} className="mt-3 w-full border border-action bg-action px-3 py-2 text-sm font-semibold text-white hover:bg-action/90 focus:border-action focus:outline-none focus:ring-2 focus:ring-action/20">
+              <p className="mt-2 text-small text-slate">Training consent: {outcome.training_consent ? "granted" : "not granted"}</p>
+              <button type="button" onClick={() => onOpen(outcome)} className="mt-sm w-full rounded-md border border-coral bg-coral px-md py-sm text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-line disabled:text-slate disabled:shadow-none">
                 Review or edit outcome
               </button>
             </article>
           ))}
         </div>
       ) : (
-        <p className="mt-3 border border-line bg-panel p-3 text-xs leading-5 text-slate-600">No locally known reported outcomes yet. Reports submitted from this browser will appear here.</p>
+        <p className="mt-sm rounded-md border border-line bg-mist p-sm text-small leading-5 text-slate">No locally known reported outcomes yet. Reports submitted from this browser will appear here.</p>
       )}
     </section>
   );
@@ -768,24 +771,24 @@ function MyOutcomesPanel({ outcomes, onOpen, refreshStatus }: { outcomes: Outcom
 function OutcomeStatusBadge({ label }: { label: OutcomeReport["outcome_label"] }) {
   const className =
     label === "positive"
-      ? "border-action/40 bg-action/10 text-action"
+      ? "border-sage/40 bg-sage/10 text-sage"
       : label === "negative"
-        ? "border-red-300 bg-red-50 text-red-700"
-        : "border-warning/40 bg-amber-50 text-warning";
-  return <span className={`border px-2 py-1 text-xs font-semibold capitalize ${className}`}>{label}</span>;
+        ? "border-clay/40 bg-clay/10 text-clay"
+        : "border-honey/40 bg-honey/10 text-honey";
+  return <span className={`rounded-pill border px-xs py-2xs text-caption font-semibold capitalize ${className}`}>{label}</span>;
 }
 
 function PendingOutcomeToast({ prompt, onOpen, onDismiss }: { prompt: PendingOutcomePrompt; onOpen: (prompt: PendingOutcomePrompt) => void; onDismiss: (prompt: PendingOutcomePrompt) => void }) {
   return (
-    <aside className="fixed left-4 right-4 top-4 z-40 border border-action/30 bg-white p-4 shadow-subtle sm:left-auto sm:top-auto sm:bottom-4 sm:w-[calc(100%-2rem)] sm:max-w-md" aria-label="Pending outcome prompt">
-      <p className="text-xs font-semibold uppercase text-action">Outcome follow-up</p>
-      <p className="mt-1 text-sm text-slate-800">Design {prompt.design_id} is ready for lab outcome feedback.</p>
-      <p className="mt-1 text-xs text-slate-500">Created {prompt.days_since_created} days ago.</p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button type="button" onClick={() => onOpen(prompt)} className="border border-action bg-action px-3 py-2 text-sm font-semibold text-white hover:bg-action/90 focus:border-action focus:outline-none focus:ring-2 focus:ring-action/20">
+    <aside className="fixed left-4 right-4 top-4 z-40 rounded-lg border border-line bg-paper p-md shadow-floating sm:left-auto sm:top-auto sm:bottom-4 sm:w-[calc(100%-2rem)] sm:max-w-md" aria-label="Pending outcome prompt">
+      <p className="text-caption font-semibold uppercase tracking-[0.06em] text-coral">Outcome follow-up</p>
+      <p className="mt-2xs text-sm text-ink">Design {prompt.design_id} is ready for lab outcome feedback.</p>
+      <p className="mt-2xs text-xs text-slate">Created {prompt.days_since_created} days ago.</p>
+      <div className="mt-sm flex flex-wrap gap-2">
+        <button type="button" onClick={() => onOpen(prompt)} className="rounded-md border border-coral bg-coral px-md py-sm text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40">
           Report outcome
         </button>
-        <button type="button" onClick={() => onDismiss(prompt)} className="border border-line bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:border-action hover:text-action focus:border-action focus:outline-none focus:ring-2 focus:ring-action/20">
+        <button type="button" onClick={() => onDismiss(prompt)} className="rounded-md border border-line-strong bg-paper px-md py-sm text-sm font-semibold text-ink hover:bg-mist focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40">
           Not now
         </button>
       </div>
@@ -795,21 +798,24 @@ function PendingOutcomeToast({ prompt, onOpen, onDismiss }: { prompt: PendingOut
 
 function RightRailJobNotice({ jobId, hasPreviousDesign }: { jobId: string | null; hasPreviousDesign: boolean }) {
   return (
-    <section className="border border-action/30 bg-action/5 p-4 shadow-subtle" role="status" aria-live="polite">
-      <p className="text-xs font-semibold uppercase text-action">Design running</p>
-      <p className="mt-1 text-sm leading-6 text-slate-700">
+    <section className="rounded-md border border-line bg-mist p-md shadow-rest" role="status" aria-live="polite">
+      <p className="flex items-center gap-xs text-caption font-semibold uppercase tracking-[0.06em] text-coral">
+        <span className="h-2 w-2 animate-pulse rounded-pill bg-coral" aria-hidden="true" />
+        Design running
+      </p>
+      <p className="mt-2xs text-sm leading-6 text-slate">
         {hasPreviousDesign
           ? "A new design is running. The panels below still show the last completed design until the current result is ready."
           : "A design is running. The map, export, and outcome panels will update when the result is ready."}
       </p>
-      {jobId ? <p className="mt-2 text-xs text-slate-500">Job ID: {jobId}</p> : null}
+      {jobId ? <p className="mt-2 text-xs text-slate">Job ID: {jobId}</p> : null}
     </section>
   );
 }
 
 function PendingPromptFetchMessage() {
   return (
-    <section className="border border-line bg-white p-3 text-xs leading-5 text-slate-600 shadow-subtle" aria-label="Outcome prompt status">
+    <section className="rounded-md border border-line bg-paper p-sm text-small leading-5 text-slate shadow-rest" aria-label="Outcome prompt status">
       Outcome follow-ups could not be checked. You can continue designing; prompts will be checked again on reload.
     </section>
   );
@@ -818,9 +824,9 @@ function PendingPromptFetchMessage() {
 function ValidationSummary({ report, onOpenThread }: { report: ValidationReport | null; onOpenThread: () => void }) {
   if (!report) {
     return (
-      <section className="border border-line bg-white p-4 shadow-rest" aria-label="Validation summary">
-        <h2 className="text-sm font-semibold text-ink">Validation</h2>
-        <p className="mt-1 text-xs leading-5 text-slate">No validation report yet. Run a design job to see assembly checks.</p>
+      <section className="rounded-md border border-line bg-paper p-md shadow-rest" aria-label="Validation summary">
+        <h2 className="font-serif text-h3 text-ink">Validation</h2>
+        <p className="mt-2xs text-small leading-5 text-slate">No validation report yet. Run a design job to see assembly checks.</p>
       </section>
     );
   }
@@ -832,21 +838,21 @@ function ValidationSummary({ report, onOpenThread }: { report: ValidationReport 
       : "PASS");
   const badgeClass =
     overall === "PASS"
-      ? "border-sage bg-mist text-sage"
+      ? "border-sage/40 bg-sage/10 text-sage"
       : overall === "WARN"
-        ? "border-honey bg-mist text-honey"
-        : "border-clay bg-mist text-clay";
+        ? "border-honey/40 bg-honey/10 text-honey"
+        : "border-clay/40 bg-clay/10 text-clay";
   return (
-    <section className="border border-line bg-white p-4 shadow-rest" aria-label="Validation summary">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold text-ink">Validation</h2>
-        <span className={`border px-xs py-2xs text-xs font-semibold ${badgeClass}`}>{overall}</span>
+    <section className="rounded-md border border-line bg-paper p-md shadow-rest" aria-label="Validation summary">
+      <div className="flex items-center justify-between gap-sm">
+        <h2 className="font-serif text-h3 text-ink">Validation</h2>
+        <span className={`rounded-pill border px-xs py-2xs text-caption font-semibold uppercase tracking-[0.06em] ${badgeClass}`}>{overall}</span>
       </div>
-      <p className="mt-2 text-xs leading-5 text-slate">{checks.length} check{checks.length === 1 ? "" : "s"} reported.</p>
+      <p className="mt-2 text-small leading-5 text-slate">{checks.length} check{checks.length === 1 ? "" : "s"} reported.</p>
       <button
         type="button"
         onClick={onOpenThread}
-        className="mt-2 text-xs font-semibold text-coral hover:underline focus:outline-none focus:ring-2 focus:ring-coral/30"
+        className="mt-2 text-xs font-semibold text-coral hover:underline focus:outline-none focus:ring-2 focus:ring-coral/40"
       >
         Open full report
       </button>
@@ -857,9 +863,9 @@ function ValidationSummary({ report, onOpenThread }: { report: ValidationReport 
 function OutcomePanel({ designId, latestOutcome, disabledReason, onOpen }: { designId: string | null; latestOutcome: OutcomeReport | null; disabledReason: string | null; onOpen: () => void }) {
   const disabled = !designId || Boolean(disabledReason);
   return (
-    <section className="border border-line bg-white p-4 shadow-subtle" aria-label="Outcome reporting">
-      <h2 className="text-sm font-semibold">Lab outcome</h2>
-      <p className="mt-1 text-xs leading-5 text-slate-600">
+    <section className="rounded-md border border-line bg-paper p-md shadow-rest" aria-label="Outcome reporting">
+      <h2 className="font-serif text-h3 text-ink">Lab outcome</h2>
+      <p className="mt-2xs text-small leading-5 text-slate">
         {disabledReason
           ? disabledReason
           : designId
@@ -869,13 +875,13 @@ function OutcomePanel({ designId, latestOutcome, disabledReason, onOpen }: { des
           : "Complete a design job to report lab results."}
       </p>
       {latestOutcome ? (
-        <p className="mt-2 text-xs text-slate-500">Training consent: {latestOutcome.training_consent ? "granted" : "not granted"}</p>
+        <p className="mt-2 text-xs text-slate">Training consent: {latestOutcome.training_consent ? "granted" : "not granted"}</p>
       ) : null}
       <button
         type="button"
         disabled={disabled}
         onClick={onOpen}
-        className="mt-4 w-full border border-action bg-action px-3 py-2 text-sm font-semibold text-white hover:bg-action/90 focus:border-action focus:outline-none focus:ring-2 focus:ring-action/20 disabled:cursor-not-allowed disabled:border-slate-300 disabled:bg-slate-300 disabled:hover:bg-slate-300"
+        className="mt-md w-full rounded-md border border-coral bg-coral px-md py-sm text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-line disabled:text-slate disabled:shadow-none"
       >
         {latestOutcome ? "Review or edit outcome" : "Report outcome"}
       </button>
@@ -887,22 +893,22 @@ function JobProgressCard({ jobId, state, elapsedMs }: { jobId: string | null; st
   const elapsedSeconds = Math.max(0, Math.round(elapsedMs / 1000));
   const label = state === "submitting" ? "Starting design job" : "Designing and validating plasmid";
   return (
-    <article className="max-w-3xl border border-action/30 bg-action/5 p-4 shadow-subtle" role="status" aria-live="polite" aria-atomic="true">
-      <div className="mb-2 flex items-center justify-between gap-4 text-xs font-semibold uppercase text-action">
+    <article className="max-w-3xl rounded-md border border-line bg-mist p-md shadow-rest" role="status" aria-live="polite" aria-atomic="true">
+      <div className="mb-2 flex items-center justify-between gap-md text-caption font-semibold uppercase tracking-[0.06em] text-coral">
         <span>{label}</span>
         <span aria-hidden="true">{elapsedSeconds}s</span>
       </div>
-      <div className="space-y-2" aria-hidden>
-        <div className="h-2 w-full overflow-hidden bg-white">
-          <div className="h-full w-2/3 animate-pulse bg-action/40" />
+      <div className="space-y-sm" aria-hidden>
+        <div className="h-2 w-full overflow-hidden rounded-pill bg-paper">
+          <div className="h-full w-2/3 origin-left animate-pulse rounded-pill bg-coral/40" />
         </div>
-        <div className="grid grid-cols-3 gap-2 text-xs text-slate-600">
+        <div className="grid grid-cols-3 gap-sm text-sm text-slate">
           <span>Retrieving templates</span>
           <span>Generating candidate</span>
           <span>Running checks</span>
         </div>
       </div>
-      {jobId ? <p className="mt-3 text-xs text-slate-500">Job ID: {jobId}</p> : null}
+      {jobId ? <p className="mt-sm text-xs text-slate">Job ID: {jobId}</p> : null}
     </article>
   );
 }
@@ -917,14 +923,14 @@ function RetrievedTemplatesPanel({ result, messageId }: { result: JobResultPaylo
   }
 
   return (
-    <section className="mt-3 border border-line bg-panel p-3" aria-label="Retrieved template evidence">
-      <h3 className="text-xs font-semibold uppercase text-slate-600">Retrieved template evidence</h3>
-      <ul className="mt-2 space-y-1 text-xs text-slate-600">
+    <section className="mt-md rounded-md border border-line bg-mist p-md" aria-label="Retrieved template evidence">
+      <h3 className="text-caption font-semibold uppercase tracking-[0.06em] text-slate">Retrieved template evidence</h3>
+      <ul className="mt-sm space-y-2xs text-small text-slate">
         {result.retrieved_templates.slice(0, 3).map((template, index) => (
           <li key={`${messageId}-${template.source_id ?? index}`}>
-            <span className="font-medium text-slate-800">Retrieved {index + 1}: {template.name ?? template.source_id ?? "template"}</span>{" "}
+            <span className="font-medium text-ink">Retrieved {index + 1}: {template.name ?? template.source_id ?? "template"}</span>{" "}
             {typeof template.score === "number" ? `(${template.score.toFixed(3)})` : ""}
-            <span className="block text-slate-500">
+            <span className="block text-slate">
               {[template.source_id, template.vector_profile, template.source].filter(Boolean).join(" · ") || "No additional source metadata returned."}
             </span>
           </li>
@@ -940,9 +946,9 @@ function MissingValidationReportPanel() {
 
 function ResultNote({ title, text }: { title: string; text: string }) {
   return (
-    <section className="mt-3 border border-line bg-panel p-3" aria-label={title}>
-      <h3 className="text-xs font-semibold uppercase text-slate-600">{title}</h3>
-      <p className="mt-1 text-xs leading-5 text-slate-500">{text}</p>
+    <section className="mt-md rounded-md border border-line bg-mist p-md" aria-label={title}>
+      <h3 className="text-caption font-semibold uppercase tracking-[0.06em] text-slate">{title}</h3>
+      <p className="mt-2xs text-small leading-5 text-slate">{text}</p>
     </section>
   );
 }
@@ -951,29 +957,29 @@ function ValidationReportPanel({ report }: { report: ValidationReport }) {
   const checks = report.checks ?? [];
   const overall = report.overall ?? (checks.some((check) => normalizeStatus(check.status) === "FAIL") ? "FAIL" : "PASS");
   return (
-    <section className="mt-4 border border-line bg-panel p-3" aria-label="Validation report">
+    <section className="mt-md rounded-md border border-line bg-mist p-md" aria-label="Validation report">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold uppercase text-slate-600">Validation report</h3>
+        <h3 className="text-caption font-semibold uppercase tracking-[0.06em] text-slate">Validation report</h3>
         <StatusBadge status={overall} />
       </div>
       {report.generated_by_model_version ? (
-        <p className="mt-1 text-xs text-slate-500">Model: {report.generated_by_model_version}</p>
+        <p className="mt-2xs text-xs text-slate">Model: {report.generated_by_model_version}</p>
       ) : null}
       {checks.length ? (
-        <div className="mt-3 space-y-2">
+        <div className="mt-sm space-y-sm">
           {checks.map((check, index) => (
-            <div key={`${checkTitle(check)}-${index}`} className="border border-line bg-white p-3">
+            <div key={`${checkTitle(check)}-${index}`} className="rounded-md border border-line bg-paper p-md">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-medium text-slate-800">{checkTitle(check)}</p>
+                <p className="text-sm font-medium text-ink">{checkTitle(check)}</p>
                 <StatusBadge status={check.status ?? "PASS"} />
               </div>
-              {check.message ? <p className="mt-1 text-xs leading-5 text-slate-600">{check.message}</p> : null}
-              {regionLabel(check) ? <p className="mt-1 text-xs text-slate-500">Region: {regionLabel(check)}</p> : null}
+              {check.message ? <p className="mt-2xs text-small leading-5 text-slate">{check.message}</p> : null}
+              {regionLabel(check) ? <p className="mt-2xs text-xs text-slate">Region: {regionLabel(check)}</p> : null}
             </div>
           ))}
         </div>
       ) : (
-        <p className="mt-3 text-xs text-slate-500">No individual checks were returned.</p>
+        <p className="mt-sm text-small text-slate">No individual checks were returned.</p>
       )}
     </section>
   );
@@ -985,9 +991,9 @@ function PartialResultNotice({ result }: { result: JobResultPayload }) {
     return null;
   }
   return (
-    <section className="mt-4 border border-warning/40 bg-amber-50 p-3 text-xs leading-5 text-slate-700" aria-label="Partial result">
-      <p className="font-semibold text-warning">Partial result</p>
-      <p className="mt-1">
+    <section className="mt-md rounded-md border border-honey/40 bg-honey/10 p-md text-small leading-5 text-slate" aria-label="Partial result">
+      <p className="font-semibold text-honey">Partial result</p>
+      <p className="mt-2xs">
         The job returned supporting evidence but no annotated sequence, so the plasmid map and exports are not available yet. Refine the request or retry the job if a full design was expected.
       </p>
     </section>
@@ -998,13 +1004,13 @@ function StatusBadge({ status }: { status: string }) {
   const normalized = normalizeStatus(status);
   const className =
     normalized === "PASS"
-      ? "border-action/40 bg-action/10 text-action"
+      ? "border-sage/40 bg-sage/10 text-sage"
       : normalized === "WARN"
-        ? "border-warning/40 bg-amber-50 text-warning"
+        ? "border-honey/40 bg-honey/10 text-honey"
         : normalized === "FAIL"
-          ? "border-red-300 bg-red-50 text-red-700"
-          : "border-slate-300 bg-slate-50 text-slate-600";
-  return <span className={`border px-2 py-1 text-xs font-semibold ${className}`}>{normalized}</span>;
+          ? "border-clay/40 bg-clay/10 text-clay"
+          : "border-line-strong bg-mist text-slate";
+  return <span className={`rounded-pill border px-xs py-2xs text-caption font-semibold uppercase tracking-[0.06em] ${className}`}>{normalized}</span>;
 }
 
 function normalizeStatus(status: string | undefined): string {
