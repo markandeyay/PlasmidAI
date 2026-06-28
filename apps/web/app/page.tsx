@@ -68,6 +68,15 @@ export default function Page() {
   const [outcomeRefreshStatus, setOutcomeRefreshStatus] = useState<"idle" | "refreshing" | "error">("idle");
   const [threadOpen, setThreadOpen] = useState(false);
   const [inspectOpen, setInspectOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(true);
+
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 768px)");
+    const onChange = (event: MediaQueryListEvent) => setIsDesktop(event.matches);
+    setIsDesktop(query.matches);
+    query.addEventListener("change", onChange);
+    return () => query.removeEventListener("change", onChange);
+  }, []);
 
   const latestResult = useMemo(
     () => [...messages].reverse().find((message) => message.result?.annotated_sequence)?.result,
@@ -465,6 +474,7 @@ return (
       </header>
 
       <div className="relative min-h-0 flex-1">
+        {isDesktop ? (
         <div className="hidden h-full md:grid md:grid-cols-1 lg:grid-cols-[56px_minmax(0,1fr)_320px]">
           <nav className="hidden flex-col items-center gap-sm border-r border-line bg-paper py-md md:flex lg:flex" aria-label="Workspace navigation">
             <button
@@ -502,7 +512,7 @@ return (
             <BrandAttribution />
           </aside>
         </div>
-
+        ) : (
         <div className="h-full overflow-y-auto md:hidden">
           <div className="flex min-h-0 flex-col">
             <div className="h-[55vh] min-h-0 p-sm">
@@ -536,6 +546,7 @@ return (
             <BrandAttribution />
           </div>
         </div>
+        )}
 
         {threadOpen ? (
           <>
