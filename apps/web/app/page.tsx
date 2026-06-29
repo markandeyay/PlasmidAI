@@ -78,9 +78,14 @@ export default function Page() {
     const query = window.matchMedia("(min-width: 768px)");
     const onChange = (event: MediaQueryListEvent) => setIsDesktop(event.matches);
     setIsDesktop(query.matches);
-    if (window.innerWidth < 880) {
-      setChatOpen(false);
-    }
+    query.addEventListener("change", onChange);
+    return () => query.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 880px)");
+    const onChange = (event: MediaQueryListEvent) => setChatOpen(event.matches);
+    setChatOpen(query.matches);
     query.addEventListener("change", onChange);
     return () => query.removeEventListener("change", onChange);
   }, []);
@@ -612,6 +617,7 @@ return (
               outcomesCollapsed={outcomesCollapsed}
               onToggleOutcomes={() => setOutcomesCollapsed((open) => !open)}
               hasDesign={Boolean(designId)}
+              onOpenSheet={() => setSidebarSheetOpen(true)}
             />
 
             <div className="flex min-h-0 min-w-0 flex-col bg-cream">
@@ -746,45 +752,61 @@ return (
               </div>
             )}
           </div>
-
-          {sidebarSheetOpen ? (
-            <div className="fixed inset-0 z-40">
-              <button type="button" tabIndex={-1} aria-label="Close menu" onClick={() => setSidebarSheetOpen(false)} className="absolute inset-0 bg-ink/30" />
-              <aside className="absolute left-0 top-0 h-full w-72 max-w-[85vw] overflow-y-auto border-r border-line bg-paper px-sm py-md shadow-floating" aria-label="Workspace navigation">
-                <SidebarContent
-                  variant="sheet"
-                  designHistory={designHistory}
-                  selectedDesignId={selectedDesignId ?? designHistory[0]?.designId ?? null}
-                  onSelect={(id) => { setSelectedDesignId(id); setSidebarSheetOpen(false); if (designHistory.some((row) => row.designId === id)) { setMobileTab("map"); } }}
-                  onNewDesign={() => { handleNewDesign(); setSidebarSheetOpen(false); }}
-                  reportedOutcomes={reportedOutcomes}
-                  onOpenReportedOutcome={openReportedOutcomeModal}
-                  outcomeRefreshStatus={outcomeRefreshStatus}
-                  pendingPromptStatus={pendingPromptStatus}
-                  outcomesCollapsed={false}
-                  onToggleOutcomes={() => undefined}
-                  hasDesign={Boolean(designId)}
-                />
-              </aside>
-            </div>
-          ) : null}
         </>
       )}
 
+      {sidebarSheetOpen ? (
+        <div className="fixed inset-0 z-40">
+          <button type="button" tabIndex={-1} aria-label="Close menu" onClick={() => setSidebarSheetOpen(false)} className="absolute inset-0 bg-ink/30" />
+          <aside className="absolute left-0 top-0 flex h-full w-72 max-w-[85vw] flex-col border-r border-line bg-paper shadow-floating" aria-label="Workspace navigation">
+            <div className="flex shrink-0 items-center justify-between border-b border-line px-md py-sm">
+              <span className="font-serif text-h3 text-ink">Menu</span>
+              <button
+                type="button"
+                aria-label="Close menu"
+                onClick={() => setSidebarSheetOpen(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-md border border-line bg-paper text-ink hover:border-line-strong focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
+              >
+                <svg viewBox="0 0 16 16" className="h-4 w-4" aria-hidden="true">
+                  <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto px-sm py-md">
+              <SidebarContent
+                variant="sheet"
+                designHistory={designHistory}
+                selectedDesignId={selectedDesignId ?? designHistory[0]?.designId ?? null}
+                onSelect={(id) => { setSelectedDesignId(id); setSidebarSheetOpen(false); if (designHistory.some((row) => row.designId === id)) { setMobileTab("map"); } }}
+                onNewDesign={() => { handleNewDesign(); setSidebarSheetOpen(false); }}
+                reportedOutcomes={reportedOutcomes}
+                onOpenReportedOutcome={openReportedOutcomeModal}
+                outcomeRefreshStatus={outcomeRefreshStatus}
+                pendingPromptStatus={pendingPromptStatus}
+                outcomesCollapsed={false}
+                onToggleOutcomes={() => undefined}
+                hasDesign={Boolean(designId)}
+                onOpenSheet={() => setSidebarSheetOpen(true)}
+              />
+            </div>
+          </aside>
+        </div>
+      ) : null}
+
       <footer className="flex h-6 items-center justify-between border-t border-line bg-paper px-md text-caption text-slate">
-        <span className="flex items-center gap-xs">
+        <span className="flex min-w-0 items-center gap-xs">
           {isBusy ? (
             <>
-              <span className="h-2 w-2 animate-pulse rounded-pill bg-coral" aria-hidden="true" />
-              <span>Design running{activeJobId ? ` · ${activeJobId.length > 10 ? `${activeJobId.slice(0, 10)}\u2026` : activeJobId}` : ""}</span>
+              <span className="h-2 w-2 shrink-0 animate-pulse rounded-pill bg-coral" aria-hidden="true" />
+              <span className="truncate">Design running{activeJobId ? ` · ${activeJobId.length > 10 ? `${activeJobId.slice(0, 10)}\u2026` : activeJobId}` : ""}</span>
             </>
           ) : state === "poll_timeout" ? (
             <>
-              <span className="h-2 w-2 rounded-pill bg-honey" aria-hidden="true" />
-              <span>Polling timed out</span>
+              <span className="h-2 w-2 shrink-0 rounded-pill bg-honey" aria-hidden="true" />
+              <span className="truncate">Polling timed out</span>
             </>
           ) : designId ? (
-            <span>Design ready · {designId}</span>
+            <span className="truncate">Design ready · {designId}</span>
           ) : (
             <span>Idle</span>
           )}
@@ -1060,7 +1082,8 @@ function SidebarContent({
   pendingPromptStatus,
   outcomesCollapsed,
   onToggleOutcomes,
-  hasDesign
+  hasDesign,
+  onOpenSheet
 }: {
   variant: "desktop" | "sheet";
   designHistory: DesignHistoryRow[];
@@ -1074,6 +1097,7 @@ function SidebarContent({
   outcomesCollapsed: boolean;
   onToggleOutcomes: () => void;
   hasDesign: boolean;
+  onOpenSheet: () => void;
 }) {
   if (variant === "desktop") {
     return (
@@ -1155,7 +1179,16 @@ function SidebarContent({
               </li>
             ))}
           </ul>
-          <span className="h-8 w-8 rounded-md" aria-hidden />
+          <button
+            type="button"
+            onClick={onOpenSheet}
+            aria-label="My reported outcomes"
+            className="flex h-8 w-8 items-center justify-center rounded-md border border-line bg-paper text-ink hover:border-line-strong focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
+          >
+            <svg viewBox="0 0 16 16" className="h-4 w-4" aria-hidden="true">
+              <path fill="currentColor" d="M3 3h10v2H3V3zm0 4h10v2H3V7zm0 4h7v2H3v-2z" />
+            </svg>
+          </button>
           <BrandAttribution />
         </div>
       </nav>
