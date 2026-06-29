@@ -16,6 +16,7 @@ from packages.core.schemas import (
     AnnotatedSequence,
     DesignSpec,
     GeneratedSequence,
+    PlasmidRecommendation,
     RetrievedPlasmid,
     ValidationCheck,
     ValidationReport,
@@ -35,7 +36,8 @@ from packages.data_pipeline.parse.sequence_parser import parse_genbank_text, par
 from packages.generation.generator import FakeGenerator, SequenceGenerator, ensure_generated_sequence_count
 from packages.retrieval.embed_corpus import EmbedCorpusConfig, build_embedder, build_vector_store
 from packages.retrieval.intent_parser import IntentParser, build_intent_parser
-from packages.retrieval.retriever import HybridRetriever, PostgresRetrievalRepository, Retriever
+from packages.retrieval.recommender import RecommendationGenerator
+from packages.retrieval.retriever import DEFAULT_RETRIEVAL_K, HybridRetriever, PostgresRetrievalRepository, Retriever
 from packages.validation.engine import ConstraintEngine as DeterministicConstraintEngine
 
 
@@ -64,6 +66,8 @@ class GenerationSpikeResult:
     query: str
     spec: DesignSpec
     template: RetrievedPlasmid
+    retrieved_templates: list[RetrievedPlasmid]
+    recommendations: list[PlasmidRecommendation]
     generated: GeneratedSequence
     reannotated_sequence: AnnotatedSequence
     validation_report: ValidationReport
@@ -144,21 +148,32 @@ class S3TextObjectStore:
 
 
 @dataclass(frozen=True)
+class ParserReannotator:
+    def reannotate(self, generated: GeneratedSequence, template: RetrievedPlasmid) -> AnnotatedSequence:
+        del template
+        return parse_generated_sequence(generated.annotated_sequence.sequence)
+
+
+@dataclass(frozen=True)
 class GenerationSpikePipeline:
     parser: IntentParser
     retriever: Retriever
     generator: SequenceGenerator
     reannotator: Reannotator
     constraint_engine: ConstraintEngine
+    recommendation_generator: RecommendationGenerator | None = None
+    retrieval_k: int = DEFAULT_RETRIEVAL_K
     version: str = SPIKE_PIPELINE_VERSION
 
     def run(self, free_text: str) -> GenerationSpikeResult:
         spec = self.parser.parse(free_text)
         if spec.clarification_needed:
             raise ValueError(f"intent clarification required: {spec.clarification_question}")
-        templates = self.retriever.retrieve(spec, k=1)
+        template_limit = max(1, self.retrieval_k if self.recommendation_generator is not None else 1)
+        templates = self.retriever.retrieve(spec, k=template_limit)
         if not templates:
             raise ValueError("retrieval returned no templates for generation spike")
+        recommendations = self.recommendation_generator.recommend(templates, spec) if self.recommendation_generator is not None else []
         generated = self.generator.generate(spec, templates, n=1)
         ensure_generated_sequence_count(generated)
         generated_sequence = generated[0]
@@ -169,6 +184,8 @@ class GenerationSpikePipeline:
             query=free_text,
             spec=spec,
             template=templates[0],
+            retrieved_templates=templates,
+            recommendations=recommendations,
             generated=generated_sequence,
             reannotated_sequence=reannotated,
             validation_report=validation,
@@ -295,15 +312,11 @@ def spike_result_as_dict(result: GenerationSpikeResult) -> dict[str, Any]:
         "query": result.query,
         "pipeline_version": result.pipeline_version,
         "passed": result.passed,
-        "spec": result.spec.model_dump(mode="json"),
-        "template": {
-            "id": result.template.plasmid.id,
-            "name": result.template.plasmid.name,
-            "score": result.template.score,
-            "matched_fields": result.template.matched_fields,
-        },
+        "design_spec": result.spec.model_dump(mode="json"),
+        "retrieved_templates": [item.model_dump(mode="json") for item in result.retrieved_templates],
+        "recommendations": [item.model_dump(mode="json") for item in result.recommendations],
         "generated": result.generated.model_dump(mode="json"),
-        "reannotated_sequence": result.reannotated_sequence.model_dump(mode="json"),
+        "annotated_sequence": result.reannotated_sequence.model_dump(mode="json"),
         "validation_report": result.validation_report.model_dump(mode="json"),
         "component_checks": [check.__dict__ for check in result.component_checks],
     }

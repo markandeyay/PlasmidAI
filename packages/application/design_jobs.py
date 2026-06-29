@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping, Protocol
 
+from packages.application.designs import DesignStore
 from packages.generation.spike import GenerationSpikePipeline, spike_result_as_dict
 
 
@@ -18,8 +19,9 @@ class GenerationDesignJobHandler:
     """Run the retrieval-grounded generation pipeline behind the worker queue."""
 
     pipeline: DesignPipeline
+    design_store: DesignStore
 
-    def __call__(self, *, session_id: str, action: str, payload: Mapping[str, Any]) -> dict[str, Any]:
+    def __call__(self, *, job_id: str, session_id: str, action: str, payload: Mapping[str, Any]) -> dict[str, Any]:
         if action not in {"design", "refine"}:
             raise ValueError(f"unsupported design job action: {action}")
         context = payload.get("context")
@@ -36,31 +38,38 @@ class GenerationDesignJobHandler:
             if clarification is None:
                 raise
             return {
-                "session_id": session_id,
-                "action": action,
-                "design": {
-                    "design_spec": {
-                        "clarification_needed": True,
-                        "clarification_question": clarification,
-                    },
+                "design_id": None,
+                "design_spec": {
+                    "clarification_needed": True,
                     "clarification_question": clarification,
-                    "retrieved_templates": [],
-                    "recommendations": [],
-                    "recommendation_text": None,
-                    "annotated_sequence": None,
-                    "validation_report": None,
                 },
+                "clarification_question": clarification,
+                "annotated_sequence": None,
+                "validation_report": None,
+                "retrieved_templates": [],
+                "recommendations": [],
+                "recommendation_text": None,
             }
         serialized = spike_result_as_dict(result)
+        design = self.design_store.create(
+            session_id=session_id,
+            job_id=job_id,
+            annotated_sequence=result.reannotated_sequence,
+        )
         return {
-            "session_id": session_id,
-            "action": action,
-            "design": serialized,
+            "design_id": design.design_id,
+            "design_spec": serialized["design_spec"],
+            "clarification_question": None,
+            "annotated_sequence": serialized["annotated_sequence"],
+            "validation_report": serialized["validation_report"],
+            "retrieved_templates": serialized["retrieved_templates"],
+            "recommendations": serialized["recommendations"],
+            "recommendation_text": _recommendation_text(serialized["recommendations"]),
         }
 
 
-def build_generation_design_job_handler(pipeline: GenerationSpikePipeline) -> GenerationDesignJobHandler:
-    return GenerationDesignJobHandler(pipeline=pipeline)
+def build_generation_design_job_handler(pipeline: GenerationSpikePipeline, design_store: DesignStore) -> GenerationDesignJobHandler:
+    return GenerationDesignJobHandler(pipeline=pipeline, design_store=design_store)
 
 
 def _clarification_from_error(exc: ValueError) -> str | None:
@@ -69,3 +78,10 @@ def _clarification_from_error(exc: ValueError) -> str | None:
         return None
     clarification = message[len(CLARIFICATION_ERROR_PREFIX) :].strip()
     return clarification or "Could you clarify the design goal?"
+
+
+def _recommendation_text(recommendations: list[dict[str, Any]]) -> str | None:
+    if not recommendations:
+        return None
+    first = recommendations[0].get("why_relevant")
+    return str(first) if isinstance(first, str) and first.strip() else None

@@ -1,4 +1,4 @@
-.PHONY: build-training-data demo derive-training-signal design e2e-test embed-corpus eval-all eval-check eval-generation eval-retrieval finetune-smoke generate-validation-gold ingest-addgene ingest-all ingest-curated ingest-genbank lint list-models parse-sample quality-report refresh-corpus register-model reprocess serve-api serve-web services-down setup shadow-eval spike-generation test validate-sample
+.PHONY: build-training-data demo derive-training-signal design e2e-test embed-corpus eval-all eval-check eval-generation eval-retrieval finetune-smoke generate-validation-gold ingest-addgene ingest-all ingest-curated ingest-genbank lint list-models parse-sample quality-report refresh-corpus register-model reprocess serve-api serve-local serve-web services-down setup shadow-eval spike-generation test validate-sample
 
 PYTHON ?= python
 MODE ?= dev
@@ -132,6 +132,9 @@ generate-validation-gold:
 
 serve-api:
 	$(PYTHON) -m uvicorn services.api.app:app --host $(API_HOST) --port $(API_PORT)
+
+serve-local:
+	$(PYTHON) -m uvicorn --factory services.api.local_app:build_local_app --host $(API_HOST) --port $(API_PORT)
 
 serve-web:
 	cd apps/web && npm run dev
