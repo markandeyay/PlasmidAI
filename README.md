@@ -2,13 +2,15 @@
 
 PlasmidAI is an AI-assisted plasmid design system: a researcher describes an experimental goal in natural language, the system grounds the request in real plasmid records, proposes an annotated candidate design, validates it against deterministic molecular-biology constraints, renders the plasmid map, and exports files that can move into normal cloning and review workflows.
 
+Two runnable surfaces matter today: `make serve-local` for the interactive local app, and `make demo` for deterministic end-to-end verification.
+
 ## What It Does
 
 PlasmidAI turns a design request into a validated plasmid artifact through a single workflow:
 
 1. A researcher describes the construct they want, such as a host, expression goal, selectable marker, reporter, cloning workflow, or template preference.
 2. The system parses the request into structured intent and retrieves relevant plasmids from an indexed corpus built from curated records and NCBI GenBank.
-3. A generation layer proposes a candidate sequence grounded in the retrieved template rather than inventing an unconstrained backbone.
+3. The local app uses `GOOGLE_API_KEY` with Gemini 2.5 Flash for intent parsing and grounded recommendations when the key is set, then proposes a candidate sequence grounded in the retrieved template rather than inventing an unconstrained backbone.
 4. A deterministic validation engine checks restriction-site conflicts, repeat instability, codon-usage fit, and regulatory-element compatibility.
 5. The application returns an annotated circular construct with validation evidence, retrieved-template evidence, and export actions for GenBank and FASTA.
 6. The outcome system captures wet-lab results so confirmed designs and failures can become future training signal with explicit consent and provenance.
@@ -23,7 +25,7 @@ The retrieval layer embeds natural-language summaries of plasmid records and sto
 
 ### Generation Layer
 
-The generation interface supports deterministic fake generation for CI and demo flows, CPU-runnable Carbon model plumbing, training-data formatting, model registry records, shadow comparison, rollout policy evaluation, and fake-backed canary behavior. Carbon DNA language models are the intended real-model family for sequence generation, with candidate outputs grounded in retrieved templates.
+The local app uses a synchronous `FakeJobQueue` and `FakeGenerator` today, with deterministic validation, real export, and real Postgres/pgvector retrieval wired through the app. The production queue path is still future work: Celery plus a durable Postgres-backed job queue.
 
 ### Validation Layer
 
@@ -56,6 +58,7 @@ Requirements:
 - Node.js 20.9.0 or newer with npm
 - Docker and Docker Compose for local Postgres, pgvector, Redis, MinIO, and service checks
 - GNU Make
+- Python dependencies from `requirements.txt`, including the current `google-genai` SDK
 
 Clone and set up the project:
 
@@ -78,7 +81,27 @@ Run the backend test suite and service checks:
 make test
 ```
 
-Run the deterministic API-backed demo:
+Start the interactive local app:
+
+```bash
+docker compose up -d
+make serve-local
+make serve-web
+```
+
+API startup command:
+
+```bash
+python -m uvicorn --factory services.api.local_app:build_local_app --host 127.0.0.1 --port 8000
+```
+
+Web startup command:
+
+```bash
+cd apps/web && npm run dev
+```
+
+Run the deterministic verification demo:
 
 ```bash
 make demo
@@ -106,6 +129,7 @@ Use these local development targets from the repository root:
 ```bash
 make serve-api
 make serve-web
+make serve-local
 make e2e-test
 make quality-report
 make validate-sample MODE=gold
@@ -118,7 +142,7 @@ The API defaults to `http://127.0.0.1:8000`; the web app defaults to `http://127
 - `packages/core/`: shared schemas and contracts.
 - `packages/data_pipeline/`: ingestion, parsing, annotation, reprocessing, and corpus-quality jobs.
 - `packages/retrieval/`: intent parsing, document composition, embeddings, vector storage, retrieval, recommendation, and evaluation.
-- `packages/generation/`: sequence-generator interfaces, Carbon plumbing, training data, registry, shadow/canary support, and generation evaluation.
+- `packages/generation/`: sequence-generator interfaces, local generator wiring, training data, registry, shadow/canary support, and generation evaluation.
 - `packages/validation/`: deterministic biological validation checks.
 - `packages/application/`: application services, stores, jobs, and export codecs.
 - `packages/feedback/`: outcome-to-training-signal derivation.
