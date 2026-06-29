@@ -47,22 +47,11 @@ def _handle_design_job(*, job_id: str, session_id: str, action: str, payload: Ma
         "annotated_sequence": annotated.model_dump(mode="json"),
         "retrieved_templates": [
             {
-                "plasmid": {
-                    "id": "curated:e2e-template",
-                    "source": "curated",
-                    "name": "E2E Reporter Template",
-                    "sequence": annotated.sequence,
-                    "length": len(annotated.sequence),
-                    "organism": "Homo sapiens",
-                    "vector_type": "e2e_reporter_vector",
-                    "markers": [],
-                    "promoters": ["CMV promoter"],
-                    "use_cases": ["reporter assay"],
-                    "annotation_complete": True,
-                    "raw_ref": "raw/e2e-template.gb",
-                },
+                "source_id": "curated:e2e-template",
+                "source": "curated",
+                "name": "E2E Reporter Template",
+                "vector_profile": "e2e_reporter_vector",
                 "score": 0.99,
-                "matched_fields": ["semantic"],
             }
         ],
         "recommendations": [],

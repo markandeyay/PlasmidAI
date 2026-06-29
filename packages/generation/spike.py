@@ -313,7 +313,16 @@ def spike_result_as_dict(result: GenerationSpikeResult) -> dict[str, Any]:
         "pipeline_version": result.pipeline_version,
         "passed": result.passed,
         "design_spec": result.spec.model_dump(mode="json"),
-        "retrieved_templates": [item.model_dump(mode="json") for item in result.retrieved_templates],
+        "retrieved_templates": [
+            {
+                "source_id": item.plasmid.id,
+                "name": item.plasmid.name,
+                "score": item.score,
+                "source": item.plasmid.source,
+                "vector_profile": item.plasmid.vector_type,
+            }
+            for item in result.retrieved_templates
+        ],
         "recommendations": [item.model_dump(mode="json") for item in result.recommendations],
         "generated": result.generated.model_dump(mode="json"),
         "annotated_sequence": result.reannotated_sequence.model_dump(mode="json"),

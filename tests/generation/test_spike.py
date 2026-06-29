@@ -18,6 +18,7 @@ from packages.generation.spike import (
     StubConstraintEngine,
     render_spike_result,
     requested_component_checks,
+    spike_result_as_dict,
 )
 from packages.retrieval.intent_parser import FakeIntentParser
 
@@ -124,6 +125,15 @@ def test_generation_spike_pipeline_runs_end_to_end_with_fakes() -> None:
     assert result.reannotated_sequence.features[0].name == "AmpR/bla"
     assert result.validation_report.overall == "PASS"
     assert "full sequence" not in render_spike_result(result).casefold()
+    assert spike_result_as_dict(result)["retrieved_templates"] == [
+        {
+            "source_id": "curated:pUC19",
+            "name": "pUC19c",
+            "score": 1.0,
+            "source": "curated",
+            "vector_profile": "bacterial_cloning_vector",
+        }
+    ]
 
 
 def test_generation_spike_pipeline_optionally_generates_recommendations() -> None:
