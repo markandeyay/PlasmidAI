@@ -9,6 +9,7 @@ import requests
 from pydantic import ValidationError
 
 from packages.core.schemas import DesignSpec, PlasmidRecommendation, RetrievedPlasmid
+from packages.retrieval.gemini_client import GeminiJsonClient, GeminiRecommendationClient
 from packages.core.vocabularies import MARKER_TERMS, PROMOTER_TYPE_TERMS, VECTOR_TYPE_TERMS, find_controlled_terms, normalize_text
 
 
@@ -114,10 +115,26 @@ class OpenAIRecommendationClient:
 
 
 def build_recommendation_generator(*, use_llm: bool | None = None) -> RecommendationGenerator:
-    provider = os.environ.get("RECOMMENDER_PROVIDER", "template").casefold()
-    if use_llm is True or provider == "openai":
+    provider = _recommendation_provider()
+    if use_llm is True and provider == "template":
+        provider = "openai"
+    if provider == "template":
+        return TemplateRecommendationGenerator()
+    if provider == "openai":
         return LLMRecommendationGenerator(OpenAIRecommendationClient.from_env())
-    return TemplateRecommendationGenerator()
+    if provider == "gemini":
+        return LLMRecommendationGenerator(
+            GeminiRecommendationClient(GeminiJsonClient.from_env()),
+            name="gemini-grounded-recommender-v1",
+        )
+    raise ValueError(f"unsupported recommendation provider: {provider}")
+
+
+def _recommendation_provider() -> str:
+    provider = os.environ.get("RECOMMENDER_PROVIDER", "template").strip().casefold()
+    if provider not in {"template", "openai", "gemini"}:
+        raise ValueError(f"unsupported recommendation provider: {provider}")
+    return provider
 
 
 def validate_recommendation_grounding(

@@ -10,6 +10,7 @@ import requests
 from pydantic import ValidationError
 
 from packages.core.schemas import DesignSpec
+from packages.retrieval.gemini_client import GeminiIntentClient, GeminiJsonClient
 from packages.core.vocabularies import (
     CELL_LINE_TERMS,
     INDUCER_TERMS,
@@ -304,10 +305,23 @@ class OpenAIIntentClient:
 def build_intent_parser(*, use_fake: bool | None = None) -> IntentParser:
     if use_fake is True:
         return FakeIntentParser()
-    provider = os.environ.get("INTENT_PARSER_PROVIDER", "fake").casefold()
-    if use_fake is False or provider == "openai":
+    provider = _intent_parser_provider()
+    if use_fake is False and provider == "fake":
+        provider = "openai"
+    if provider == "fake":
+        return FakeIntentParser()
+    if provider == "openai":
         return LLMIntentParser(OpenAIIntentClient.from_env())
-    return FakeIntentParser()
+    if provider == "gemini":
+        return LLMIntentParser(GeminiIntentClient(GeminiJsonClient.from_env()))
+    raise ValueError(f"unsupported intent parser provider: {provider}")
+
+
+def _intent_parser_provider() -> str:
+    provider = os.environ.get("INTENT_PARSER_PROVIDER", "fake").strip().casefold()
+    if provider not in {"fake", "openai", "gemini"}:
+        raise ValueError(f"unsupported intent parser provider: {provider}")
+    return provider
 
 
 def parse_design_spec_heuristic(free_text: str, clarifications: list[str] | None = None) -> DesignSpec:
