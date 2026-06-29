@@ -9,6 +9,7 @@ from packages.core.schemas import (
     AnnotatedSequence,
     DesignSpec,
     Plasmid,
+    PlasmidRecommendation,
     RetrievedPlasmid,
 )
 from packages.generation import FakeGenerator
@@ -37,6 +38,16 @@ class FakeReannotator:
     def reannotate(self, generated, template) -> AnnotatedSequence:
         del generated, template
         return self.annotated
+
+
+@dataclass
+class StaticRecommender:
+    recommendations: list[PlasmidRecommendation]
+    calls: list[tuple[list[RetrievedPlasmid], DesignSpec]]
+
+    def recommend(self, retrieved: list[RetrievedPlasmid], spec: DesignSpec) -> list[PlasmidRecommendation]:
+        self.calls.append((retrieved, spec))
+        return self.recommendations
 
 
 def _template() -> RetrievedPlasmid:
@@ -107,10 +118,39 @@ def test_generation_spike_pipeline_runs_end_to_end_with_fakes() -> None:
 
     assert result.passed is True
     assert result.template.plasmid.id == "curated:pUC19"
+    assert [item.plasmid.id for item in result.retrieved_templates] == ["curated:pUC19"]
+    assert result.recommendations == []
     assert result.generated.parent_template_ids == ["curated:pUC19"]
     assert result.reannotated_sequence.features[0].name == "AmpR/bla"
     assert result.validation_report.overall == "PASS"
     assert "full sequence" not in render_spike_result(result).casefold()
+
+
+def test_generation_spike_pipeline_optionally_generates_recommendations() -> None:
+    spec = DesignSpec(organism="Escherichia coli", vector_type="bacterial_cloning_vector")
+    template = _template()
+    recommendations = [
+        PlasmidRecommendation(
+            plasmid_id=template.plasmid.id,
+            rank=1,
+            score=template.score,
+            why_relevant="pUC19c is relevant because it matched the requested backbone.",
+        )
+    ]
+    recommender = StaticRecommender(recommendations=recommendations, calls=[])
+    pipeline = GenerationSpikePipeline(
+        parser=FakeIntentParser({"recommended": spec}),
+        retriever=FakeRetriever([template]),
+        generator=FakeGenerator(),
+        reannotator=FakeReannotator(_annotated()),
+        constraint_engine=StubConstraintEngine(),
+        recommendation_generator=recommender,
+    )
+
+    result = pipeline.run("recommended")
+
+    assert result.recommendations == recommendations
+    assert recommender.calls == [([template], spec)]
 
 
 def test_generation_spike_pipeline_fails_on_clarification_or_missing_template() -> None:

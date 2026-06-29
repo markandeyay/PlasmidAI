@@ -6,7 +6,8 @@ import os
 import pytest
 
 from packages.core.schemas import DesignSpec
-from packages.retrieval.intent_parser import FakeIntentParser, LLMIntentParser, OpenAIIntentClient
+from packages.retrieval.gemini_client import GeminiIntentClient
+from packages.retrieval.intent_parser import FakeIntentParser, LLMIntentParser, OpenAIIntentClient, build_intent_parser
 
 
 def test_fake_intent_parser_normalizes_lentiviral_dox_hek293_and_tagged_gene() -> None:
@@ -200,6 +201,20 @@ def test_llm_intent_parser_rejects_invalid_json_and_extra_keys() -> None:
 
     with pytest.raises(ValueError, match="invalid DesignSpec"):
         LLMIntentParser(extra_key).parse("x")
+
+
+def test_build_intent_parser_selects_gemini_and_rejects_unknown_provider(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("INTENT_PARSER_PROVIDER", "gemini")
+    monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
+
+    parser = build_intent_parser()
+
+    assert isinstance(parser, LLMIntentParser)
+    assert isinstance(parser._call_llm, GeminiIntentClient)
+
+    monkeypatch.setenv("INTENT_PARSER_PROVIDER", "bogus")
+    with pytest.raises(ValueError, match="unsupported intent parser provider"):
+        build_intent_parser()
 
 
 @pytest.mark.skipif(

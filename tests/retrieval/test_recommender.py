@@ -5,10 +5,12 @@ import json
 import pytest
 
 from packages.core.schemas import DesignSpec, Plasmid, PlasmidRecommendation, RetrievedPlasmid
+from packages.retrieval.gemini_client import GeminiRecommendationClient
 from packages.retrieval.recommender import (
     LLMRecommendationGenerator,
     TemplateRecommendationGenerator,
     build_recommendation_context,
+    build_recommendation_generator,
     validate_recommendation_grounding,
 )
 
@@ -195,3 +197,19 @@ def test_llm_recommender_rejects_invalid_json() -> None:
 
     with pytest.raises(ValueError, match="invalid JSON"):
         LLMRecommendationGenerator(BadClient()).recommend([retrieved()], DesignSpec(organism="Homo sapiens"))
+
+
+def test_build_recommendation_generator_selects_gemini_and_rejects_unknown_provider(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("RECOMMENDER_PROVIDER", "gemini")
+    monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
+
+    generator = build_recommendation_generator()
+
+    assert isinstance(generator, LLMRecommendationGenerator)
+    assert isinstance(generator.client, GeminiRecommendationClient)
+
+    monkeypatch.setenv("RECOMMENDER_PROVIDER", "bogus")
+    with pytest.raises(ValueError, match="unsupported recommendation provider"):
+        build_recommendation_generator()

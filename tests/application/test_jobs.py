@@ -43,7 +43,8 @@ def test_fake_job_queue_runs_handler_synchronously_and_stores_success() -> None:
     queue = FakeJobQueue(
         store=store,
         metrics=metrics,
-        handler=lambda *, session_id, action, payload: {
+        handler=lambda *, job_id, session_id, action, payload: {
+            "job_id": job_id,
             "session_id": session_id,
             "action": action,
             "goal": payload["goal"],
@@ -59,6 +60,7 @@ def test_fake_job_queue_runs_handler_synchronously_and_stores_success() -> None:
 
     assert record.status == JOB_STATUS_SUCCEEDED
     assert record.result == {
+        "job_id": record.job_id,
         "session_id": "session-2",
         "action": "design",
         "goal": "strong bacterial promoter",
@@ -72,8 +74,8 @@ def test_fake_job_queue_runs_handler_synchronously_and_stores_success() -> None:
 def test_fake_job_queue_captures_handler_failure() -> None:
     store = InMemoryJobStore()
 
-    def fail_handler(*, session_id: str, action: str, payload: dict[str, Any]) -> Any:
-        del session_id, action, payload
+    def fail_handler(*, job_id: str, session_id: str, action: str, payload: dict[str, Any]) -> Any:
+        del job_id, session_id, action, payload
         raise ValueError("pipeline unavailable")
 
     queue = FakeJobQueue(store=store, handler=fail_handler)
@@ -168,7 +170,7 @@ def test_create_job_task_updates_store_for_success_and_failure() -> None:
 
     success_task = create_job_task(
         store=store,
-        handler=lambda *, session_id, action, payload: f"{session_id}:{action}:{payload['goal']}",
+        handler=lambda *, job_id, session_id, action, payload: f"{job_id}:{session_id}:{action}:{payload['goal']}",
     )
     finished = success_task(
         job_id=success_record.job_id,
@@ -179,8 +181,8 @@ def test_create_job_task_updates_store_for_success_and_failure() -> None:
 
     failed_record = store.create(session_id="session-12", action="refine", payload={"instruction": "trim payload"})
 
-    def fail_handler(*, session_id: str, action: str, payload: dict[str, Any]) -> Any:
-        del session_id, action, payload
+    def fail_handler(*, job_id: str, session_id: str, action: str, payload: dict[str, Any]) -> Any:
+        del job_id, session_id, action, payload
         raise RuntimeError("worker failed")
 
     failed = create_job_task(store=store, handler=fail_handler)(
@@ -191,7 +193,7 @@ def test_create_job_task_updates_store_for_success_and_failure() -> None:
     )
 
     assert finished.status == JOB_STATUS_SUCCEEDED
-    assert finished.result == "session-11:design:vector"
+    assert finished.result == f"{success_record.job_id}:session-11:design:vector"
     assert failed.status == JOB_STATUS_FAILED
     assert failed.error == "worker failed"
     assert get_correlation_id() is None
@@ -205,7 +207,8 @@ def test_create_job_task_restores_correlation_id_and_records_metrics() -> None:
     task = create_job_task(
         store=store,
         metrics=metrics,
-        handler=lambda *, session_id, action, payload: {
+        handler=lambda *, job_id, session_id, action, payload: {
+            "job_id": job_id,
             "session_id": session_id,
             "action": action,
             "correlation_id": get_correlation_id(),
@@ -220,6 +223,7 @@ def test_create_job_task_restores_correlation_id_and_records_metrics() -> None:
     )
 
     assert finished.status == JOB_STATUS_SUCCEEDED
+    assert finished.result["job_id"] == record.job_id
     assert finished.result["correlation_id"] == "trace-worker-1"
     assert get_correlation_id() is None
     assert metrics.snapshot()["jobs"]["terminal"]["action:design:status:succeeded"] == 1
@@ -246,7 +250,12 @@ def test_register_job_task_uses_celery_decorator_and_build_app_reads_redis_url(m
     task = register_job_task(
         registered_app,
         store=store,
-        handler=lambda *, session_id, action, payload: {"session_id": session_id, "action": action, **payload},
+        handler=lambda *, job_id, session_id, action, payload: {
+            "job_id": job_id,
+            "session_id": session_id,
+            "action": action,
+            **payload,
+        },
     )
 
     assert registered_app.name == "pmr.jobs.run"
