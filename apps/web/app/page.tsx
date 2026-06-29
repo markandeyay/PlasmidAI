@@ -154,6 +154,18 @@ const latestResult = useMemo(
     }
     return latestResult;
   }, [selectedDesignId, messages, latestResult]);
+  const selectedResultMessageId = useMemo(() => {
+    let found;
+    if (selectedDesignId) {
+      found = [...messages]
+        .reverse()
+        .find((message) => (message.result?.design_id ?? message.result?.design?.design_id) === selectedDesignId);
+    }
+    if (!found) {
+      found = [...messages].reverse().find((message) => message.result?.annotated_sequence);
+    }
+    return found?.id ?? null;
+  }, [selectedDesignId, messages]);
   const reportedOutcomeDesignIds = useMemo(
     () => Array.from(new Set(reportedOutcomes.map((outcome) => outcome.design_id))).sort().join("|"),
     [reportedOutcomes]
@@ -455,6 +467,26 @@ const latestResult = useMemo(
     setOutcomeModalOpen(true);
   }
 
+  function handleOpenFullReport() {
+    const targetId = selectedResultMessageId;
+    const scrollToResult = () => {
+      if (!targetId) {
+        return;
+      }
+      const el = document.getElementById(`message-${targetId}`);
+      if (el instanceof HTMLElement) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    };
+    if (!isDesktop) {
+      setMobileTab("chat");
+      setSidebarSheetOpen(false);
+    } else {
+      setChatOpen(true);
+    }
+    requestAnimationFrame(() => requestAnimationFrame(scrollToResult));
+  }
+
   function openPromptOutcomeModal(prompt: PendingOutcomePrompt) {
     setOutcomeModalTarget({
       designId: prompt.design_id,
@@ -582,8 +614,10 @@ return (
               hasDesign={Boolean(designId)}
             />
 
-            <div className="flex min-h-0 min-w-0 flex-col bg-cream p-sm md:p-md">
-              <PlasmidMapView annotatedSequence={annotatedSequence as AnnotatedSequence | null} />
+            <div className="flex min-h-0 min-w-0 flex-col bg-cream">
+              <div className="min-h-0 flex-1 p-sm md:p-md">
+                <PlasmidMapView annotatedSequence={annotatedSequence as AnnotatedSequence | null} />
+              </div>
               <ToolsStrip
                 layout="row"
                 designId={designId}
@@ -594,7 +628,7 @@ return (
                 onExport={handleExport}
                 latestOutcome={latestOutcome}
                 onOpenOutcome={openCurrentOutcomeModal}
-                onOpenFullReport={() => setMobileTab("chat")}
+                onOpenFullReport={handleOpenFullReport}
               />
             </div>
 
@@ -673,8 +707,10 @@ return (
 
           <div className="min-h-0 flex-1 md:hidden">
             {mobileTab === "map" ? (
-              <div className="flex h-full min-h-0 flex-col bg-cream p-sm">
-                <PlasmidMapView annotatedSequence={annotatedSequence as AnnotatedSequence | null} />
+              <div className="flex h-full min-h-0 flex-col bg-cream">
+                <div className="min-h-0 flex-1 p-sm">
+                  <PlasmidMapView annotatedSequence={annotatedSequence as AnnotatedSequence | null} />
+                </div>
                 <ToolsStrip
                   layout="stack"
                   designId={designId}
@@ -685,7 +721,7 @@ return (
                   onExport={handleExport}
                   latestOutcome={latestOutcome}
                   onOpenOutcome={openCurrentOutcomeModal}
-                  onOpenFullReport={() => { setMobileTab("chat"); setSidebarSheetOpen(false); }}
+                  onOpenFullReport={handleOpenFullReport}
                 />
               </div>
             ) : (
@@ -1209,9 +1245,10 @@ function ToolsStrip({
   onOpenFullReport: () => void;
 }) {
   const candidacy = designId ?? null;
-  const containerClass = layout === "row" ? "mt-md h-14 shrink-0 rounded-md border border-line bg-paper p-0" : "mt-md shrink-0 rounded-md border border-line bg-paper p-sm";
-  const innerClass = layout === "row" ? "grid h-full grid-cols-3 divide-x divide-line" : "flex flex-col gap-sm";
-  const cellClass = layout === "row" ? "flex min-h-0 items-center gap-xs overflow-hidden px-sm py-xs" : "flex flex-col gap-xs";
+  const isRow = layout === "row";
+  const containerClass = "shrink-0 border-t border-line bg-paper";
+  const innerClass = isRow ? "grid grid-cols-3 divide-x divide-line" : "flex flex-col divide-y divide-line";
+  const cellClass = isRow ? "flex min-h-0 items-center gap-xs overflow-hidden px-sm py-2xs" : "flex flex-col gap-xs px-sm py-2xs";
   const outcomeHint = candidacy
     ? latestOutcome
       ? `Outcome reported ${new Date(latestOutcome.reported_at).toLocaleDateString()}.`
@@ -1224,9 +1261,11 @@ function ToolsStrip({
         <div className={cellClass} aria-label="Validation summary">
           {validationReport ? (
             <>
-              <span className={`shrink-0 rounded-pill border px-xs py-2xs text-caption font-semibold uppercase tracking-[0.06em] ${overallBadgeClass(validationReport)}`}>{overallLabel(validationReport)}</span>
-              <span className="truncate text-caption text-slate">{validationReport.checks?.length ?? 0} check{(validationReport.checks?.length ?? 0) === 1 ? "" : "s"}</span>
-              <button type="button" onClick={onOpenFullReport} className="ml-auto text-xs font-semibold text-coral hover:underline focus:outline-none focus:ring-2 focus:ring-coral/40">
+              <div className="flex min-w-0 items-center gap-xs">
+                <span className={`shrink-0 rounded-pill border px-xs py-2xs text-caption font-semibold uppercase tracking-[0.06em] ${overallBadgeClass(validationReport)}`}>{overallLabel(validationReport)}</span>
+                <span className="truncate text-caption text-slate">{validationReport.checks?.length ?? 0} check{(validationReport.checks?.length ?? 0) === 1 ? "" : "s"}</span>
+              </div>
+              <button type="button" onClick={onOpenFullReport} className={`text-xs font-semibold text-coral hover:underline focus:outline-none focus:ring-2 focus:ring-coral/40 ${isRow ? "ml-auto" : ""}`}>
                 Open full report
               </button>
             </>
@@ -1245,7 +1284,7 @@ function ToolsStrip({
               type="button"
               disabled={isBusy}
               onClick={onOpenOutcome}
-              className="rounded-md border border-coral bg-coral px-md py-2xs text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-line disabled:text-slate disabled:shadow-none"
+              className="shrink-0 rounded-md border border-coral bg-coral px-md py-2xs text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-line disabled:text-slate disabled:shadow-none"
             >
               {latestOutcome ? "Review or edit outcome" : "Report outcome"}
             </button>
@@ -1308,6 +1347,7 @@ function ChatPanel({
         {messages.map((message) => (
           <article
             key={message.id}
+            id={message.result ? `message-${message.id}` : undefined}
             className={`max-w-3xl border p-4 shadow-rest ${
               message.role === "user"
                 ? "ml-auto border-coral/30 bg-coral/5"
