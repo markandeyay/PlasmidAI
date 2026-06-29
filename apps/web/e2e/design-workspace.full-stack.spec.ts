@@ -5,7 +5,7 @@ test("researcher completes a real API-backed design and export journey", async (
   await expect(page.getByRole("heading", { name: "Design workspace" })).toBeVisible();
 
   await page.getByLabel("Experimental goal").fill("build a deterministic E2E GFP reporter");
-  await page.getByRole("button", { name: "Design" }).click();
+  await page.getByRole("button", { name: "Design", exact: true }).click();
 
   await expect(page.getByText("Generated deterministic full-stack E2E reporter plasmid.")).toBeVisible();
   await expect(page.getByText("Retrieved template evidence")).toBeVisible();
