@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import { Newsreader, Inter } from "next/font/google";
+import { Inter, Inter_Tight } from "next/font/google";
 import "./globals.css";
 
-const newsreader = Newsreader({
+const interTight = Inter_Tight({
   subsets: ["latin"],
-  weight: ["500", "600"],
-  style: ["normal", "italic"],
   variable: "--font-serif",
   display: "swap",
 });
@@ -24,7 +22,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${newsreader.variable} ${inter.variable}`}>{children}</body>
+      <body className={`${interTight.variable} ${inter.variable}`}>{children}</body>
     </html>
   );
 }
