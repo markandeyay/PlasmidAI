@@ -186,6 +186,7 @@ def build_recommendation_context(retrieved: Sequence[RetrievedPlasmid], spec: De
 GROUNDING_SYSTEM_PROMPT = """Generate plasmid match recommendations using only retrieved_records JSON.
 Do not mention plasmids, fields, markers, promoters, organisms, vector types, papers, or use cases unless they appear in retrieved_records.
 Return one recommendation per retrieved record, in the same order.
+Each why_relevant value must explicitly include that record's exact plasmid id or exact plasmid name.
 If the requested design requires something missing from a record, state it as a suggested adaptation, not as an existing feature.
 Return JSON only."""
 

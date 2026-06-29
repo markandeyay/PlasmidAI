@@ -167,6 +167,7 @@ def test_llm_recommender_validates_client_output_and_builds_grounded_context() -
     assert recommendations[0].plasmid_id == item.plasmid.id
     assert context["retrieved_records"][0]["plasmid"]["id"] == item.plasmid.id
     assert client.calls
+    assert "exact plasmid id or exact plasmid name" in client.calls[0]["system_prompt"]
 
 
 def test_llm_recommender_rejects_ungrounded_client_output() -> None:
