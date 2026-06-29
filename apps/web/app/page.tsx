@@ -144,7 +144,7 @@ export default function Page() {
     }
   }
 
-const latestResult = useMemo(
+  const latestResult = useMemo(
     () => [...messages].reverse().find((message) => message.result?.annotated_sequence)?.result,
     [messages]
   );
@@ -555,7 +555,7 @@ const latestResult = useMemo(
     }
   }
 
-return (
+  return (
     <main className="flex h-screen flex-col bg-cream font-sans text-ink">
       <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">{appStatus}</p>
       {visiblePendingPrompt ? (
@@ -678,7 +678,7 @@ return (
         <>
           <header className="relative flex h-[52px] items-center gap-sm border-b border-line bg-paper px-md md:hidden" role="banner">
             <span className="font-serif text-h2 tracking-tight text-ink">Plasmid<span className="text-coral">AI</span></span>
-            <h1 id="design-workspace-title" className="truncate font-serif text-h3 text-ink">Design workspace</h1>
+            <h1 id="design-workspace-title" className="sr-only">Design workspace</h1>
             <button
               type="button"
               onClick={() => setSidebarSheetOpen(true)}
@@ -745,10 +745,10 @@ return (
                   onSubmit={handleSubmit}
                   activeClarification={activeClarification}
                   isPollTimeoutRecovery={isPollTimeoutRecovery}
-                onCheckJob={() => void handleCheckJob()}
-                onStartOver={handleStartOverAfterTimeout}
-                onViewMap={() => setMobileTab("map")}
-              />
+                  onCheckJob={() => void handleCheckJob()}
+                  onStartOver={handleStartOverAfterTimeout}
+                  onViewMap={() => setMobileTab("map")}
+                />
               </div>
             )}
           </div>
