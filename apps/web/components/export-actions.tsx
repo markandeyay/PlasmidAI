@@ -56,7 +56,7 @@ function ExportButton({
       disabled={!designId || disabled || loading}
       onClick={() => void onExport(format)}
       aria-busy={loading || undefined}
-      className="relative overflow-hidden rounded-md border border-line-strong bg-paper px-md py-2xs text-sm font-semibold text-ink hover:bg-mist focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-paper disabled:text-slate disabled:hover:bg-paper"
+      className="relative overflow-hidden rounded-md border border-line-strong bg-paper px-sm py-2xs text-sm font-semibold text-ink hover:bg-mist focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-paper disabled:text-slate disabled:hover:bg-paper"
     >
       <span className="relative z-10">{buttonLabel}</span>
       {loading ? <span className="absolute inset-x-0 bottom-0 z-0 h-2xs w-2/3 origin-left animate-pulse rounded-pill bg-coral/40" aria-hidden="true" /> : null}

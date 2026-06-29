@@ -24,7 +24,7 @@ type PlasmidMapViewProps = {
 export function PlasmidMapView({ annotatedSequence }: PlasmidMapViewProps) {
   if (!annotatedSequence) {
     return (
-      <section id="plasmid-map" className="flex h-full min-h-0 flex-col rounded-md border border-line bg-paper p-lg shadow-raised" aria-labelledby="plasmid-map-title-empty">
+      <section id="plasmid-map" className="flex h-full min-h-0 flex-col rounded-md border border-line bg-paper p-md shadow-raised" aria-labelledby="plasmid-map-title-empty">
         <h2 id="plasmid-map-title-empty" className="font-serif text-h3 text-ink">Plasmid map</h2>
         <div className="mt-md flex h-full min-h-0 flex-1 flex-col items-center justify-center gap-sm rounded-md border border-dashed border-line-strong bg-mist px-lg text-center">
           <p className="font-serif text-h3 text-ink">No construct loaded</p>
@@ -44,7 +44,7 @@ export function PlasmidMapView({ annotatedSequence }: PlasmidMapViewProps) {
   }));
 
   return (
-    <section id="plasmid-map" className="flex h-full min-h-0 flex-col rounded-md border border-line bg-paper p-lg shadow-raised" aria-labelledby="plasmid-map-title">
+    <section id="plasmid-map" className="flex h-full min-h-0 flex-col rounded-md border border-line bg-paper p-md shadow-raised" aria-labelledby="plasmid-map-title">
       <div className="flex items-start justify-between gap-md">
         <div>
           <h2 id="plasmid-map-title" className="font-serif text-h3 text-ink">Plasmid map</h2>

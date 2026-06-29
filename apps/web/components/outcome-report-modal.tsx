@@ -205,7 +205,7 @@ function OutcomeReportForm({ designId, modelVersion, onClose, onSubmitted, initi
               : "This report will not be used for model training."}
           </p>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={onClose} className="rounded-md border border-coral bg-coral px-md py-sm text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40">
+            <button type="button" onClick={onClose} className="rounded-md border border-coral bg-coral px-sm py-xs text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40">
               Back to design
             </button>
           </div>
@@ -248,7 +248,7 @@ function OutcomeReportForm({ designId, modelVersion, onClose, onSubmitted, initi
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
               rows={4}
-              className="mt-2 w-full resize-none rounded-sm border border-line bg-paper px-md py-sm text-sm text-ink outline-none focus:border-coral focus:ring-2 focus:ring-coral/40"
+              className="mt-2 w-full resize-none rounded-sm border border-line bg-paper px-sm py-xs text-sm text-ink outline-none focus:border-coral focus:ring-2 focus:ring-coral/40"
               placeholder="Protocol deviations, vendor issues, changed sequence, weak controls, or clone-specific details..."
             />
           </label>
@@ -284,11 +284,11 @@ function OutcomeReportForm({ designId, modelVersion, onClose, onSubmitted, initi
         {warnings.length ? <MessageList tone="warning" items={warnings} /> : null}
         {apiError ? <p className="rounded-md border border-clay/40 bg-clay/10 p-sm text-sm text-clay">{apiError}</p> : null}
 
-        <div className="sticky bottom-0 -mx-lg flex flex-wrap justify-end gap-2 border-t border-line bg-paper px-lg py-md">
-          <button type="button" onClick={onClose} disabled={submitting} className="rounded-md border border-line-strong bg-paper px-md py-sm text-sm font-semibold text-ink hover:bg-mist focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-paper disabled:text-slate disabled:hover:bg-paper">
+        <div className="sticky bottom-0 -mx-md flex flex-wrap justify-end gap-2 border-t border-line bg-paper px-md py-sm">
+          <button type="button" onClick={onClose} disabled={submitting} className="rounded-md border border-line-strong bg-paper px-sm py-xs text-sm font-semibold text-ink hover:bg-mist focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-paper disabled:text-slate disabled:hover:bg-paper">
             Close
           </button>
-          <button type="submit" disabled={submitting || Boolean(validationIssues.length)} className="rounded-md border border-coral bg-coral px-md py-sm text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-line disabled:text-slate disabled:shadow-none">
+          <button type="submit" disabled={submitting || Boolean(validationIssues.length)} className="rounded-md border border-coral bg-coral px-sm py-xs text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-line disabled:text-slate disabled:shadow-none">
             {submitting ? "Submitting..." : "Submit outcome"}
           </button>
         </div>
@@ -361,7 +361,7 @@ function ModalFrame({ children, onClose, titleId, descriptionId }: { children: R
       tabIndex={-1}
       onKeyDown={handleKeyDown}
     >
-      <div className="mx-auto max-w-3xl rounded-lg border border-line bg-paper p-lg shadow-floating">
+      <div className="mx-auto max-w-3xl rounded-lg border border-line bg-paper p-md shadow-floating">
         {children}
       </div>
     </div>
@@ -372,7 +372,7 @@ function SelectField({ label, value, options, onChange, id, ariaDescribedby, ari
   return (
     <label className="block text-sm font-medium text-ink" htmlFor={id}>
       {label}
-      <select id={id} value={value} onChange={(event) => onChange(event.target.value)} aria-describedby={ariaDescribedby} aria-invalid={ariaInvalid || undefined} className="mt-2 w-full rounded-sm border border-line bg-paper px-md py-sm text-sm text-ink outline-none focus:border-coral focus:ring-2 focus:ring-coral/40">
+      <select id={id} value={value} onChange={(event) => onChange(event.target.value)} aria-describedby={ariaDescribedby} aria-invalid={ariaInvalid || undefined} className="mt-2 w-full rounded-sm border border-line bg-paper px-sm py-xs text-sm text-ink outline-none focus:border-coral focus:ring-2 focus:ring-coral/40">
         <option value="">Select closest status</option>
         {options.map((option) => (
           <option key={option} value={option}>{option}</option>

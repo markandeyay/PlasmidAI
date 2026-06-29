@@ -689,13 +689,13 @@ export default function Page() {
                 <path fill="currentColor" d="M2 3h12v2H2V3zm0 4h12v2H2V7zm0 4h12v2H2v-2z" />
               </svg>
             </button>
-            <div role="tablist" aria-label="Workspace tabs" className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-xs rounded-pill bg-mist p-2xs">
+            <div role="tablist" aria-label="Workspace tabs" className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-xs rounded-md bg-mist p-2xs">
               <button
                 type="button"
                 role="tab"
                 aria-selected={mobileTab === "map"}
                 onClick={() => setMobileTab("map")}
-                className={`rounded-pill px-sm py-2xs text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-coral/40 ${mobileTab === "map" ? "bg-paper text-ink shadow-rest" : "text-slate"}`}
+                className={`rounded-sm px-sm py-2xs text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-coral/40 ${mobileTab === "map" ? "bg-paper text-ink shadow-rest" : "text-slate"}`}
               >
                 Map
               </button>
@@ -704,7 +704,7 @@ export default function Page() {
                 role="tab"
                 aria-selected={mobileTab === "chat"}
                 onClick={() => setMobileTab("chat")}
-                className={`rounded-pill px-sm py-2xs text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-coral/40 ${mobileTab === "chat" ? "bg-paper text-ink shadow-rest" : "text-slate"}`}
+                className={`rounded-sm px-sm py-2xs text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-coral/40 ${mobileTab === "chat" ? "bg-paper text-ink shadow-rest" : "text-slate"}`}
               >
                 Chat
               </button>
@@ -865,7 +865,7 @@ function MyOutcomesPanel({ outcomes, onOpen, refreshStatus }: { outcomes: Outcom
                 <OutcomeStatusBadge label={outcome.outcome_label} />
               </div>
               <p className="mt-2 text-small text-slate">Training consent: {outcome.training_consent ? "granted" : "not granted"}</p>
-              <button type="button" onClick={() => onOpen(outcome)} className="mt-sm w-full rounded-md border border-line-strong bg-paper px-md py-sm text-sm font-semibold text-ink hover:bg-mist focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40">
+              <button type="button" onClick={() => onOpen(outcome)} className="mt-sm w-full rounded-md border border-line-strong bg-paper px-sm py-xs text-sm font-semibold text-ink hover:bg-mist focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40">
                 Review or edit outcome
               </button>
             </article>
@@ -895,10 +895,10 @@ function PendingOutcomeToast({ prompt, onOpen, onDismiss }: { prompt: PendingOut
       <p className="mt-2xs text-sm text-ink">Design {prompt.design_id} is ready for lab outcome feedback.</p>
       <p className="mt-2xs text-xs text-slate">Created {prompt.days_since_created} days ago.</p>
       <div className="mt-sm flex flex-wrap gap-2">
-        <button type="button" onClick={() => onOpen(prompt)} className="rounded-md border border-coral bg-coral px-md py-sm text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40">
+        <button type="button" onClick={() => onOpen(prompt)} className="rounded-md border border-coral bg-coral px-sm py-xs text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40">
           Report outcome
         </button>
-        <button type="button" onClick={() => onDismiss(prompt)} className="rounded-md border border-line-strong bg-paper px-md py-sm text-sm font-semibold text-ink hover:bg-mist focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40">
+        <button type="button" onClick={() => onDismiss(prompt)} className="rounded-md border border-line-strong bg-paper px-sm py-xs text-sm font-semibold text-ink hover:bg-mist focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40">
           Not now
         </button>
       </div>
@@ -1108,7 +1108,7 @@ function SidebarContent({
             <button
               type="button"
               onClick={onNewDesign}
-              className="w-full rounded-md border border-coral bg-coral px-md py-sm text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
+              className="w-full rounded-md border border-coral bg-coral px-sm py-xs text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
             >
               New design
             </button>
@@ -1201,7 +1201,7 @@ function SidebarContent({
       <button
         type="button"
         onClick={onNewDesign}
-        className="w-full rounded-md border border-coral bg-coral px-md py-sm text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
+        className="w-full rounded-md border border-coral bg-coral px-sm py-xs text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40"
       >
         New design
       </button>
@@ -1317,7 +1317,7 @@ function ToolsStrip({
               type="button"
               disabled={isBusy}
               onClick={onOpenOutcome}
-              className="shrink-0 rounded-md border border-coral bg-coral px-md py-2xs text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-line disabled:text-slate disabled:shadow-none"
+              className="shrink-0 rounded-md border border-coral bg-coral px-sm py-2xs text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-line disabled:text-slate disabled:shadow-none"
             >
               {latestOutcome ? "Review or edit outcome" : "Report outcome"}
             </button>
@@ -1424,7 +1424,7 @@ function ChatPanel({
         ) : null}
       </div>
 
-      <form onSubmit={onSubmit} className="shrink-0 border-t border-line bg-paper px-md py-md" aria-label="Design composer">
+      <form onSubmit={onSubmit} className="shrink-0 border-t border-line bg-paper px-sm py-sm" aria-label="Design composer">
         {state === "awaiting_clarification" && activeClarification ? (
           <div className="mb-3 rounded-md border border-honey/40 bg-honey/10 p-md text-sm text-ink">
             <span className="font-semibold text-honey">Clarification needed: </span>
@@ -1459,12 +1459,12 @@ function ChatPanel({
               ? "Answer the clarification question..."
               : "Describe the host, marker, payload, promoter, and any constraints..."
           }
-          className="min-h-24 w-full resize-none rounded-md border border-line bg-paper px-md py-sm text-sm text-ink shadow-rest outline-none focus:border-coral focus:ring-2 focus:ring-coral/40"
+          className="min-h-20 w-full resize-none rounded-md border border-line bg-paper px-sm py-xs text-sm text-ink shadow-rest outline-none focus:border-coral focus:ring-2 focus:ring-coral/40"
         />
         <button
           type="submit"
           disabled={!input.trim() || isBusy || isPollTimeoutRecovery}
-          className="mt-2 h-12 w-full rounded-md border border-coral bg-coral px-md text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-line disabled:text-slate disabled:shadow-none"
+          className="mt-2 h-10 w-full rounded-md border border-coral bg-coral px-sm text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-line disabled:text-slate disabled:shadow-none"
         >
           {state === "submitting" ? "Starting" : state === "polling" ? "Designing" : state === "awaiting_clarification" ? "Answer" : sessionId ? "Refine" : "Design"}
         </button>
