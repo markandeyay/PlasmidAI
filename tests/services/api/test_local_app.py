@@ -83,6 +83,8 @@ def test_build_local_app_runs_design_synchronously(monkeypatch: pytest.MonkeyPat
     pipeline = SimpleNamespace(run=lambda free_text: SimpleNamespace(reannotated_sequence=_annotated_sequence()))
     monkeypatch.setattr(local_app, "_load_env_defaults", lambda path: None)
     monkeypatch.setattr(local_app, "_assert_corpus_ready", lambda database_url: None)
+    migration_calls: list[bool] = []
+    monkeypatch.setattr(local_app, "_run_app_migrations", lambda: migration_calls.append(True))
     monkeypatch.setattr(local_app, "_build_application_stores", lambda database_url: stores)
     monkeypatch.setattr(local_app, "_build_local_pipeline", lambda config: pipeline)
     monkeypatch.setattr(
@@ -125,3 +127,4 @@ def test_build_local_app_runs_design_synchronously(monkeypatch: pytest.MonkeyPat
     design = client.get(f"/v1/designs/{result['design_id']}").json()
     assert design["job_id"] == job_id
     assert design["annotated_sequence"]["vector_profile"] == "bacterial_cloning_vector"
+    assert migration_calls == [True]

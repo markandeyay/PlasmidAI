@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Any
 
 import psycopg
+from alembic import command
+from alembic.config import Config
 from fastapi import FastAPI
 
 from packages.application import (
@@ -46,6 +48,7 @@ def build_local_app() -> FastAPI:
     if config.use_fake:
         raise RuntimeError("Local app requires a real retrieval embedder configuration; EMBEDDING_FAKE must be false.")
     _assert_corpus_ready(config.database_url)
+    _run_app_migrations()
     stores = _build_application_stores(config.database_url)
     pipeline = _build_local_pipeline(config)
     handler = GenerationDesignJobHandler(pipeline=pipeline, design_store=stores["design_store"])
@@ -56,6 +59,11 @@ def build_local_app() -> FastAPI:
         design_store=stores["design_store"],
         outcome_store=stores["outcome_store"],
     )
+
+
+def _run_app_migrations() -> None:
+    repository_root = Path(__file__).resolve().parents[2]
+    command.upgrade(Config(str(repository_root / "alembic.ini")), "head")
 
 
 def _load_env_defaults(path: Path) -> None:
