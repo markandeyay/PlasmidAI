@@ -51,7 +51,7 @@ export function PlasmidMapView({ annotatedSequence, waitingForClarification = fa
   }));
 
   return (
-    <section id="plasmid-map" className="flex h-full min-h-0 flex-col rounded-md border border-line bg-paper p-md shadow-raised" aria-labelledby="plasmid-map-title">
+    <section id="plasmid-map" className="flex min-h-full flex-col rounded-md border border-line bg-paper p-md shadow-raised" aria-labelledby="plasmid-map-title">
       <div className="flex items-start justify-between gap-md">
         <div>
           <h2 id="plasmid-map-title" className="font-serif text-h3 text-ink">Plasmid map</h2>
@@ -84,10 +84,10 @@ export function PlasmidMapView({ annotatedSequence, waitingForClarification = fa
 
       <MapErrorBoundary fallback={<MapFallback annotatedSequence={annotatedSequence} />}>
         <div
-          className="mt-md flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-line bg-paper shadow-rest"
+          className="mt-md flex min-h-[400px] shrink-0 flex-col overflow-visible rounded-md border border-line bg-paper shadow-rest"
           aria-label="Visual interactive plasmid map"
         >
-          <div data-testid="seqviz-map" className="h-full min-h-[280px] min-w-[320px] bg-paper p-sm">
+          <div data-testid="seqviz-map" className="h-[400px] min-h-[400px] min-w-0 bg-paper p-sm">
             <SeqViz
               name={annotatedSequence.vector_profile ?? "Plasmid design"}
               seq={annotatedSequence.sequence}

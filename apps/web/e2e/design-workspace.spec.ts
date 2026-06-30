@@ -168,6 +168,63 @@ test("small viewport keeps map, export, and outcome actions reachable", async ({
   await expect(page.getByRole("dialog").getByRole("heading", { name: "What happened in the lab?" })).toBeVisible();
 });
 
+test("seqviz content is not clipped at common laptop viewports", async ({ page }) => {
+  await page.route("http://127.0.0.1:8000/v1/users/me/pending-outcome-prompts", async (route) => {
+    await route.fulfill({ json: { prompts: [] } });
+  });
+  await page.route("http://127.0.0.1:8000/v1/sessions", async (route) => {
+    await route.fulfill({ json: { session_id: "session-map-layout" } });
+  });
+  await page.route("http://127.0.0.1:8000/v1/sessions/session-map-layout/design", async (route) => {
+    await route.fulfill({ json: { job_id: "job-map-layout" } });
+  });
+  await page.route("http://127.0.0.1:8000/v1/jobs/job-map-layout", async (route) => {
+    await route.fulfill({
+      json: {
+        job_id: "job-map-layout",
+        status: "succeeded",
+        result: {
+          design_id: "design-map-layout",
+          recommendation_text: "Generated map layout fixture.",
+          annotated_sequence: annotatedSequence,
+          retrieved_templates: []
+        }
+      }
+    });
+  });
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  await page.getByLabel("Experimental goal").fill("build a map layout fixture");
+  await page.getByRole("button", { name: "Design", exact: true }).click();
+  await expect(page.getByTestId("seqviz-map")).toBeVisible();
+
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 1280, height: 800 },
+    { width: 1366, height: 768 }
+  ]) {
+    await page.setViewportSize(viewport);
+    const metrics = await page.getByTestId("seqviz-map").evaluate((map) => {
+      const visual = map.parentElement;
+      const rect = map.getBoundingClientRect();
+      return {
+        width: rect.width,
+        height: rect.height,
+        mapClientHeight: map.clientHeight,
+        mapScrollHeight: map.scrollHeight,
+        visualClientHeight: visual?.clientHeight ?? 0,
+        visualScrollHeight: visual?.scrollHeight ?? 0
+      };
+    });
+
+    expect(metrics.width).toBeGreaterThan(500);
+    expect(metrics.height).toBeGreaterThanOrEqual(400);
+    expect(metrics.mapScrollHeight).toBeLessThanOrEqual(metrics.mapClientHeight + 2);
+    expect(metrics.visualScrollHeight).toBeLessThanOrEqual(metrics.visualClientHeight + 2);
+  }
+});
+
 test("completed job without sequence shows partial result evidence", async ({ page }) => {
   await page.route("http://127.0.0.1:8000/v1/users/me/pending-outcome-prompts", async (route) => {
     await route.fulfill({ json: { prompts: [] } });
