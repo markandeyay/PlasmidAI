@@ -58,7 +58,7 @@ def create_job_task(*, store: JobStore, handler: JobHandler, metrics: MetricsCol
         if isinstance(correlation_id, str) and correlation_id:
             token = set_correlation_id(correlation_id)
         try:
-            result = handler(session_id=session_id, action=action, payload=payload)
+            result = handler(job_id=job_id, session_id=session_id, action=action, payload=payload)
         except Exception as exc:
             if metrics is not None:
                 metrics.record_job_duration(duration_ms=(time.perf_counter() - started_at) * 1000)

@@ -1,13 +1,16 @@
 import type { FeatureType } from "@/lib/types";
 
+// Muted annotation palette tuned for the cooler near-white + green interface.
+// SeqViz defaults are replaced with restrained product colors so the biological
+// feature map stays integrated with the surrounding workspace chrome.
 export const componentColors: Record<string, string> = {
-  ORI: "#2F80ED",
-  promoter: "#27AE60",
-  GOI: "#9B51E0",
-  marker: "#EB5757",
-  MCS: "#F2994A",
-  terminator: "#56CCF2",
-  other: "#828282"
+  promoter: "#365f43",
+  GOI: "#7b3d45",
+  terminator: "#1f2320",
+  ORI: "#a9782c",
+  marker: "#6f7f68",
+  MCS: "#556b74",
+  other: "#5f665f"
 };
 
 export function componentColor(type: FeatureType): string {

@@ -31,29 +31,30 @@ def _annotated_sequence() -> AnnotatedSequence:
     )
 
 
-def _handle_design_job(*, session_id: str, action: str, payload: Mapping[str, Any]) -> dict[str, Any]:
+def _handle_design_job(*, job_id: str, session_id: str, action: str, payload: Mapping[str, Any]) -> dict[str, Any]:
     annotated = _annotated_sequence()
     _designs.create(
         session_id=session_id,
-        job_id=str(payload.get("correlation_id") or "e2e-job"),
+        job_id=job_id,
         design_id=DESIGN_ID,
         annotated_sequence=annotated,
     )
     return {
-        "session_id": session_id,
-        "action": action,
         "design_id": DESIGN_ID,
+        "design_spec": {"organism": "Homo sapiens", "vector_type": "e2e_reporter_vector"},
+        "clarification_question": None,
         "recommendation_text": "Generated deterministic full-stack E2E reporter plasmid.",
         "annotated_sequence": annotated.model_dump(mode="json"),
         "retrieved_templates": [
             {
                 "source_id": "curated:e2e-template",
-                "name": "E2E Reporter Template",
-                "score": 0.99,
                 "source": "curated",
+                "name": "E2E Reporter Template",
                 "vector_profile": "e2e_reporter_vector",
+                "score": 0.99,
             }
         ],
+        "recommendations": [],
         "validation_report": {
             "overall": "PASS",
             "checks": [

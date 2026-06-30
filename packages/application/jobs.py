@@ -66,7 +66,7 @@ class JobQueue(Protocol):
 
 
 class JobHandler(Protocol):
-    def __call__(self, *, session_id: str, action: str, payload: Mapping[str, Any]) -> Any: ...
+    def __call__(self, *, job_id: str, session_id: str, action: str, payload: Mapping[str, Any]) -> Any: ...
 
 
 class PostgresJobStore:
@@ -282,7 +282,7 @@ class FakeJobQueue:
             token = set_correlation_id(correlation_id)
         log_event(LOGGER, "worker_job_started", job_id=record.job_id, session_id=session_id, action=action)
         try:
-            result = self.handler(session_id=session_id, action=action, payload=payload)
+            result = self.handler(job_id=record.job_id, session_id=session_id, action=action, payload=payload)
         except Exception as exc:
             duration_ms = (time.perf_counter() - started_at) * 1000
             if self.metrics is not None:

@@ -37,7 +37,7 @@ from packages.application.observability import (
     reset_correlation_id,
     set_correlation_id,
 )
-from packages.core.schemas import OutcomeReport
+from packages.core.schemas import AnnotatedSequence, OutcomeReport
 from packages.generation.registry import ModelRegistry
 
 
@@ -131,6 +131,15 @@ class OutcomeResponse(ApiModel):
     outcome_id: str = Field(min_length=1)
     report: OutcomeReport
     created_at: datetime
+
+
+class DesignResponse(ApiModel):
+    design_id: str = Field(min_length=1)
+    session_id: str = Field(min_length=1)
+    job_id: str = Field(min_length=1)
+    annotated_sequence: AnnotatedSequence
+    created_at: datetime
+    updated_at: datetime
 
 
 class PendingOutcomePromptResponse(ApiModel):
@@ -459,6 +468,20 @@ def create_app(
             created_at=getattr(job, "created_at", None),
             updated_at=getattr(job, "updated_at", None),
             retry_after_ms=JOB_RETRY_AFTER_MS if job_status.lower() in {"queued", "running"} else None,
+        )
+
+    @app.get("/v1/designs/{design_id}", response_model=DesignResponse)
+    def get_design(design_id: str) -> DesignResponse:
+        design = designs.get(design_id)
+        if design is None:
+            raise _http_error(status.HTTP_404_NOT_FOUND, "design_not_found", "Design not found.")
+        return DesignResponse(
+            design_id=design.design_id,
+            session_id=design.session_id,
+            job_id=design.job_id,
+            annotated_sequence=design.annotated_sequence,
+            created_at=design.created_at,
+            updated_at=design.updated_at,
         )
 
     @app.get("/v1/designs/{design_id}/export")

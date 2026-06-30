@@ -6,9 +6,19 @@ Goal: show that the app is not a generic chatbot. It turns a plain-English plasm
 
 This script was checked against the current Next.js workspace, the `Makefile` targets, and the `apps/web` UI on branch `demo-punch-list`.
 
+Use `make serve-local` for the interactive local app. Use `make demo` only for deterministic end-to-end verification against the fixture app.
+
 ## Pre-Demo Setup
 
-Run the demo with `make demo`. This is the canonical, self-contained, demo-safe path: it starts the deterministic API fixture (`services.api.e2e_app`) and the web app together and drives the full-stack Playwright flow through a design job that completes, a plasmid map that renders, and a GenBank export that downloads. Run it before the meeting to confirm the demo path works end-to-end.
+Install dependencies, make sure `.env` exists, and start Postgres/pgvector before using the live local app:
+
+```powershell
+docker compose up -d
+```
+
+The current local app expects the Python dependencies from `requirements.txt`, including the official `google-genai` SDK, and reads environment values from `.env`.
+
+Run the deterministic verification demo with `make demo`. This is the canonical, self-contained verification path: it starts the fixture API (`services.api.e2e_app`) and the web app together and drives the full-stack Playwright flow through a design job that completes, a plasmid map that renders, and a GenBank export that downloads.
 
 ```powershell
 make demo
@@ -16,9 +26,16 @@ make demo
 
 Under the hood, `make demo` runs `make e2e-test`, which invokes the full-stack Playwright config (`apps/web/playwright.fullstack.config.ts`). That config brings up the deterministic fixture API on `127.0.0.1:8000` and the web app on `127.0.0.1:3000`, then exercises the design, retrieval, map, and GenBank export flow against `services.api.e2e_app` rather than the live scaffold.
 
-Do NOT demo the live API path. `make serve-api` runs the default FastAPI scaffold (`services.api.app`), which can queue design jobs without completing them unless a generation worker is wired in. A demo against `make serve-api` plus `npm run dev` (or `make serve-web`) can stall in `Designing and validating plasmid` before the map or export ever appears. Those targets are for development only, not for demos.
+For the interactive local app, start the API and web separately:
 
-To walk through the script steps interactively in the browser, start the same deterministic fixture `make demo` uses (the full-stack Playwright config runs `python -m uvicorn services.api.e2e_app:app --host 127.0.0.1 --port 8000` for the API and `npm run dev` in `apps/web` for the web app), then open `http://127.0.0.1:3000`. Do not substitute `make serve-api` here — that is the live scaffold, not the deterministic fixture.
+```powershell
+make serve-local
+make serve-web
+```
+
+The API command behind `make serve-local` is `python -m uvicorn --factory services.api.local_app:build_local_app --host 127.0.0.1 --port 8000`, and the web command behind `make serve-web` is `cd apps/web && npm run dev`. Open `http://127.0.0.1:3000` after both are running.
+
+Do NOT use `make serve-api` for the interactive app. It runs the default FastAPI scaffold (`services.api.app`), which can queue design jobs without completing them unless a generation worker is wired in. The production queue path remains future Celery plus a durable Postgres-backed job queue deployment.
 
 Before starting:
 

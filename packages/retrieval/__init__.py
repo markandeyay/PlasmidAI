@@ -10,6 +10,7 @@ from .embedder import (
     FakeEmbedder,
     TransformersEmbedder,
 )
+from .gemini_client import DEFAULT_GEMINI_MODEL, GeminiIntentClient, GeminiJsonClient, GeminiRecommendationClient
 from .intent_parser import FakeIntentParser, IntentParser, LLMIntentParser
 from .recommender import LLMRecommendationGenerator, RecommendationGenerator, TemplateRecommendationGenerator
 from .retriever import HybridRetriever, Retriever
@@ -22,10 +23,14 @@ def design_retrieval(free_text: str):
 
 __all__ = [
     "ComposedDocument",
+    "DEFAULT_GEMINI_MODEL",
     "DEFAULT_MAX_LENGTH",
     "Embedder",
     "FakeEmbedder",
     "FakeIntentParser",
+    "GeminiIntentClient",
+    "GeminiJsonClient",
+    "GeminiRecommendationClient",
     "HybridRetriever",
     "IntentParser",
     "LLMIntentParser",

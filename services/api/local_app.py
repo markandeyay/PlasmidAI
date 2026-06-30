@@ -1,0 +1,146 @@
+from __future__ import annotations
+
+import os
+from pathlib import Path
+from typing import Any
+
+import psycopg
+from alembic import command
+from alembic.config import Config
+from fastapi import FastAPI
+
+from packages.application import (
+    FakeJobQueue,
+    InMemoryJobStore,
+    InMemoryOutcomeStore,
+    InMemorySessionStore,
+    PostgresJobStore,
+    PostgresOutcomeStore,
+    PostgresSessionStore,
+)
+from packages.application.design_jobs import GenerationDesignJobHandler
+from packages.application.designs import InMemoryDesignStore, PostgresDesignStore
+from packages.data_pipeline.ingest.genbank import load_dotenv
+from packages.generation.generator import FakeGenerator
+from packages.generation.spike import GenerationSpikePipeline, ParserReannotator
+from packages.retrieval.embed_corpus import EmbedCorpusConfig, build_embedder, build_vector_store
+from packages.retrieval.gemini_client import GeminiIntentClient, GeminiJsonClient, GeminiRecommendationClient
+from packages.retrieval.intent_parser import FakeIntentParser, LLMIntentParser
+from packages.retrieval.recommender import LLMRecommendationGenerator, TemplateRecommendationGenerator
+from packages.retrieval.retriever import HybridRetriever, PostgresRetrievalRepository
+from packages.validation.engine import ConstraintEngine as DeterministicConstraintEngine
+from services.api.app import create_app
+
+
+REQUIRED_CORPUS_TABLES = ("plasmids", "plasmid_embeddings")
+REQUIRED_APP_TABLES = ("sessions", "session_turns", "jobs", "designs", "outcomes")
+
+
+def build_local_app() -> FastAPI:
+    _load_env_defaults(Path(".env"))
+    config = EmbedCorpusConfig.from_env(
+        batch_size=1,
+        limit=None,
+        use_fake=False,
+        local_files_only=False,
+        hf_cache_dir=None,
+    )
+    if config.use_fake:
+        raise RuntimeError("Local app requires a real retrieval embedder configuration; EMBEDDING_FAKE must be false.")
+    _assert_corpus_ready(config.database_url)
+    _run_app_migrations()
+    stores = _build_application_stores(config.database_url)
+    pipeline = _build_local_pipeline(config)
+    handler = GenerationDesignJobHandler(pipeline=pipeline, design_store=stores["design_store"])
+    queue = FakeJobQueue(store=stores["job_store"], handler=handler)
+    return create_app(
+        session_store=stores["session_store"],
+        job_queue=queue,
+        design_store=stores["design_store"],
+        outcome_store=stores["outcome_store"],
+    )
+
+
+def _run_app_migrations() -> None:
+    repository_root = Path(__file__).resolve().parents[2]
+    command.upgrade(Config(str(repository_root / "alembic.ini")), "head")
+
+
+def _load_env_defaults(path: Path) -> None:
+    for key, value in load_dotenv(path).items():
+        os.environ.setdefault(key, value)
+
+
+def _build_local_pipeline(config: EmbedCorpusConfig) -> GenerationSpikePipeline:
+    embedder = build_embedder(config)
+    vector_index = build_vector_store(config, embedder)
+    retriever = HybridRetriever(
+        vector_index=vector_index,
+        embedder=embedder,
+        repository=PostgresRetrievalRepository(config.database_url),
+    )
+    api_key = (os.environ.get("GOOGLE_API_KEY") or "").strip()
+    if api_key:
+        gemini = GeminiJsonClient(api_key=api_key)
+        parser = LLMIntentParser(GeminiIntentClient(gemini))
+        recommender = LLMRecommendationGenerator(
+            GeminiRecommendationClient(gemini),
+            name="gemini-grounded-recommender-v1",
+        )
+    else:
+        parser = FakeIntentParser()
+        recommender = TemplateRecommendationGenerator()
+    return GenerationSpikePipeline(
+        parser=parser,
+        retriever=retriever,
+        generator=FakeGenerator(),
+        reannotator=ParserReannotator(),
+        constraint_engine=DeterministicConstraintEngine(),
+        recommendation_generator=recommender,
+    )
+
+
+def _build_application_stores(database_url: str) -> dict[str, Any]:
+    if _tables_available(database_url, REQUIRED_APP_TABLES):
+        return {
+            "session_store": PostgresSessionStore(database_url),
+            "job_store": PostgresJobStore(database_url),
+            "design_store": PostgresDesignStore(database_url),
+            "outcome_store": PostgresOutcomeStore(database_url),
+        }
+    return {
+        "session_store": InMemorySessionStore(),
+        "job_store": InMemoryJobStore(),
+        "design_store": InMemoryDesignStore(),
+        "outcome_store": InMemoryOutcomeStore(),
+    }
+
+
+def _assert_corpus_ready(database_url: str) -> None:
+    try:
+        if not _tables_available(database_url, REQUIRED_CORPUS_TABLES, require_vector_extension=True):
+            missing = ", ".join(REQUIRED_CORPUS_TABLES)
+            raise RuntimeError(f"Local app requires corpus tables and pgvector at DATABASE_URL; missing one of: {missing}.")
+    except psycopg.Error as exc:
+        raise RuntimeError("Local app requires a reachable Postgres corpus at DATABASE_URL.") from exc
+
+
+def _tables_available(
+    database_url: str,
+    tables: tuple[str, ...],
+    *,
+    require_vector_extension: bool = False,
+) -> bool:
+    with psycopg.connect(database_url) as connection:
+        available = {
+            row[0]
+            for row in connection.execute(
+                "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname = 'public' AND tablename = ANY(%s)",
+                (list(tables),),
+            ).fetchall()
+        }
+        if require_vector_extension:
+            vector_ready = connection.execute("SELECT 1 FROM pg_extension WHERE extname = 'vector'").fetchone() is not None
+            if not vector_ready:
+                return False
+        return all(table in available for table in tables)

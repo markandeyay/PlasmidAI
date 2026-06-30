@@ -17,7 +17,7 @@ from packages.core.schemas import (
 )
 from packages.application.designs import InMemoryDesignStore
 from packages.application.exports import read_annotated_sequence
-from services.api import create_app
+from services.api.app import create_app
 
 
 def example_plasmid() -> Plasmid:
@@ -161,6 +161,35 @@ def test_export_endpoint_returns_round_trip_genbank_design() -> None:
     assert response.headers["content-disposition"] == 'attachment; filename="design-export.gb"'
     round_tripped = read_annotated_sequence(response.text, format="genbank")
     assert round_tripped == annotated
+
+
+def test_get_design_returns_identifiers_sequence_and_timestamps() -> None:
+    designs = InMemoryDesignStore()
+    annotated = example_result().annotated_sequence
+    assert annotated is not None
+    created = designs.create(
+        session_id="session-design",
+        job_id="job-design",
+        design_id="design-show",
+        annotated_sequence=annotated,
+    )
+    client = TestClient(
+        create_app(
+            session_store=InMemorySessionStore(),
+            job_queue=InMemoryJobQueue(),
+            design_store=designs,
+        )
+    )
+
+    response = client.get("/v1/designs/design-show")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["design_id"] == "design-show"
+    assert payload["session_id"] == "session-design"
+    assert payload["job_id"] == "job-design"
+    assert payload["annotated_sequence"]["topology"] == "circular"
+    assert payload["created_at"] == created.created_at.isoformat().replace("+00:00", "Z")
 
 
 def test_outcome_endpoint_requires_owner_and_returns_latest_outcome() -> None:
