@@ -73,6 +73,7 @@ export default function Page() {
   const [sidebarSheetOpen, setSidebarSheetOpen] = useState(false);
   const [outcomesCollapsed, setOutcomesCollapsed] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [retryableError, setRetryableError] = useState(false);
 
   useEffect(() => {
     const query = window.matchMedia("(min-width: 768px)");
@@ -139,6 +140,7 @@ export default function Page() {
     setJobStartedAt(null);
     setSelectedDesignId(null);
     setAppStatus("");
+    setRetryableError(false);
     if (!isDesktop) {
       setMobileTab("chat");
     }
@@ -330,6 +332,7 @@ export default function Page() {
 
     let keepActiveJob = false;
     try {
+      setRetryableError(false);
       setState("submitting");
       setAppStatus("Starting design job.");
       setJobStartedAt(Date.now());
@@ -360,13 +363,18 @@ export default function Page() {
         setAppStatus(`Job ${jobId} is still queued or running. Check the local worker or demo fixture before retrying.`);
         return;
       }
-      const text = friendlyErrorMessage(error);
+      const errorText = friendlyErrorMessage(error);
+      const canRetry = error instanceof ApiError && error.retryable;
+      setRetryableError(canRetry);
+      if (canRetry) {
+        setInput(text);
+      }
       setMessages((current) => [
         ...current,
-        { id: crypto.randomUUID(), role: "system", kind: "error", text }
+        { id: crypto.randomUUID(), role: "system", kind: "error", text: errorText }
       ]);
       setState("error");
-      setAppStatus(`Design failed. ${text}`);
+      setAppStatus(`Design failed. ${errorText}`);
     } finally {
       if (!keepActiveJob) {
         setActiveJobId(null);
@@ -424,6 +432,7 @@ export default function Page() {
       throw jobError(job);
     }
     if (clarification) {
+      setRetryableError(false);
       setMessages((current) => [
         ...current,
         {
@@ -437,6 +446,7 @@ export default function Page() {
       setState("awaiting_clarification");
       setAppStatus("Waiting for your clarification answer.");
     } else {
+      setRetryableError(false);
       setMessages((current) => [
         ...current,
         { id: crypto.randomUUID(), role: "assistant", kind: "result", text: resultSummary(result), result }
@@ -668,6 +678,7 @@ export default function Page() {
                 onCheckJob={() => void handleCheckJob()}
                 onStartOver={handleStartOverAfterTimeout}
                 onViewMap={() => undefined}
+                retryableError={retryableError}
               />
             </aside>
           </div>
@@ -760,6 +771,7 @@ export default function Page() {
                   onCheckJob={() => void handleCheckJob()}
                   onStartOver={handleStartOverAfterTimeout}
                   onViewMap={() => setMobileTab("map")}
+                  retryableError={retryableError}
                 />
               </div>
             )}
@@ -1356,7 +1368,8 @@ function ChatPanel({
   isPollTimeoutRecovery,
   onCheckJob,
   onStartOver,
-  onViewMap
+  onViewMap,
+  retryableError
 }: {
   messages: ChatMessage[];
   isBusy: boolean;
@@ -1373,6 +1386,7 @@ function ChatPanel({
   onCheckJob: () => void;
   onStartOver: () => void;
   onViewMap: () => void;
+  retryableError: boolean;
 }) {
   return (
     <>
@@ -1478,7 +1492,17 @@ function ChatPanel({
           disabled={!input.trim() || isBusy || isPollTimeoutRecovery}
           className="mt-2 h-10 w-full rounded-md border border-coral bg-coral px-sm text-sm font-semibold text-paper shadow-rest hover:shadow-raised focus:border-coral focus:outline-none focus:ring-2 focus:ring-coral/40 disabled:cursor-not-allowed disabled:border-line disabled:bg-line disabled:text-slate disabled:shadow-none"
         >
-          {state === "submitting" ? "Starting" : state === "polling" ? "Designing" : state === "awaiting_clarification" ? "Answer" : sessionId ? "Refine" : "Design"}
+          {state === "submitting"
+            ? "Starting"
+            : state === "polling"
+              ? "Designing"
+              : state === "awaiting_clarification"
+                ? "Answer"
+                : state === "error" && retryableError
+                  ? "Try again"
+                  : sessionId
+                    ? "Refine"
+                    : "Design"}
         </button>
         {activeJobId ? (
           <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate">
@@ -1541,7 +1565,7 @@ function friendlyErrorMessage(error: unknown): string {
     const fieldText = error.fieldErrors.length
       ? ` ${error.fieldErrors.map((field) => `${field.field}: ${field.message}`).join(" ")}`
       : "";
-    const retryText = error.retryable ? " Try again in a moment." : "";
+    const retryText = error.retryable && !/try again/i.test(error.message) ? " Try again in a moment." : "";
     return `${error.message}${fieldText}${retryText}`;
   }
   if (error instanceof Error) {

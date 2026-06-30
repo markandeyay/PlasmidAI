@@ -277,6 +277,61 @@ test("clarification question leads to a refinement and rendered design", async (
   await expect(page.getByTestId("seqviz-map")).toBeVisible();
 });
 
+test("retryable model failure restores the prompt and offers try again", async ({ page }) => {
+  await page.route("http://127.0.0.1:8000/v1/users/me/pending-outcome-prompts", async (route) => {
+    await route.fulfill({ json: { prompts: [] } });
+  });
+  await page.route("http://127.0.0.1:8000/v1/sessions", async (route) => {
+    await route.fulfill({ json: { session_id: "session-retry" } });
+  });
+  await page.route("http://127.0.0.1:8000/v1/sessions/session-retry/design", async (route) => {
+    await route.fulfill({ json: { job_id: "job-unavailable" } });
+  });
+  await page.route("http://127.0.0.1:8000/v1/sessions/session-retry/refine", async (route) => {
+    expect((route.request().postDataJSON() as { instruction: string }).instruction).toBe("build an ampicillin cloning vector");
+    await route.fulfill({ json: { job_id: "job-retry-success" } });
+  });
+  await page.route("http://127.0.0.1:8000/v1/jobs/*", async (route) => {
+    const succeeded = route.request().url().endsWith("/job-retry-success");
+    await route.fulfill({
+      json: succeeded
+        ? {
+            job_id: "job-retry-success",
+            status: "succeeded",
+            result: {
+              design_id: "design-after-retry",
+              recommendation_text: "Generated the design after retrying.",
+              annotated_sequence: annotatedSequence,
+              retrieved_templates: []
+            }
+          }
+        : {
+            job_id: "job-unavailable",
+            status: "failed",
+            result: null,
+            error: "provider unavailable",
+            error_detail: {
+              code: "language_model_unavailable",
+              message: "The language model is temporarily unavailable. Please try again in a moment.",
+              retryable: true,
+              details: {}
+            }
+          }
+    });
+  });
+
+  await page.goto("/");
+  await page.getByLabel("Experimental goal").fill("build an ampicillin cloning vector");
+  await page.getByRole("button", { name: "Design", exact: true }).click();
+
+  await expect(page.getByText("The language model is temporarily unavailable. Please try again in a moment.", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Experimental goal")).toHaveValue("build an ampicillin cloning vector");
+  await page.getByRole("button", { name: "Try again" }).click();
+
+  await expect(page.getByLabel("Conversation history").getByText("Generated the design after retrying.")).toBeVisible();
+  await expect(page.getByTestId("seqviz-map")).toBeVisible();
+});
+
 test("researcher can submit a prompted outcome report", async ({ page }) => {
   let submittedOutcome: Record<string, unknown> | null = null;
 

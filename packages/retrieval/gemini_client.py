@@ -2,15 +2,32 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from dataclasses import dataclass
-from typing import Any, Mapping, Protocol
+from typing import Any, Callable, Mapping, Protocol
 
 
 DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_RETRY_DELAYS_SECONDS = (1.0, 2.0, 4.0)
+TRANSIENT_GEMINI_STATUS_CODES = frozenset({429, 500, 502, 503, 504})
+GEMINI_UNAVAILABLE_MESSAGE = "The language model is temporarily unavailable. Please try again in a moment."
 
 
 class GeminiModelClient(Protocol):
     def generate_content(self, *, model: str, contents: Any, config: Any) -> Any: ...
+
+
+class GeminiUnavailableError(RuntimeError):
+    def __init__(self) -> None:
+        super().__init__(
+            json.dumps(
+                {
+                    "code": "language_model_unavailable",
+                    "message": GEMINI_UNAVAILABLE_MESSAGE,
+                    "retryable": True,
+                }
+            )
+        )
 
 
 @dataclass
@@ -18,6 +35,8 @@ class GeminiJsonClient:
     api_key: str
     model: str = DEFAULT_GEMINI_MODEL
     sdk_client: Any | None = None
+    sleep: Callable[[float], None] = time.sleep
+    retry_delays: tuple[float, ...] = GEMINI_RETRY_DELAYS_SECONDS
 
     @classmethod
     def from_env(cls) -> GeminiJsonClient:
@@ -35,11 +54,7 @@ class GeminiJsonClient:
     ) -> str:
         client = self._client()
         config = self._build_config(schema=schema, system_instruction=system_instruction)
-        response = client.models.generate_content(
-            model=self.model,
-            contents=prompt,
-            config=config,
-        )
+        response = self._generate_with_retry(client=client, prompt=prompt, config=config)
         text = getattr(response, "text", None)
         if isinstance(text, str) and text.strip():
             return text
@@ -47,6 +62,22 @@ class GeminiJsonClient:
         if parsed is not None:
             return json.dumps(parsed)
         raise ValueError("Gemini client returned no structured JSON payload")
+
+    def _generate_with_retry(self, *, client: Any, prompt: str, config: Any) -> Any:
+        for attempt in range(len(self.retry_delays) + 1):
+            try:
+                return client.models.generate_content(
+                    model=self.model,
+                    contents=prompt,
+                    config=config,
+                )
+            except Exception as exc:
+                if not _is_transient_api_error(exc):
+                    raise
+                if attempt >= len(self.retry_delays):
+                    raise GeminiUnavailableError() from exc
+                self.sleep(self.retry_delays[attempt])
+        raise AssertionError("Gemini retry loop exited unexpectedly")
 
     def _client(self) -> Any:
         if self.sdk_client is not None:
@@ -100,3 +131,11 @@ def _render_messages(messages: list[dict[str, str]]) -> str:
             continue
         parts.append(f"{role.upper()}:\n{content}")
     return "\n\n".join(parts)
+
+
+def _is_transient_api_error(exc: Exception) -> bool:
+    try:
+        from google.genai import errors
+    except ImportError:
+        return False
+    return isinstance(exc, errors.APIError) and int(exc.code) in TRANSIENT_GEMINI_STATUS_CODES
