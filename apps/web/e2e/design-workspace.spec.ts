@@ -213,6 +213,70 @@ test("completed job without sequence shows partial result evidence", async ({ pa
   await expect(page.getByText("Submit a design to render the annotated plasmid.")).toBeVisible();
 });
 
+test("clarification question leads to a refinement and rendered design", async ({ page }) => {
+  let refinementBody: { instruction: string } | null = null;
+
+  await page.route("http://127.0.0.1:8000/v1/users/me/pending-outcome-prompts", async (route) => {
+    await route.fulfill({ json: { prompts: [] } });
+  });
+  await page.route("http://127.0.0.1:8000/v1/sessions", async (route) => {
+    await route.fulfill({ json: { session_id: "session-clarification" } });
+  });
+  await page.route("http://127.0.0.1:8000/v1/sessions/session-clarification/design", async (route) => {
+    await route.fulfill({ json: { job_id: "job-clarification" } });
+  });
+  await page.route("http://127.0.0.1:8000/v1/sessions/session-clarification/refine", async (route) => {
+    refinementBody = route.request().postDataJSON() as { instruction: string };
+    await route.fulfill({ json: { job_id: "job-refined" } });
+  });
+  await page.route("http://127.0.0.1:8000/v1/jobs/*", async (route) => {
+    const refined = route.request().url().endsWith("/job-refined");
+    await route.fulfill({
+      json: refined
+        ? {
+            job_id: "job-refined",
+            status: "succeeded",
+            result: {
+              design_id: "design-clarified",
+              recommendation_text: "Generated the clarified mammalian reporter design.",
+              annotated_sequence: annotatedSequence,
+              retrieved_templates: []
+            }
+          }
+        : {
+            job_id: "job-clarification",
+            status: "succeeded",
+            result: {
+              design_id: null,
+              design_spec: {
+                clarification_needed: true,
+                clarification_question: "Which mammalian cell line should this target?"
+              },
+              clarification_question: "Which mammalian cell line should this target?",
+              annotated_sequence: null,
+              retrieved_templates: []
+            }
+          }
+    });
+  });
+
+  await page.goto("/");
+  await page.getByLabel("Experimental goal").fill("make me a mammalian reporter");
+  await page.getByRole("button", { name: "Design", exact: true }).click();
+
+  await expect(page.getByText("To design this for you, I need to know: Which mammalian cell line should this target?")).toBeVisible();
+  await expect(page.getByText("Waiting for your answer", { exact: true })).toBeVisible();
+  await expect(page.getByText("Answer the clarification question to render the design map.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Answer" })).toBeVisible();
+
+  await page.getByLabel("Experimental goal").fill("HEK293");
+  await page.getByRole("button", { name: "Answer" }).click();
+
+  expect(refinementBody).toEqual({ instruction: "HEK293" });
+  await expect(page.getByText("Generated the clarified mammalian reporter design.")).toBeVisible();
+  await expect(page.getByTestId("seqviz-map")).toBeVisible();
+});
+
 test("researcher can submit a prompted outcome report", async ({ page }) => {
   let submittedOutcome: Record<string, unknown> | null = null;
 

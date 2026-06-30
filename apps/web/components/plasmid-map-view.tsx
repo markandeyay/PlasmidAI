@@ -19,16 +19,23 @@ const SeqViz = dynamic(() => import("seqviz").then((module) => module.SeqViz), {
 
 type PlasmidMapViewProps = {
   annotatedSequence: AnnotatedSequence | null;
+  waitingForClarification?: boolean;
 };
 
-export function PlasmidMapView({ annotatedSequence }: PlasmidMapViewProps) {
+export function PlasmidMapView({ annotatedSequence, waitingForClarification = false }: PlasmidMapViewProps) {
   if (!annotatedSequence) {
     return (
       <section id="plasmid-map" className="flex h-full min-h-0 flex-col rounded-md border border-line bg-paper p-md shadow-raised" aria-labelledby="plasmid-map-title-empty">
         <h2 id="plasmid-map-title-empty" className="font-serif text-h3 text-ink">Plasmid map</h2>
         <div className="mt-md flex h-full min-h-0 flex-1 flex-col items-center justify-center gap-sm rounded-md border border-dashed border-line-strong bg-mist px-lg text-center">
-          <p className="font-serif text-h3 text-ink">No construct loaded</p>
-          <p className="text-small leading-5 text-slate">Submit a design to render the annotated plasmid.</p>
+          <p className="font-serif text-h3 text-ink">
+            {waitingForClarification ? "Waiting for your answer" : "No construct loaded"}
+          </p>
+          <p className="text-small leading-5 text-slate">
+            {waitingForClarification
+              ? "Answer the clarification question to render the design map."
+              : "Submit a design to render the annotated plasmid."}
+          </p>
         </div>
       </section>
     );

@@ -426,10 +426,16 @@ export default function Page() {
     if (clarification) {
       setMessages((current) => [
         ...current,
-        { id: crypto.randomUUID(), role: "assistant", kind: "clarification", text: clarification, result }
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          kind: "clarification",
+          text: `To design this for you, I need to know: ${clarification}`,
+          result
+        }
       ]);
       setState("awaiting_clarification");
-      setAppStatus("Clarification needed.");
+      setAppStatus("Waiting for your clarification answer.");
     } else {
       setMessages((current) => [
         ...current,
@@ -622,7 +628,10 @@ export default function Page() {
 
             <div className="flex min-h-0 min-w-0 flex-col bg-cream">
               <div className="min-h-0 flex-1 p-sm md:p-md">
-                <PlasmidMapView annotatedSequence={annotatedSequence as AnnotatedSequence | null} />
+                <PlasmidMapView
+                  annotatedSequence={annotatedSequence as AnnotatedSequence | null}
+                  waitingForClarification={state === "awaiting_clarification"}
+                />
               </div>
               <ToolsStrip
                 layout="row"
@@ -715,7 +724,10 @@ export default function Page() {
             {mobileTab === "map" ? (
               <div className="flex h-full min-h-0 flex-col bg-cream">
                 <div className="min-h-0 flex-1 p-sm">
-                  <PlasmidMapView annotatedSequence={annotatedSequence as AnnotatedSequence | null} />
+                  <PlasmidMapView
+                    annotatedSequence={annotatedSequence as AnnotatedSequence | null}
+                    waitingForClarification={state === "awaiting_clarification"}
+                  />
                 </div>
                 <ToolsStrip
                   layout="stack"
@@ -1427,8 +1439,8 @@ function ChatPanel({
       <form onSubmit={onSubmit} className="shrink-0 border-t border-line bg-paper px-sm py-sm" aria-label="Design composer">
         {state === "awaiting_clarification" && activeClarification ? (
           <div className="mb-3 rounded-md border border-honey/40 bg-honey/10 p-md text-sm text-ink">
-            <span className="font-semibold text-honey">Clarification needed: </span>
-            {activeClarification}
+            <span className="font-semibold text-honey">Waiting for your answer: </span>
+            {activeClarification.replace(/^To design this for you, I need to know:\s*/i, "")}
           </div>
         ) : null}
         {!sessionId && state === "idle" ? (
