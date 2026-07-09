@@ -6,7 +6,7 @@ Two runnable surfaces matter today: `make serve-local` for the interactive local
 
 ## What It Does
 
-PlasmidAI turns a design request into a validated plasmid artifact through a single workflow:
+PlasmidAI turns any design request into a validated plasmid artifact through a single workflow:
 
 1. A researcher describes the construct they want, such as a host, expression goal, selectable marker, reporter, cloning workflow, or template preference.
 2. The system parses the request into structured intent and retrieves relevant plasmids from an indexed corpus built from curated records and NCBI GenBank.
